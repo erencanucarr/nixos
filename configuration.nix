@@ -1,0 +1,92 @@
+# Edit this configuration file to define what should be installed on
+# your system.  Help is available in the configuration.nix(5) man page
+# and in the NixOS manual (accessible by running 'nixos-help').
+
+{ config, pkgs, ... }:
+
+{
+  imports =
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+      ./modules/security
+      ./modules/network
+      ./apps
+    ];
+
+  # Bootloader.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  # Use latest kernel.
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  # Set your time zone.
+  time.timeZone = "Europe/Istanbul";
+
+  # Select internationalisation properties.
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "tr_TR.UTF-8";
+    LC_IDENTIFICATION = "tr_TR.UTF-8";
+    LC_MEASUREMENT = "tr_TR.UTF-8";
+    LC_MONETARY = "tr_TR.UTF-8";
+    LC_NAME = "tr_TR.UTF-8";
+    LC_NUMERIC = "tr_TR.UTF-8";
+    LC_PAPER = "tr_TR.UTF-8";
+    LC_TELEPHONE = "tr_TR.UTF-8";
+    LC_TIME = "tr_TR.UTF-8";
+  };
+
+  # Configure keymap in X11
+  services.xserver.xkb = {
+    layout = "tr";
+    variant = "";
+  };
+
+  # Configure console keymap
+  console.keyMap = "trq";
+
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+
+  # Enable sound with pipewire.
+  services.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+  };
+
+  # Define a user account.
+  users.users."can" = {
+    isNormalUser = true;
+    description = "Can";
+    extraGroups = [ "networkmanager" "wheel" ];
+    packages = with pkgs; [
+      kdePackages.kate
+    ];
+  };
+
+  # Install firefox.
+  programs.firefox.enable = true;
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+
+  environment.systemPackages = with pkgs; [
+   wget
+   curl
+   dig
+   git
+   pkgs.opencode
+   fzf
+   tree
+   unzip
+   vesktop
+  ];
+
+  system.stateVersion = "26.05";
+}
