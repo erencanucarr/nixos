@@ -9,7 +9,6 @@
       modules = [
         ./configuration.nix
         ./hardware-configuration.nix
-        ./modules/desktop/kde.nix
       ];
     };
   };
