@@ -1,8 +1,5 @@
 { config, pkgs, ... }:
 {
-  services.xserver.enable = true;
-  services.displayManager.sddm.enable = true;
-  services.desktopManager.plasma6.enable = true;
   services.openssh.enable = true;
   networking.firewall.allowedTCPPorts = [ 22 ];
   services.fprintd = {
