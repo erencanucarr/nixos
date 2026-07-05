@@ -1,17 +1,17 @@
 {
   imports = [
-    ./zapret.nix
   ];
-
   networking = {
     hostName = "nixos";
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      dns = "systemd-resolved";
+    };
     nameservers = [
       "1.1.1.1"
       "8.8.8.8"
     ];
   };
-
   services.resolved = {
     enable = true;
     settings = {
@@ -24,10 +24,15 @@
         DNSSEC = "true";
         Domains = [ "~." ];
         FallbackDNS = [
-          "9.9.9.9#dns.quad9.net"
-          "149.112.112.112#dns.quad9.net"
+          "1.1.1.1#one.one.one.one"
+          "8.8.8.8#dns.google"
         ];
       };
     };
+  };
+  services.ihtc = {
+    enable = true;
+    verbose = true;
+    patterns = [ "discord" "discordapp" "googleapis" ];
   };
 }

@@ -14,8 +14,16 @@
     serviceConfig.Type = "simple";
   };
   security.pam.services = {
-    "login".fprintAuth = false;
+    "login".fprintAuth = true;
     "sddm".fprintAuth = true;
     "sddm-autologin".fprintAuth = true;
   };
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if (action.id == "net.reactivated.fprint.device.enroll" &&
+          subject.user == "can") {
+        return polkit.Result.YES;
+      }
+    });
+  '';
 }

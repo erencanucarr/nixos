@@ -80,13 +80,13 @@
   environment.systemPackages = with pkgs; [
    wget
    curl
+   btop
    dig
    git
    pkgs.opencode
    fzf
    tree
    unzip
-   vesktop
   ];
 
   system.stateVersion = "26.05";
