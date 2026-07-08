@@ -2,7 +2,7 @@
 {
   stylix = {
     enable = true;
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/chalk.yaml";
     cursor.package = pkgs.bibata-cursors;
     cursor.name = "Bibata-Modern-Classic";
     cursor.size = 24;
