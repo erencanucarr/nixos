@@ -1,9 +1,4 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running 'nixos-help').
-
 { config, pkgs, ... }:
-
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -13,20 +8,16 @@
       ./modules/network
       ./apps
     ];
-
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
+  boot.loader.systemd-boot.configurationLimit = 10;
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
-
   # Set your time zone.
   time.timeZone = "Europe/Istanbul";
-
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "tr_TR.UTF-8";
     LC_IDENTIFICATION = "tr_TR.UTF-8";
@@ -38,19 +29,15 @@
     LC_TELEPHONE = "tr_TR.UTF-8";
     LC_TIME = "tr_TR.UTF-8";
   };
-
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "tr";
     variant = "";
   };
-
   # Configure console keymap
   console.keyMap = "trq";
-
   # Enable CUPS to print documents.
   services.printing.enable = true;
-
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -60,7 +47,9 @@
     alsa.support32Bit = true;
     pulse.enable = true;
   };
-
+  # Bluetooth
+  hardware.bluetooth.enable = true;
+  services.blueman.enable = true;
   # Define a user account.
   users.users."can" = {
     isNormalUser = true;
@@ -70,13 +59,18 @@
       kdePackages.kate
     ];
   };
-
   # Install firefox.
   programs.firefox.enable = true;
-
   # Allow unfree packages
-   nixpkgs.config.allowUnfree = true;
-
+  nixpkgs.config.allowUnfree = true;
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 7d";
+    };
+    settings = { auto-optimise-store = true; };
+  };
   environment.systemPackages = with pkgs; [
    wget
    curl
@@ -90,6 +84,5 @@
    age
    sops
   ];
-
   system.stateVersion = "26.05";
 }
