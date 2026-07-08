@@ -32,6 +32,7 @@
         ./hardware-configuration.nix
         ihtc.nixosModules.default
         stylix.nixosModules.stylix
+        sops-nix.nixosModules.sops
         home-manager.nixosModules.home-manager
         {
           home-manager = {

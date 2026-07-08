@@ -1,5 +1,8 @@
 { config, pkgs, ... }:
 {
+  imports = [
+    ./sops.nix
+  ];
   services.openssh.enable = true;
   networking.firewall.allowedTCPPorts = [ 22 ];
   services.fprintd = {

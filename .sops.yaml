@@ -1,0 +1,7 @@
+keys:
+  - &can age1w9ljlek4y27626t49lvcc326z0qmtn9ef0msn9eu7z2kgm2nyflqvmjfm8
+creation_rules:
+  - path_regex: modules/security/secrets.yaml
+    key_groups:
+      - age:
+          - *can

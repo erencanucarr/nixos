@@ -1,12 +1,13 @@
-{ pkgs, ... }:
-
+{ config, pkgs, ... }:
+let
+  user = config.users.users.can;
+in
 {
   programs = {
     _1password.enable = true;
     _1password-gui = {
       enable = true;
-      package =
-        with pkgs;
+      package = with pkgs;
         _1password-gui.overrideAttrs (
           {
             buildInputs ? [ ],
@@ -14,12 +15,11 @@
             ...
           }:
           {
-            buildInputs = buildInputs ++ [
-              makeWrapper
-            ];
+            buildInputs = buildInputs ++ [ makeWrapper ];
           }
         );
     };
+    ssh.startAgent = true;
   };
   environment.etc."1password/custom_allowed_browsers" = {
     text = ''
@@ -28,4 +28,10 @@
     '';
     mode = "0755";
   };
+  environment.sessionVariables = {
+    SSH_AUTH_SOCK = "${user.home}/.1password/agent.sock";
+  };
+  programs.ssh.extraConfig = ''
+    IdentityAgent ${user.home}/.1password/agent.sock
+  '';
 }

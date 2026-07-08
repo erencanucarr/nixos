@@ -75,7 +75,7 @@
   programs.firefox.enable = true;
 
   # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
+   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
    wget
@@ -87,6 +87,8 @@
    fzf
    tree
    unzip
+   age
+   sops
   ];
 
   system.stateVersion = "26.05";
