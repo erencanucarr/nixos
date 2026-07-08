@@ -12,10 +12,9 @@
       driver = pkgs.libfprint-2-tod1-goodix-550a;
     };
   };
-  systemd.services.fprintd = {
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig.Type = "simple";
-  };
+  systemd.services.fprintd.wantedBy = [ "multi-user.target" ];
+  systemd.services.sddm.after = [ "fprintd.service" ];
+  systemd.services.sddm.wants = [ "fprintd.service" ];
   security.pam.services = {
     "login".fprintAuth = true;
     "sddm".fprintAuth = true;
