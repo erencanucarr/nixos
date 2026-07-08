@@ -15,20 +15,29 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+    stylix = {
+      url = "github:nix-community/stylix/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs = { self, nixpkgs, home-manager, plasma-manager, ihtc, ... }: {
+  outputs = { self, nixpkgs, home-manager, plasma-manager, stylix, sops-nix, ihtc, ... }: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
         ./configuration.nix
         ./hardware-configuration.nix
         ihtc.nixosModules.default
+        stylix.nixosModules.stylix
         home-manager.nixosModules.home-manager
         {
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
-            extraSpecialArgs = { inherit plasma-manager; };
+            extraSpecialArgs = { inherit plasma-manager stylix; };
             users.can = import ./home.nix;
           };
         }

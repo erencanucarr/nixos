@@ -1,4 +1,4 @@
-{ config, pkgs, plasma-manager, ... }:
+{ config, pkgs, plasma-manager, stylix, ... }:
 let
   vesktop-wrapped = pkgs.writeShellScriptBin "vesktop" ''
     export HTTP_PROXY="http://127.0.0.1:4452"
