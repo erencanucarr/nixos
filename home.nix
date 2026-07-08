@@ -30,6 +30,7 @@ in
     NIXOS_OZONE_WL = "1";
   };
   programs.plasma = {
+    enable = true;
     shortcuts = {
       "kwin" = {
         "Switch One Desktop to the Left" = "Ctrl+Left";
@@ -38,5 +39,22 @@ in
         "Window to Next Desktop" = "Ctrl+Shift+Right";
       };
     };
+    panels = [
+      {
+        location = "bottom";
+        height = 44;
+        widgets = [
+          "org.kde.plasma.kickoff"
+          "org.kde.plasma.pager"
+          { panelSpacer = { expanding = true; }; }
+          "org.kde.plasma.icontasks"
+          { panelSpacer = { expanding = true; }; }
+          "org.kde.plasma.marginsseparator"
+          "org.kde.plasma.systemtray"
+          "org.kde.plasma.digitalclock"
+          "org.kde.plasma.showdesktop"
+        ];
+      }
+    ];
   };
 }
