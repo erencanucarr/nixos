@@ -16,6 +16,7 @@ in
     stateVersion = "26.05";
   };
   programs.home-manager.enable = true;
+  gtk.gtk2.force = true;
   home.packages = with pkgs; [
     vesktop-wrapped
     grim slurp wl-clipboard
@@ -47,7 +48,16 @@ in
           "org.kde.plasma.kickoff"
           "org.kde.plasma.pager"
           { panelSpacer = { expanding = true; }; }
-          "org.kde.plasma.icontasks"
+          {
+            iconTasks = {
+              settings = {
+                General = {
+                  useCustomStyle = true;
+                  customIconStyle = 2;
+                };
+              };
+            };
+          }
           { panelSpacer = { expanding = true; }; }
           "org.kde.plasma.marginsseparator"
           "org.kde.plasma.systemtray"

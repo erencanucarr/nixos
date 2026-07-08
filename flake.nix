@@ -38,10 +38,10 @@
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
-            backupFileExtension = "bak";
             extraSpecialArgs = { inherit plasma-manager stylix; };
             users.can = import ./home.nix;
           };
+
         }
       ];
     };
