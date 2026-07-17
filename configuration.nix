@@ -82,7 +82,8 @@
    tree
    unzip
    age
-   sops
-  ];
+    sops
+    usbutils
+   ];
   system.stateVersion = "26.05";
 }
