@@ -56,8 +56,8 @@ let
     ════════════════════════════════════════════════════════
     Screenshot
     ════════════════════════════════════════════════════════
-    Print               Tam ekran → kaydet + clipboard
-    Mod4+Print          Bölge seç → kaydet
+    Print               Tam ekran → Swappy düzenle
+    Mod4+Print          Bölge seç → Swappy düzenle
     Mod4+Shift+s        Bölge seç → clipboard
     Mod4+Shift+a        Bölge → OCR (tesseract)
     Mod4+c              Cliphist (pano geçmişi)
@@ -146,6 +146,7 @@ in
     networkmanagerapplet pavucontrol
     swayosd
     ags
+    swappy
   ];
   home.sessionVariables = {
     XDG_CURRENT_DESKTOP = "KDE";
@@ -245,8 +246,8 @@ in
         "XF86AudioPause" = "exec playerctl play-pause";
         "XF86AudioPlay" = "exec playerctl play-pause";
         "XF86AudioPrev" = "exec playerctl previous";
-        "Print" = "exec grim - | tee ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png | wl-copy";
-        "Mod4+Print" = "exec grim -g \"$(slurp)\" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S)-region.png";
+        "Print" = "exec grim - | swappy -f -";
+        "Mod4+Print" = "exec grim -g \"$(slurp)\" - | swappy -f -";
       };
       floating.criteria = [
         { title = "Picture-in-Picture"; }
@@ -311,6 +312,7 @@ in
         ];
         modules-right = [
           "idle_inhibitor"
+          "custom/notification"
           "network"
           "pulseaudio"
           "clock"
@@ -390,6 +392,21 @@ in
             deactivated = "󰾫";
           };
         };
+
+        "custom/notification" = {
+          tooltip = false;
+          format = "{icon}";
+          format-icons = {
+            notification = "";
+            dnd-notification = "";
+            dnd-none = "";
+          };
+          return-type = "json";
+          exec = "swaync-client -swb";
+          on-click = "swaync-client -t";
+          on-click-right = "swaync-client -d";
+          escape = true;
+        };
       };
     };
     style = ''
@@ -438,13 +455,14 @@ in
           border: none;
       }
 
-      #window,
-      #network,
-      #pulseaudio,
-      #clock,
-      #idle_inhibitor,
-      #mpris,
-      #tray {
+#window,
+#network,
+#pulseaudio,
+#clock,
+#idle_inhibitor,
+#mpris,
+#tray,
+#custom-notification {
           background-color: ${c.inactive};
           color: ${c.text};
           border: 1px solid ${c.active};
@@ -488,7 +506,8 @@ in
           background-color: ${c.urgent};
       }
 
-      #battery {
+      #battery,
+#custom-notification {
           background-color: ${c.inactive};
           color: ${c.text};
           border: 1px solid ${c.active};
