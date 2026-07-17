@@ -90,7 +90,12 @@ in
     stateVersion = "26.05";
   };
   programs.home-manager.enable = true;
-  gtk.gtk2.force = true;
+  gtk = {
+    enable = true;
+    gtk2.force = true;
+    iconTheme.name = "Papirus-Dark";
+    iconTheme.package = pkgs.papirus-icon-theme;
+  };
   programs.alacritty = {
     enable = true;
     settings = {
@@ -137,8 +142,8 @@ in
     fuzzel
     waybar
     swaynotificationcenter
-    swaylock swayidle
-    networkmanagerapplet
+    swaylock swayidle swaybg
+    networkmanagerapplet pavucontrol
     swayosd
     ags
   ];
@@ -256,10 +261,12 @@ in
         }
       ];
       startup = [
+        { command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill > /dev/null 2>&1"; }
         { command = "waybar > /dev/null 2>&1"; }
         { command = "swaync > /dev/null 2>&1"; }
         { command = "swayosd-server > /dev/null 2>&1"; }
         { command = "ags > /dev/null 2>&1 &"; }
+        { command = "swaymsg workspace number 1"; }
         { command = "nm-applet"; }
         { command = "blueman-applet"; }
         { command = "wl-paste --type text --watch cliphist store"; }
@@ -596,9 +603,28 @@ in
               label = "󰆍";
               command = "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy";
             }
-          ];
-        };
-      };
+      ];
+    };
+    extraConfig = ''
+      workspace_auto_back_and_forth yes
+      smart_gaps on
+      smart_borders on
+      bindsym Ctrl+Left workspace prev
+      bindsym Ctrl+Right workspace next
+      bindsym Ctrl+Tab workspace next
+      bindsym Ctrl+Shift+Tab workspace prev
+      bindsym Mod4+Tab workspace next
+      bindsym Mod4+Shift+Tab workspace prev
+
+      exec swayidle -w \
+        timeout 300 'swaylock -f' \
+        timeout 600 'swaymsg "output * dpms off"' \
+             resume 'swaymsg "output * dpms on"' \
+        before-sleep 'swaylock -f'
+
+      bindsym --no-warn Mod4+k exec keybinds-help
+    '';
+  };
     };
     style = ''
       @define-color bg ${c.background};
@@ -685,7 +711,7 @@ in
     settings = {
       main = {
         terminal = "alacritty";
-        font = "JetBrains Mono:size=10";
+        font = "JetBrains Mono:size=12";
         dpi-aware = false;
         width = 40;
         lines = 15;
