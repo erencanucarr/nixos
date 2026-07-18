@@ -111,6 +111,34 @@ let
     Mod4+Shift+e        Çıkış
     BINDS
   '';
+
+  screenshot-region = pkgs.writeShellScriptBin "screenshot-region" ''
+    SAVE_DIR="''${XDG_PICTURES_DIR:-$HOME/Pictures/screenshots}"
+    mkdir -p "$SAVE_DIR"
+    BEFORE=$(ls -1 "$SAVE_DIR")
+    grim -g "$(slurp)" - | swappy -f -
+    AFTER=$(ls -1 "$SAVE_DIR")
+    NEW=$(comm -13 <(echo "$BEFORE") <(echo "$AFTER") | head -1)
+    if [ -n "$NEW" ]; then
+      notify-send -i "$SAVE_DIR/$NEW" "Screenshot" "Saved: $NEW"
+    else
+      notify-send -i camera-screenshot "Screenshot" "Copied to clipboard"
+    fi
+  '';
+
+  screenshot-full = pkgs.writeShellScriptBin "screenshot-full" ''
+    SAVE_DIR="''${XDG_PICTURES_DIR:-$HOME/Pictures/screenshots}"
+    mkdir -p "$SAVE_DIR"
+    BEFORE=$(ls -1 "$SAVE_DIR")
+    grim - | swappy -f -
+    AFTER=$(ls -1 "$SAVE_DIR")
+    NEW=$(comm -13 <(echo "$BEFORE") <(echo "$AFTER") | head -1)
+    if [ -n "$NEW" ]; then
+      notify-send -i "$SAVE_DIR/$NEW" "Screenshot" "Saved: $NEW"
+    else
+      notify-send -i camera-screenshot "Screenshot" "Copied to clipboard"
+    fi
+  '';
 in
 {
   imports = [
@@ -164,6 +192,8 @@ in
     vesktop-wrapped
     keybinds-help
     powermenu
+    screenshot-region
+    screenshot-full
     jetbrains-mono
     nerd-fonts.jetbrains-mono
     grim slurp wl-clipboard
@@ -180,6 +210,10 @@ in
     swayosd
     ags
     swappy
+    imv
+    mpv
+    wf-recorder
+    file-roller
   ];
   home.sessionVariables = {
     XDG_CURRENT_DESKTOP = "KDE";
@@ -191,6 +225,23 @@ in
   stylix.targets.fuzzel.enable = false;
   stylix.targets.sway.enable = false;
   stylix.targets.alacritty.enable = false;
+
+  xdg.configFile."swappy/config".text = ''
+    [Default]
+    early_exit=true
+    save_dir=$HOME/Pictures/screenshots
+    save_filename_format=screenshot-%Y%m%d-%H%M%S.png
+    show_panel=false
+    line_size=5
+    text_size=20
+    text_font=sans-serif
+    paint_mode=brush
+    fill_shape=false
+    auto_save=false
+    custom_color=rgba(193,125,17,1)
+    transparent=false
+    transparency=50
+  '';
 
   programs.fuzzel = {
     enable = true;

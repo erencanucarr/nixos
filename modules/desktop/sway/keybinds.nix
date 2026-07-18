@@ -5,7 +5,7 @@
     "Mod4+Shift+s" = "exec grim -g \"$(slurp -d)\" - | wl-copy";
     "Mod4+Shift+a" = "exec grim -g \"$(slurp)\" - | tesseract stdin stdout -l tur | wl-copy";
     "Mod4+c" = "exec cliphist list | fuzzel --dmenu | cliphist decode | wl-copy";
-    "Mod4+e" = "exec pcmanfm";
+    "Mod4+e" = "exec thunar";
     "Mod4+Shift+space" = "floating toggle";
     "Mod4+m" = "exec ags -t quicksettings";
     "XF86AudioRaiseVolume" = "exec swayosd-client --output-volume raise";
@@ -18,8 +18,8 @@
     "XF86AudioPause" = "exec playerctl play-pause";
     "XF86AudioPlay" = "exec playerctl play-pause";
     "XF86AudioPrev" = "exec playerctl previous";
-    "Print" = "exec grim -g \"$(slurp)\" - | swappy -f -";
-    "Mod4+Print" = "exec grim - | swappy -f -";
+    "Print" = "exec screenshot-region";
+    "Mod4+Print" = "exec screenshot-full";
     "Mod4+q" = "kill";
     "Mod4+Escape" = "exec powermenu";
   };

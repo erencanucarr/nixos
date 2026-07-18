@@ -7,6 +7,13 @@
     extraPackages = with pkgs; [ alacritty ];
   };
 
+  programs.thunar = {
+    enable = true;
+    plugins = with pkgs; [ thunar-volman thunar-archive-plugin ];
+  };
+
+  services.gvfs.enable = true;
+
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
