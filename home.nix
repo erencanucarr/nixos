@@ -19,6 +19,18 @@ let
     exec ${pkgs.vesktop}/bin/vesktop "$@"
   '';
 
+  powermenu = pkgs.writeShellScriptBin "powermenu" ''
+    choice=$(printf "⏻ Shutdown\n Reboot\n Lock\n󰗽 Logout\n󰤄 Sleep" | \
+      fuzzel --dmenu --prompt="Power > " --width=30 --lines=5)
+    case "$choice" in
+      *Shutdown) systemctl poweroff ;;
+      *Reboot) systemctl reboot ;;
+      *Lock) swaylock -f ;;
+      *Logout) swaymsg exit ;;
+      *Sleep) systemctl suspend ;;
+    esac
+  '';
+
   keybinds-help = pkgs.writeShellScriptBin "keybinds-help" ''
     cat <<'BINDS' | fuzzel --dmenu --prompt="Keybinds > " --width=65 --lines=25
     ════════════════════════════════════════════════════════
@@ -32,6 +44,9 @@ let
     Ctrl+Shift+Tab      Workspace önceki
     Mod4+Tab            Workspace sonraki
     Mod4+Shift+Tab      Workspace önceki
+    Mod4+Shift+1-9      Pencereyi workspace'e taşı
+    Mod4+a              Parent container (yukarı çık)
+    Mod4+grave (`)      Scratchpad toggle
     ════════════════════════════════════════════════════════
     Launch
     ════════════════════════════════════════════════════════
@@ -53,11 +68,15 @@ let
     Mod4+arrows/hjkl    Odaklan
     Mod4+Shift+arrows   Taşı
     Mod4+r              Resize modu
+    Mod4+s              Stacking layout (üst üste)
+    Mod4+w              Tabbed layout (sekme)
+    Mod4+b              Splith layout (yan yana)
+    Mod4+v              Splitv layout (alt alta)
     ════════════════════════════════════════════════════════
     Screenshot
     ════════════════════════════════════════════════════════
-    Print               Tam ekran → Swappy düzenle
-    Mod4+Print          Bölge seç → Swappy düzenle
+    Print               Bölge seç → Swappy düzenle
+    Mod4+Print          Tam ekran → Swappy düzenle
     Mod4+Shift+s        Bölge seç → clipboard
     Mod4+Shift+a        Bölge → OCR (tesseract)
     Mod4+c              Cliphist (pano geçmişi)
@@ -74,7 +93,10 @@ let
     Caps_Lock           Caps OSD
     Mod4+l              Kilit ekranı
     Mod4+m              AGS Quick Settings
+    Mod4+Escape         Power menu
     Mod4+k              Bu yardım
+    🔔 (tıkla)          Notification Center
+    🔔 (sağ tık)        Bildirimleri temizle
     Mod4+Shift+c        Config reload
     Mod4+Shift+e        Çıkış
     BINDS
@@ -131,6 +153,7 @@ in
   home.packages = with pkgs; [
     vesktop-wrapped
     keybinds-help
+    powermenu
     jetbrains-mono
     nerd-fonts.jetbrains-mono
     grim slurp wl-clipboard
@@ -246,8 +269,10 @@ in
         "XF86AudioPause" = "exec playerctl play-pause";
         "XF86AudioPlay" = "exec playerctl play-pause";
         "XF86AudioPrev" = "exec playerctl previous";
-        "Print" = "exec grim - | swappy -f -";
-        "Mod4+Print" = "exec grim -g \"$(slurp)\" - | swappy -f -";
+        "Print" = "exec grim -g \"$(slurp)\" - | swappy -f -";
+        "Mod4+Print" = "exec grim - | swappy -f -";
+        "Mod4+q" = "kill";
+        "Mod4+Escape" = "exec powermenu";
       };
       floating.criteria = [
         { title = "Picture-in-Picture"; }
@@ -263,7 +288,6 @@ in
       ];
       startup = [
         { command = "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill > /dev/null 2>&1"; }
-        { command = "waybar > /dev/null 2>&1"; }
         { command = "swaync > /dev/null 2>&1"; }
         { command = "swayosd-server > /dev/null 2>&1"; }
         { command = "ags > /dev/null 2>&1 &"; }
@@ -318,6 +342,7 @@ in
           "clock"
           "battery"
           "tray"
+          "custom/powermenu"
         ];
 
         "sway/workspaces" = {
@@ -407,6 +432,12 @@ in
           on-click-right = "swaync-client -d";
           escape = true;
         };
+
+        "custom/powermenu" = {
+          tooltip = false;
+          format = "⏻";
+          on-click = "powermenu";
+        };
       };
     };
     style = ''
@@ -462,7 +493,8 @@ in
 #idle_inhibitor,
 #mpris,
 #tray,
-#custom-notification {
+#custom-notification,
+#custom-powermenu {
           background-color: ${c.inactive};
           color: ${c.text};
           border: 1px solid ${c.active};
@@ -507,7 +539,8 @@ in
       }
 
       #battery,
-#custom-notification {
+      #custom-notification,
+      #custom-powermenu {
           background-color: ${c.inactive};
           color: ${c.text};
           border: 1px solid ${c.active};
@@ -539,6 +572,21 @@ in
           }
       }
     '';
+  };
+
+  systemd.user.services.waybar = {
+    Unit = {
+      Description = "Waybar";
+      PartOf = [ "sway-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.waybar}/bin/waybar";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+    Install = {
+      WantedBy = [ "sway-session.target" ];
+    };
   };
 
   services.swaync = {
