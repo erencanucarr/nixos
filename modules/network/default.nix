@@ -31,8 +31,6 @@
     };
   };
   services.ihtc = {
-    enable = true;
-    verbose = true;
-    patterns = [ "discord" "discordapp" "googleapis" ];
+    enable = false;
   };
 }

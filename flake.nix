@@ -3,7 +3,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     ihtc = {
-      url = "github:kreatoo/ihtc";
+      url = "git+https://src.krea.to/kreato/ihtc";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -38,7 +38,7 @@
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
-            extraSpecialArgs = { inherit plasma-manager stylix; };
+            extraSpecialArgs = { inherit plasma-manager stylix ihtc; };
             users.can = import ./home.nix;
           };
 

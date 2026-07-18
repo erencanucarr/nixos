@@ -1,4 +1,4 @@
-{ config, pkgs, lib, plasma-manager, stylix, ... }:
+{ config, pkgs, lib, plasma-manager, stylix, ihtc, ... }:
 let
   colors = with config.lib.stylix.colors; {
     withHashtag = {
@@ -14,15 +14,19 @@ let
   c = colors.withHashtag;
 
   vesktop-wrapped = pkgs.writeShellScriptBin "vesktop" ''
+    ${ihtc.packages.x86_64-linux.ihtc}/bin/ihtc --listen 127.0.0.1:4452 --verbose --regex 'discord|discordapp|googleapis' &
+    IHTC_PID=$!
     for i in $(seq 1 15); do
-      if systemctl --user is-active ihtc.service > /dev/null 2>&1; then
+      if ss -tlnp 2>/dev/null | grep -q 4452; then
         break
       fi
       sleep 1
     done
     export HTTP_PROXY="http://127.0.0.1:4452"
     export HTTPS_PROXY="http://127.0.0.1:4452"
-    exec ${pkgs.vesktop}/bin/vesktop "$@"
+    ${pkgs.vesktop}/bin/vesktop "$@"
+    kill $IHTC_PID 2>/dev/null
+    wait $IHTC_PID 2>/dev/null
   '';
 
   powermenu = pkgs.writeShellScriptBin "powermenu" ''
@@ -201,14 +205,21 @@ in
         vertical-pad = 8;
         inner-pad = 4;
         prompt = ">> ";
+        icon-theme = "Papirus-Dark";
       };
       colors = {
-        background = "${c.background}dd";
-        text = "${c.text}";
-        match = "${c.active}";
-        selection = "${c.inactive}";
-        selection-text = "${c.text}";
-        border = "${c.active}";
+        background = "#1e1e1edd";
+        text = "#ccccccff";
+        match = "#ffffffff";
+        selection = "#3a3a3aff";
+        selection-text = "#ffffffff";
+        selection-match = "#ffffffff";
+        border = "#888888ff";
+        prompt = "#ccccccff";
+        input = "#ccccccff";
+        placeholder = "#777777ff";
+        counter = "#777777ff";
+        message = "#ccccccff";
       };
       border = {
         radius = 8;

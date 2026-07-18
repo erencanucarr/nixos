@@ -9,6 +9,5 @@
     { command = "blueman-applet"; }
     { command = "wl-paste --type text --watch cliphist store"; }
     { command = "wl-paste --type image --watch cliphist store"; }
-    { command = "vesktop > /dev/null 2>&1"; }
   ];
 }
