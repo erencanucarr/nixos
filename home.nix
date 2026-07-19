@@ -42,74 +42,124 @@ let
   '';
 
   keybinds-help = pkgs.writeShellScriptBin "keybinds-help" ''
-    cat <<'BINDS' | fuzzel --dmenu --prompt="Keybinds > " --width=65 --lines=25
-    ════════════════════════════════════════════════════════
-    Navigation
-    ════════════════════════════════════════════════════════
-    Mod4+1-9            Workspace 1-9
-    Mod4+0              Workspace 10
-    Ctrl+Left           Workspace önceki
-    Ctrl+Right          Workspace sonraki
-    Ctrl+Tab            Workspace sonraki
-    Ctrl+Shift+Tab      Workspace önceki
-    Mod4+Tab            Workspace sonraki
-    Mod4+Shift+Tab      Workspace önceki
-    Mod4+Shift+1-9      Pencereyi workspace'e taşı
-    Mod4+a              Parent container (yukarı çık)
-    Mod4+grave (`)      Scratchpad toggle
-    ════════════════════════════════════════════════════════
-    Launch
-    ════════════════════════════════════════════════════════
-    Mod4+Return         Alacritty (terminal)
-    Alt+Space           Fuzzel (launcher)
-    Mod4+d              Fuzzel (launcher)
-    Mod4+e              PCManFM (dosya yöneticisi)
-    ════════════════════════════════════════════════════════
-    Windows
-    ════════════════════════════════════════════════════════
-    Mod4+q              Kapat
-    Mod4+f              Tam ekran
-    Mod4+v              Dikey böl
-    Mod4+b              Yatay böl
-    Mod4+Shift+space    Floating toggle
-    Mod4+space          Focus mode_toggle
-    Mod4+Shift+minus    Scratchpad
-    Mod4+minus          Scratchpad göster
-    Mod4+arrows/hjkl    Odaklan
-    Mod4+Shift+arrows   Taşı
-    Mod4+r              Resize modu
-    Mod4+s              Stacking layout (üst üste)
-    Mod4+w              Tabbed layout (sekme)
-    Mod4+b              Splith layout (yan yana)
-    Mod4+v              Splitv layout (alt alta)
-    ════════════════════════════════════════════════════════
-    Screenshot
-    ════════════════════════════════════════════════════════
-    Print               Bölge seç → Swappy düzenle
-    Mod4+Print          Tam ekran → Swappy düzenle
-    Mod4+Shift+s        Bölge seç → clipboard
-    Mod4+Shift+a        Bölge → OCR (tesseract)
-    Mod4+c              Cliphist (pano geçmişi)
-    ════════════════════════════════════════════════════════
-    Media / System
-    ════════════════════════════════════════════════════════
-    XF86AudioRaise      Ses +
-    XF86AudioLower      Ses -
-    XF86AudioMute       Sessiz
-    XF86AudioNext/Prev  Sonraki/Önceki şarkı
-    XF86AudioPlay       Oynat/Duraklat
-    XF86MonBrightness+  Parlaklık +
-    XF86MonBrightness-  Parlaklık -
-    Caps_Lock           Caps OSD
-    Mod4+l              Kilit ekranı
-    Mod4+m              AGS Quick Settings
-    Mod4+Escape         Power menu
-    Mod4+k              Bu yardım
-    🔔 (tıkla)          Notification Center
-    🔔 (sağ tık)        Bildirimleri temizle
-    Mod4+Shift+c        Config reload
-    Mod4+Shift+e        Çıkış
-    BINDS
+    categories() {
+      printf "󰩈  Navigation\n"
+      printf "󰐌  Launch\n"
+      printf "  Windows\n"
+      printf "  Layout\n"
+      printf "󰧚  Screenshot\n"
+      printf "  Media / System\n"
+      printf "  Exit\n"
+    }
+
+    bindings() {
+      case "$1" in
+        *Navigation*)
+          printf "Mod4+1-9            Workspace 1-9\n"
+          printf "Mod4+0              Workspace 10\n"
+          printf "Ctrl+Left           Workspace önceki\n"
+          printf "Ctrl+Right          Workspace sonraki\n"
+          printf "Ctrl+Tab            Workspace sonraki\n"
+          printf "Ctrl+Shift+Tab      Workspace önceki\n"
+          printf "Mod4+Tab            Workspace sonraki\n"
+          printf "Mod4+Shift+Tab      Workspace önceki\n"
+          printf "Mod4+Shift+1-9      Pencereyi workspace'e taşı\n"
+          printf "Mod4+a              Parent container\n"
+          printf "Mod4+grave          Scratchpad toggle\n"
+          ;;
+        *Launch*)
+          printf "Mod4+Return         Alacritty (terminal)\n"
+          printf "Alt+Space           Fuzzel (launcher)\n"
+          printf "Mod4+d              Fuzzel (launcher)\n"
+          printf "Mod4+e              PCManFM (dosya yöneticisi)\n"
+          ;;
+        *Windows*)
+          printf "Mod4+q              Kapat\n"
+          printf "Mod4+f              Tam ekran\n"
+          printf "Mod4+r              Resize modu\n"
+          printf "Mod4+Shift+space    Floating toggle\n"
+          printf "Mod4+space          Focus mode_toggle\n"
+          printf "Mod4+Shift+minus    Scratchpad'a gönder\n"
+          printf "Mod4+minus          Scratchpad göster\n"
+          printf "Mod4+arrows/hjkl    Odaklan\n"
+          printf "Mod4+Shift+arrows   Taşı\n"
+          ;;
+        *Layout*)
+          printf "Mod4+s              Stacking (üst üste)\n"
+          printf "Mod4+w              Tabbed (sekme)\n"
+          printf "Mod4+b              Splith (yan yana)\n"
+          printf "Mod4+v              Splitv (alt alta)\n"
+          ;;
+        *Screenshot*)
+          printf "Print               Bölge seç → Swappy\n"
+          printf "Mod4+Print          Tam ekran → Swappy\n"
+          printf "Mod4+Shift+s        Bölge seç → clipboard\n"
+          printf "Mod4+Shift+a        Bölge → OCR (tesseract)\n"
+          printf "Mod4+c              Cliphist (pano geçmişi)\n"
+          ;;
+        *Media*)
+          printf "XF86AudioRaise      Ses +\n"
+          printf "XF86AudioLower      Ses -\n"
+          printf "XF86AudioMute       Sessiz\n"
+          printf "XF86AudioNext/Prev  Sonraki/Önceki şarkı\n"
+          printf "XF86AudioPlay       Oynat/Duraklat\n"
+          printf "XF86MonBrightness+  Parlaklık +\n"
+          printf "XF86MonBrightness-  Parlaklık -\n"
+          printf "Caps_Lock           Caps OSD\n"
+          printf "Mod4+l              Kilit ekranı\n"
+          printf "Mod4+m              AGS Quick Settings\n"
+          printf "Mod4+Escape         Power menu\n"
+          printf "Mod4+k              Bu yardım\n"
+          printf "Mod4+Shift+c        Config reload\n"
+          printf "Mod4+Shift+e        Sway'den çıkış\n"
+          printf "Mod4+Shift+i        Sistem bilgisi\n"
+          printf "Notification tıkla  Notification Center\n"
+          printf "Notification sağ tık Bildirimleri temizle\n"
+          ;;
+      esac
+    }
+
+    while true; do
+      cat=$(categories | fuzzel --dmenu --prompt="Kategori > " --width=35 --lines=8)
+      [ -z "$cat" ] && break
+      [ "$cat" = "  Exit" ] && break
+      choice=$(bindings "$cat" | fuzzel --dmenu --prompt="Keybinds > " --width=55 --lines=16)
+      [ -n "$choice" ] && break
+    done
+  '';
+
+  sysinfo = pkgs.writeShellScriptBin "sysinfo" ''
+    cpu=$(awk -v a="$(grep '^cpu ' /proc/stat)" -v b="$(sleep 0.5 && grep '^cpu ' /proc/stat)" 'BEGIN {
+      split(a, x); split(b, y);
+      idle = (y[5]-x[5]) / (y[2]+y[3]+y[4]+y[5]+y[6]+y[7]+y[8] - x[2]-x[3]-x[4]-x[5]-x[6]-x[7]-x[8]) * 100;
+      used = 100 - idle;
+      printf "%.1f", used
+    }')
+    temp=$(awk '{printf "%.0f°C", $1/1000}' /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo "N/A")
+    mem=$(free -h | awk '/^Mem:/ {print $3 " / " $2 " (" $3/$2*100 "%)"}')
+    bat_name=$(upower -e | grep -i bat | head -1)
+    if [ -n "$bat_name" ]; then
+      bat_info=$(upower -i "$bat_name" 2>/dev/null)
+      bat_pct=$(echo "$bat_info" | awk '/percentage/{print $NF}')
+      bat_state=$(echo "$bat_info" | awk '/state/{print $2}')
+      bat_cycle=$(echo "$bat_info" | awk -F': +' '/cycle count/{print $2}')
+      [ -z "$bat_cycle" ] && bat_cycle=$(awk '/CYCLE_COUNT/{print $2}' /sys/class/power_supply/BAT0/uevent 2>/dev/null || echo "-")
+      health=$(cat /sys/class/power_supply/BAT0/energy_full_design 2>/dev/null)
+      [ -n "$health" ] && health_pct=$(awk -v f="$health" -v n="$(cat /sys/class/power_supply/BAT0/energy_full)" 'BEGIN{printf "%.0f", n/f*100}')
+      battery="    $bat_pct ($bat_state) — cycle: $bat_cycle, health: $health_pct%"
+    else
+      battery="    No battery"
+    fi
+    disk=$(df -h / /home 2>/dev/null | awk 'NR>1 {printf "    %s: %s / %s (%s)\n", $6, $3, $2, $5}')
+    {
+      printf "  System Info\n"
+      printf "━━━━━━━━━━━━━━━━━━━━━━\n"
+      printf "    CPU: %s%%\n" "$cpu"
+      printf "    Temp: %s\n" "$temp"
+      printf "    RAM: %s\n" "$mem"
+      printf "%s\n" "$battery"
+      printf "%s" "$disk"
+    } | fuzzel --dmenu --prompt="" --width=55 --lines=12
   '';
 
   screenshot-region = pkgs.writeShellScriptBin "screenshot-region" ''
@@ -154,6 +204,10 @@ in
   gtk = {
     enable = true;
     gtk2.force = true;
+    theme = {
+      name = lib.mkForce "adw-gtk3-dark";
+      package = lib.mkForce pkgs.adw-gtk3;
+    };
     iconTheme.name = "Papirus-Dark";
     iconTheme.package = pkgs.papirus-icon-theme;
   };
@@ -192,7 +246,8 @@ in
     vesktop-wrapped
     keybinds-help
     powermenu
-    screenshot-region
+  sysinfo
+  screenshot-region
     screenshot-full
     jetbrains-mono
     nerd-fonts.jetbrains-mono

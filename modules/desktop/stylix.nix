@@ -4,6 +4,7 @@
     enable = true;
     image = ./wallpaper.jpg;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/chalk.yaml";
+    polarity = "dark";
     cursor.package = pkgs.bibata-cursors;
     cursor.name = "Bibata-Modern-Classic";
     cursor.size = 24;

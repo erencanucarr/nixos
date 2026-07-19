@@ -22,5 +22,6 @@
     "Mod4+Print" = "exec screenshot-full";
     "Mod4+q" = "kill";
     "Mod4+Escape" = "exec powermenu";
+    "Mod4+Shift+i" = "exec sysinfo";
   };
 }
