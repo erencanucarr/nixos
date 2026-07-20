@@ -113,6 +113,7 @@ let
           printf "Mod4+Shift+c        Config reload\n"
           printf "Mod4+Shift+e        Sway'den çıkış\n"
           printf "Mod4+Shift+i        Sistem bilgisi\n"
+          printf "Mod4+Shift+r        Kayıt başlat/durdur\n"
           printf "Notification tıkla  Notification Center\n"
           printf "Notification sağ tık Bildirimleri temizle\n"
           ;;
@@ -187,6 +188,32 @@ let
       notify-send -i "$SAVE_DIR/$NEW" "Screenshot" "Saved: $NEW"
     else
       notify-send -i camera-screenshot "Screenshot" "Copied to clipboard"
+    fi
+  '';
+
+  recording-toggle = pkgs.writeShellScriptBin "recording-toggle" ''
+    if [ -f /tmp/recording-pid ] && kill -0 "$(cat /tmp/recording-pid)" 2>/dev/null; then
+      kill "$(cat /tmp/recording-pid)" 2>/dev/null
+      rm -f /tmp/recording-pid /tmp/recording-indicator
+      pkill -RTMIN+3 .waybar-wrapped 2>/dev/null
+      notify-send -i camera-video "Recording" "Kayıt durduruldu"
+    else
+      SAVE_DIR="''${XDG_VIDEOS_DIR:-$HOME/Videos/recordings}"
+      mkdir -p "$SAVE_DIR"
+      FILE="$SAVE_DIR/record-$(date +%Y%m%d-%H%M%S).mp4"
+      touch /tmp/recording-indicator
+      pkill -RTMIN+3 .waybar-wrapped 2>/dev/null
+      wf-recorder -f "$FILE" -c h264_vaapi -d /dev/dri/renderD128 &
+      echo $! > /tmp/recording-pid
+      notify-send -i camera-video "Recording" "Kayıt başladı"
+    fi
+  '';
+
+  recording-indicator = pkgs.writeShellScriptBin "recording-indicator" ''
+    if [ -f /tmp/recording-indicator ]; then
+      printf '{"text": "  ", "class": "recording", "tooltip": "Kayıt yapılıyor — tıkla durdur"}\n'
+    else
+      printf '{"text": "", "class": "idle"}\n'
     fi
   '';
 in
@@ -365,6 +392,8 @@ in
     sysinfo
     screenshot-region
     screenshot-full
+    recording-toggle
+    recording-indicator
     jetbrains-mono
     nerd-fonts.jetbrains-mono
     grim slurp wl-clipboard

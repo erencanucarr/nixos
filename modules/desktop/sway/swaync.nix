@@ -88,7 +88,7 @@ in {
             }
             {
               label = "󰑊";
-              command = "killall wf-recorder || wf-recorder -f /tmp/recording.mp4 &";
+              command = "recording-toggle";
             }
             {
               label = "󰆍";

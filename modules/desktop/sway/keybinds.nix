@@ -23,5 +23,6 @@
     "Mod4+q" = "kill";
     "Mod4+Escape" = "exec powermenu";
     "Mod4+Shift+i" = "exec sysinfo";
+    "Mod4+Shift+r" = "exec recording-toggle";
   };
 }

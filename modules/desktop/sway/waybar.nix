@@ -30,6 +30,7 @@ in {
         ];
         modules-right = [
           "idle_inhibitor"
+          "custom/recording"
           "custom/notification"
           "network"
           "pulseaudio"
@@ -127,6 +128,14 @@ in {
           escape = true;
         };
 
+        "custom/recording" = {
+          return-type = "json";
+          exec = "recording-indicator";
+          signal = 3;
+          on-click = "recording-toggle";
+          tooltip = true;
+        };
+
         "custom/powermenu" = {
           tooltip = false;
           format = "⏻";
@@ -188,6 +197,7 @@ in {
 #mpris,
 #tray,
 #custom-notification,
+#custom-recording,
 #custom-powermenu {
           background-color: ${c.inactive};
           color: ${c.text};
@@ -234,6 +244,7 @@ in {
 
       #battery,
       #custom-notification,
+      #custom-recording,
       #custom-powermenu {
           background-color: ${c.inactive};
           color: ${c.text};
@@ -264,6 +275,16 @@ in {
               background-color: #ffffff;
               color: #eb4d4b;
           }
+      }
+
+      #custom-recording.recording {
+          background-color: #eb4d4b;
+          color: #ffffff;
+          animation-name: blink;
+          animation-duration: 1s;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+          animation-direction: alternate;
       }
     '';
   };
