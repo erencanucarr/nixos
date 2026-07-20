@@ -4,7 +4,7 @@
     "Alt+Space" = "exec fuzzel";
     "Mod4+Shift+s" = "exec grim -g \"$(slurp -d)\" - | wl-copy";
     "Mod4+Shift+a" = "exec grim -g \"$(slurp)\" - | tesseract stdin stdout -l tur | wl-copy";
-    "Mod4+c" = "exec cliphist list | fuzzel --dmenu | cliphist decode | wl-copy";
+    "Mod4+c" = "exec cliphist-menu";
     "Mod4+e" = "exec thunar";
     "Mod4+Shift+space" = "floating toggle";
     "Mod4+m" = "exec ags -t quicksettings";

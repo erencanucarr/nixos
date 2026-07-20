@@ -92,7 +92,7 @@ in {
             }
             {
               label = "󰆍";
-              command = "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy";
+              command = "cliphist-menu";
             }
           ];
         };
