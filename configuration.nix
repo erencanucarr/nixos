@@ -1,22 +1,17 @@
 { config, pkgs, ... }:
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ./modules/security
-      ./modules/desktop
-      ./modules/network
-      ./apps
-    ];
-  # Bootloader.
+  imports = [
+    ./hardware-configuration.nix
+    ./modules/security
+    ./modules/desktop
+    ./modules/network
+    ./apps
+  ];
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.systemd-boot.configurationLimit = 10;
-  # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  # Set your time zone.
   time.timeZone = "Europe/Istanbul";
-  # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "tr_TR.UTF-8";
@@ -29,16 +24,12 @@
     LC_TELEPHONE = "tr_TR.UTF-8";
     LC_TIME = "tr_TR.UTF-8";
   };
-  # Configure keymap in X11
   services.xserver.xkb = {
     layout = "tr";
     variant = "";
   };
-  # Configure console keymap
   console.keyMap = "trq";
-  # Enable CUPS to print documents.
   services.printing.enable = true;
-  # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -47,10 +38,11 @@
     alsa.support32Bit = true;
     pulse.enable = true;
   };
-  # Bluetooth
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
-  # Define a user account.
+  services.udev.extraRules = ''
+    SUBSYSTEM=="leds", KERNEL=="tpacpi::kbd_backlight", ACTION=="add", RUN+="${pkgs.coreutils}/bin/chmod 666 /sys/class/leds/tpacpi::kbd_backlight/brightness"
+  '';
   users.users."can" = {
     isNormalUser = true;
     description = "Can";
@@ -59,9 +51,7 @@
       kdePackages.kate
     ];
   };
-  # Install firefox.
   programs.firefox.enable = true;
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
   nix = {
     gc = {
@@ -75,18 +65,18 @@
     };
   };
   environment.systemPackages = with pkgs; [
-   wget
-   curl
-   btop
-   dig
-   git
-   pkgs.opencode
-   fzf
-   tree
-   unzip
-   age
+    wget
+    curl
+    btop
+    dig
+    git
+    pkgs.opencode
+    fzf
+    tree
+    unzip
+    age
     sops
     usbutils
-   ];
+  ];
   system.stateVersion = "26.05";
 }

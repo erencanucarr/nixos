@@ -32,6 +32,7 @@ in {
           "idle_inhibitor"
           "custom/recording"
           "custom/notification"
+          "custom/brightness"
           "network"
           "pulseaudio"
           "clock"
@@ -136,6 +137,14 @@ in {
           tooltip = true;
         };
 
+        "custom/brightness" = {
+          return-type = "json";
+          exec = "brightness-indicator";
+          interval = 5;
+          on-click = "brightness-menu";
+          tooltip = true;
+        };
+
         "custom/powermenu" = {
           tooltip = false;
           format = "⏻";
@@ -198,6 +207,7 @@ in {
 #tray,
 #custom-notification,
 #custom-recording,
+#custom-brightness,
 #custom-powermenu {
           background-color: ${c.inactive};
           color: ${c.text};
@@ -245,6 +255,7 @@ in {
       #battery,
       #custom-notification,
       #custom-recording,
+      #custom-brightness,
       #custom-powermenu {
           background-color: ${c.inactive};
           color: ${c.text};
