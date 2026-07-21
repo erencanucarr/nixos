@@ -29,6 +29,9 @@ let
         [ "$next" -lt 0 ] && next=0
         echo "$next" > "$KBD/brightness"
         ;;
+      *)
+        [ -n "$choice" ] && brightnessctl set "$choice%" 2>/dev/null || true
+        ;;
     esac
   '';
 
