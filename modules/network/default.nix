@@ -1,5 +1,6 @@
 {
   imports = [
+    ./hosts.nix
   ];
   networking = {
     hostName = "nixos";
