@@ -51,12 +51,14 @@ ShellRoot {
     property bool networkOpen: false
     property bool calendarOpen: false
     property bool audioOpen: false
+    property bool batteryOpen: false
     property var audioSinks: []
     property var audioSources: []
     property var audioStreams: []
     property string audioDefaultSinkName: "—"
     property string audioDefaultSinkVol: "—"
     property bool audioDefaultSinkMuted: false
+    property string powerProfile: ""
     readonly property var mediaPlayer: {
         const list = Mpris.players ? Mpris.players.values : []
         for (const p of list) {
@@ -114,7 +116,18 @@ ShellRoot {
         if (name !== "audio") root.audioOpen = false
         if (name !== "network") root.networkOpen = false
         if (name !== "calendar") root.calendarOpen = false
+        if (name !== "battery") root.batteryOpen = false
         if (name !== "notif") root.notifOpen = false
+    }
+
+    function refreshPowerProfile() {
+        powerProfileProc.running = true
+    }
+
+    function setPowerProfile(profile) {
+        root.powerProfile = profile
+        Quickshell.execDetached(["powerprofilesctl", "set", profile])
+        powerProfileRefreshTimer.restart()
     }
 
     function refreshAudio() {
@@ -389,6 +402,24 @@ ShellRoot {
         onTriggered: audioProc.running = true
     }
 
+    Process {
+        id: powerProfileProc
+        running: true
+        command: ["powerprofilesctl", "get"]
+        stdout: StdioCollector {
+            onStreamFinished: root.powerProfile = text.trim()
+        }
+    }
+    Timer {
+        interval: 30000; running: true; repeat: true
+        onTriggered: root.refreshPowerProfile()
+    }
+    Timer {
+        id: powerProfileRefreshTimer
+        interval: 500; repeat: false
+        onTriggered: root.refreshPowerProfile()
+    }
+
     // ---- system clock ----------------------------------------------------
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
@@ -521,8 +552,16 @@ ShellRoot {
                     : pct <= 15    ? "danger"
                     : pct <= 30    ? "warn"
                     :                "normal"
-                property var onClick: null
-                property var onClickRight: null
+                property var onClick: () => {
+                    root.closePopupsExcept("battery")
+                    root.batteryOpen = !root.batteryOpen
+                    root.refreshPowerProfile()
+                }
+                property var onClickRight: () => {
+                    root.closePopupsExcept("battery")
+                    root.batteryOpen = !root.batteryOpen
+                    root.refreshPowerProfile()
+                }
             }
 
             QtObject {
@@ -729,6 +768,12 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         AudioPopup { rootRef: root }
+    }
+
+    // ---- battery popup ---------------------------------------------------
+    Variants {
+        model: Quickshell.screens
+        BatteryPopup { rootRef: root }
     }
 
     // ---- calendar popup --------------------------------------------------
