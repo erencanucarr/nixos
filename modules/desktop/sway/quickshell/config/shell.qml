@@ -57,6 +57,22 @@ ShellRoot {
     property string audioDefaultSinkName: "—"
     property string audioDefaultSinkVol: "—"
     property bool audioDefaultSinkMuted: false
+    readonly property var mediaPlayer: {
+        const list = Mpris.players ? Mpris.players.values : []
+        for (const p of list) {
+            if (p && (p.canControl === undefined || p.canControl)) return p
+        }
+        return null
+    }
+    readonly property string mediaTitle: mediaPlayer && mediaPlayer.trackTitle ? mediaPlayer.trackTitle : ""
+    readonly property string mediaArtists: {
+        if (!mediaPlayer) return ""
+        const artists = mediaPlayer.trackArtists
+        if (Array.isArray(artists)) return artists.join(", ")
+        return artists || ""
+    }
+    readonly property bool mediaPlaying: mediaPlayer && (mediaPlayer.isPlaying === true
+        || (mediaPlayer.playbackState !== undefined && mediaPlayer.playbackState === MprisPlaybackState.Playing))
 
     function formatBytes(bytes, suffix) {
         let n = Number(bytes) || 0
@@ -157,6 +173,18 @@ ShellRoot {
             root.patchStream(target, s => s.muted = !s.muted)
         }
         audioRefreshTimer.restart()
+    }
+
+    function toggleMedia() {
+        if (!root.mediaPlayer) return
+        if (root.mediaPlayer.togglePlaying) root.mediaPlayer.togglePlaying()
+        else if (root.mediaPlaying && root.mediaPlayer.pause) root.mediaPlayer.pause()
+        else if (root.mediaPlayer.play) root.mediaPlayer.play()
+    }
+
+    function stopMedia() {
+        if (root.mediaPlayer && root.mediaPlayer.stop) root.mediaPlayer.stop()
+        else if (root.mediaPlayer && root.mediaPlayer.pause) root.mediaPlayer.pause()
     }
 
     // ---- notifications ---------------------------------------------------
@@ -391,8 +419,8 @@ ShellRoot {
                     anchors.leftMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 20
-                    Workspaces { }
-                    MprisChip { }
+                    Workspaces { rootRef: root }
+                    MprisChip { rootRef: root }
                 }
 
                 Text {
@@ -419,130 +447,13 @@ ShellRoot {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 16
 
-                    Chip { props: idleInhibitorC }
-                    Chip { props: soundC }
-                    Chip { props: networkC }
-                    Chip { props: dateC }
-                    Chip { props: batteryC }
-                    Chip { props: notifC }
-                    SystemTrayChip { }
-                }
-            }
-
-            // ---- workspaces (sway = i3ipc) -------------------------------
-            // Bare text with an accent-color animated underline for focused.
-            component Workspaces: Row {
-                spacing: 16
-                Repeater {
-                    model: I3.workspaces
-                    delegate: Item {
-                        required property I3Workspace modelData
-                        readonly property bool focused: modelData.focused
-                        readonly property bool urgent:  modelData.urgent
-
-                        implicitWidth: Math.max(wsLabel.implicitWidth, 8)
-                        implicitHeight: 20
-
-                        Text {
-                            id: wsLabel
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: modelData.name
-                            color: urgent                ? root.danger
-                                 : focused               ? root.accent
-                                 : wsMouse.containsMouse ? root.accent
-                                 :                         "#6A6A6A"   // brighter than palette muted for legibility
-                            font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
-                            Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        }
-
-                        Rectangle {
-                            id: wsUnderline
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: -2
-                            width: focused ? Math.max(wsLabel.implicitWidth, 6) : 0
-                            height: 2
-                            radius: 1
-                            color: urgent ? root.danger : root.accent
-                            Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                        }
-
-                        MouseArea {
-                            id: wsMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: modelData.activate()
-                        }
-                    }
-                }
-            }
-
-            // ---- shared chip component -----------------------------------
-            // Bare text, no box. Tone drives color; hover fades muted -> fg.
-            // `props` = QtObject { icon, text, tone, onClick, onClickRight }
-            component Chip: Item {
-                id: c
-                required property var props
-                property bool hover: false
-                readonly property bool blink: props.tone === "warn" || props.tone === "danger"
-
-                implicitHeight: 20
-                implicitWidth: chipRow.implicitWidth
-
-                // Default = primary silver; hover fades to white. On/warn/
-                // danger override with their palette color.
-                readonly property color activeColor:
-                    props.tone === "on"     ? root.accent
-                  : props.tone === "warn"   ? root.warn
-                  : props.tone === "danger" ? root.danger
-                  : hover                    ? root.accent
-                  :                            root.fg
-
-                Row {
-                    id: chipRow
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
-                    property real blinkAlpha: 1.0
-                    opacity: c.blink ? blinkAlpha : 1.0
-                    SequentialAnimation on blinkAlpha {
-                        running: c.blink
-                        loops: Animation.Infinite
-                        NumberAnimation { to: 0.30; duration: 700; easing.type: Easing.InOutSine }
-                        NumberAnimation { to: 1.0;  duration: 700; easing.type: Easing.InOutSine }
-                    }
-                    Text {
-                        text: c.props.icon || ""
-                        color: c.activeColor
-                        font { family: root.fontFamily; pixelSize: 14; weight: Font.Bold }
-                        visible: text.length > 0
-                        anchors.verticalCenter: parent.verticalCenter
-                        Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                    }
-                    Text {
-                        text: c.props.text || ""
-                        color: c.activeColor
-                        font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
-                        visible: text.length > 0
-                        anchors.verticalCenter: parent.verticalCenter
-                        Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    cursorShape: Qt.PointingHandCursor
-                    onEntered: c.hover = true
-                    onExited:  c.hover = false
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton && c.props.onClickRight)
-                            c.props.onClickRight()
-                        else if (c.props.onClick)
-                            c.props.onClick()
-                    }
+                    Chip { rootRef: root; props: idleInhibitorC }
+                    Chip { rootRef: root; props: soundC }
+                    Chip { rootRef: root; props: networkC }
+                    Chip { rootRef: root; props: dateC }
+                    Chip { rootRef: root; props: batteryC }
+                    Chip { rootRef: root; props: notifC }
+                    SystemTrayChip { rootRef: root; barRef: bar }
                 }
             }
 
@@ -654,139 +565,6 @@ ShellRoot {
                 readonly property string tone: (root.dnd || count > 0) ? "on" : "normal"
                 property var onClick:      () => root.notifOpen = !root.notifOpen
                 property var onClickRight: () => root.dnd = !root.dnd
-            }
-            // ---- collapsible system tray --------------------------------
-            component SystemTrayChip: Item {
-                id: tray
-                property bool expanded: false
-
-                implicitHeight: 20
-                implicitWidth: trayRow.implicitWidth
-                Behavior on implicitWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-
-                MouseArea {
-                    id: hoverArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    propagateComposedEvents: true
-                    onEntered: tray.expanded = true
-                    onExited:  tray.expanded = false
-                }
-
-                Row {
-                    id: trayRow
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 12
-
-                    Text {
-                        text: tray.expanded ? "\u{203A}" : "\u{2039}"   // › / ‹
-                        color: hoverArea.containsMouse ? root.accent : "#8A8A8A"   // brighter than palette muted
-                        font { family: root.fontFamily; pixelSize: 15; weight: Font.Bold }
-                        anchors.verticalCenter: parent.verticalCenter
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                    }
-
-                    Row {
-                        spacing: 10
-                        visible: tray.expanded
-                        opacity: tray.expanded ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-                        Repeater {
-                            model: SystemTray.items
-                            delegate: Item {
-                                required property SystemTrayItem modelData
-                                implicitWidth: 18; implicitHeight: 18
-                                anchors.verticalCenter: parent.verticalCenter
-                                Image {
-                                    anchors.fill: parent
-                                    source: modelData.icon
-                                    smooth: true
-                                    fillMode: Image.PreserveAspectFit
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: mouse => {
-                                        if (mouse.button === Qt.RightButton && modelData.hasMenu) {
-                                            modelData.display(bar, mouse.x, mouse.y)
-                                        } else {
-                                            modelData.activate()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ---- mpris (music player) -----------------------------------
-            component MprisChip: Item {
-                id: m
-                readonly property var player: {
-                    const list = Mpris.players ? Mpris.players.values : []
-                    for (const p of list) {
-                        if (p && (p.canControl === undefined || p.canControl)) return p
-                    }
-                    return null
-                }
-                readonly property string _title:   player && player.trackTitle ? player.trackTitle : ""
-                readonly property string _artists: {
-                    if (!player) return ""
-                    const a = player.trackArtists
-                    if (Array.isArray(a)) return a.join(", ")
-                    return a || ""
-                }
-                readonly property bool _playing: player && (player.isPlaying === true
-                    || (player.playbackState !== undefined && player.playbackState === MprisPlaybackState.Playing))
-
-                visible: player !== null && (_title.length > 0 || _artists.length > 0)
-                implicitHeight: 20
-                implicitWidth: mprisRow.implicitWidth
-
-                Row {
-                    id: mprisRow
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
-
-                    Text {
-                        text: m._playing ? "\u{F03E4}" : "\u{F040A}"   // md-pause / md-play
-                        color: root.accent
-                        font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: m._artists ? (m._artists + "  —  " + m._title) : m._title
-                        color: root.accent
-                        elide: Text.ElideRight
-                        width: Math.min(implicitWidth, 260)
-                        font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                MouseArea {
-                    id: mMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: mouse => {
-                        if (!m.player) return
-                        if (mouse.button === Qt.RightButton) {
-                            if (m.player.next) m.player.next()
-                        } else if (m.player.togglePlaying) {
-                            m.player.togglePlaying()
-                        } else if (m._playing && m.player.pause) {
-                            m.player.pause()
-                        } else if (m.player.play) {
-                            m.player.play()
-                        }
-                    }
-                }
             }
         }
     }
@@ -950,294 +728,7 @@ ShellRoot {
     // ---- audio popup -----------------------------------------------------
     Variants {
         model: Quickshell.screens
-
-        PanelWindow {
-            id: audioShade
-            required property var modelData
-            screen: modelData
-            WlrLayershell.namespace: "quickshell-audio-shade"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.exclusiveZone: 0
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-            anchors { top: true; left: true; right: true; bottom: true }
-            margins { top: 34 }
-            color: "transparent"
-            visible: root.audioOpen
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.audioOpen = false
-            }
-
-            Rectangle {
-                id: audioBox
-                x: parent.width - width - 12
-                y: 8
-                width: 430
-                height: 420
-                color: root.chip
-                border { color: "#8A8A8A"; width: 2 }
-                radius: 7
-                MouseArea { anchors.fill: parent; onClicked: {} }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 10
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Audio"
-                            color: root.accent
-                            font { family: root.fontFamily; pixelSize: 20; weight: Font.Bold }
-                        }
-                        Rectangle {
-                            property bool hover: false
-                            Layout.preferredWidth: 32
-                            Layout.preferredHeight: 28
-                            color: hover ? root.chipHover : "transparent"
-                            border { color: "#6A6A6A"; width: 1 }
-                            radius: 8
-                            Text {
-                                anchors.centerIn: parent
-                                text: ""
-                                color: root.accent
-                                font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onEntered: parent.hover = true
-                                onExited: parent.hover = false
-                                onClicked: {
-                                    root.audioOpen = false
-                                    Quickshell.execDetached(["pavucontrol"])
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        Text {
-                            text: root.audioDefaultSinkName
-                            color: root.fg
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                            font { family: root.fontFamily; pixelSize: 12; weight: Font.Bold }
-                        }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            Text {
-                                text: root.audioDefaultSinkMuted ? "muted" : root.audioDefaultSinkVol
-                                color: root.accent
-                                Layout.preferredWidth: 58
-                                font { family: root.fontFamily; pixelSize: 18; weight: Font.Bold }
-                            }
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 8
-                                color: root.line
-                                radius: 4
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width * Math.min(1, Math.max(0, (parseInt(root.audioDefaultSinkVol) || 0) / 100))
-                                    height: parent.height
-                                    radius: 4
-                                    color: root.audioDefaultSinkMuted ? root.muted : root.accent
-                                }
-                            }
-                            Repeater {
-                                model: ["-", "+", root.audioDefaultSinkMuted ? "unmute" : "mute"]
-                                delegate: Rectangle {
-                                    required property string modelData
-                                    property bool hover: false
-                                    Layout.preferredWidth: modelData.length > 1 ? 56 : 30
-                                    Layout.preferredHeight: 28
-                                    color: hover ? root.chipHover : "transparent"
-                                    border { color: "#6A6A6A"; width: 1 }
-                                    radius: 7
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: modelData
-                                        color: root.accent
-                                        font { family: root.fontFamily; pixelSize: 12; weight: Font.Bold }
-                                    }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onEntered: parent.hover = true
-                                        onExited: parent.hover = false
-                                        onClicked: {
-                                            if (modelData === "-") root.changeAudioVolume("@DEFAULT_AUDIO_SINK@", "5%-")
-                                            else if (modelData === "+") root.changeAudioVolume("@DEFAULT_AUDIO_SINK@", "5%+")
-                                            else root.toggleAudioMute("@DEFAULT_AUDIO_SINK@")
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
-
-                    Text { text: "OUTPUT"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 5
-                        Repeater {
-                            model: root.audioSinks
-                            delegate: Rectangle {
-                                required property var modelData
-                                property bool hover: false
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 30
-                                color: modelData.active ? root.chipOn : (hover ? root.chipHover : "transparent")
-                                border { color: modelData.active ? root.accent : root.line; width: 1 }
-                                radius: 6
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 9
-                                    anchors.rightMargin: 9
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: modelData.name
-                                        color: modelData.active ? root.accent : root.fg
-                                        elide: Text.ElideRight
-                                        font { family: root.fontFamily; pixelSize: 12; weight: Font.Bold }
-                                    }
-                                    Text {
-                                        text: root.audioPercent(modelData.vol)
-                                        color: root.fg
-                                        font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
-                                    }
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onEntered: parent.hover = true
-                                    onExited: parent.hover = false
-                                    onClicked: root.setAudioDefault(modelData.id)
-                                }
-                            }
-                        }
-                        Text {
-                            text: "no outputs"
-                            color: root.muted
-                            visible: root.audioSinks.length === 0
-                            font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
-                        }
-                    }
-
-                    Text { text: "INPUT"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-                        Repeater {
-                            model: root.audioSources
-                            delegate: Rectangle {
-                                required property var modelData
-                                property bool hover: false
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 30
-                                color: modelData.active ? root.chipOn : (hover ? root.chipHover : "transparent")
-                                border { color: modelData.active ? root.accent : root.line; width: 1 }
-                                radius: 6
-                                Text {
-                                    anchors.centerIn: parent
-                                    width: parent.width - 12
-                                    text: modelData.name
-                                    color: modelData.active ? root.accent : root.fg
-                                    elide: Text.ElideRight
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onEntered: parent.hover = true
-                                    onExited: parent.hover = false
-                                    onClicked: root.setAudioDefault(modelData.id)
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
-
-                    Text { text: "APPS"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 5
-                        Repeater {
-                            model: root.audioStreams.slice(0, 3)
-                            delegate: Rectangle {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 30
-                                color: "transparent"
-                                border { color: root.line; width: 1 }
-                                radius: 6
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 9
-                                    anchors.rightMargin: 6
-                                    spacing: 6
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: modelData.name
-                                        color: root.fg
-                                        elide: Text.ElideRight
-                                        font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
-                                    }
-                                    Text {
-                                        text: modelData.muted ? "muted" : root.audioPercent(modelData.vol)
-                                        color: root.accent
-                                        font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
-                                    }
-                                    Text {
-                                        text: "-"
-                                        color: root.accent
-                                        font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
-                                        MouseArea { anchors.fill: parent; onClicked: root.changeAudioVolume(modelData.id, "5%-") }
-                                    }
-                                    Text {
-                                        text: "+"
-                                        color: root.accent
-                                        font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
-                                        MouseArea { anchors.fill: parent; onClicked: root.changeAudioVolume(modelData.id, "5%+") }
-                                    }
-                                    Text {
-                                        text: modelData.muted ? "unmute" : "mute"
-                                        color: root.accent
-                                        font { family: root.fontFamily; pixelSize: 10; weight: Font.Bold }
-                                        MouseArea { anchors.fill: parent; onClicked: root.toggleAudioMute(modelData.id) }
-                                    }
-                                }
-                            }
-                        }
-                        Text {
-                            text: "no active streams"
-                            color: root.muted
-                            visible: root.audioStreams.length === 0
-                            font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
-                        }
-                    }
-                }
-            }
-        }
+        AudioPopup { rootRef: root }
     }
 
     // ---- calendar popup --------------------------------------------------
