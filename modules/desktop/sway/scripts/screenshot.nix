@@ -8,9 +8,9 @@ let
     AFTER=$(ls -1 "$SAVE_DIR")
     NEW=$(comm -13 <(echo "$BEFORE") <(echo "$AFTER") | head -1)
     if [ -n "$NEW" ]; then
-      notify-send -i "$SAVE_DIR/$NEW" "Screenshot" "Saved: $NEW"
+      notify-send "Screenshot" "Saved: $NEW"
     else
-      notify-send -i camera-screenshot "Screenshot" "Copied to clipboard"
+      notify-send "Screenshot" "Copied to clipboard"
     fi
   '';
 
@@ -22,9 +22,9 @@ let
     AFTER=$(ls -1 "$SAVE_DIR")
     NEW=$(comm -13 <(echo "$BEFORE") <(echo "$AFTER") | head -1)
     if [ -n "$NEW" ]; then
-      notify-send -i "$SAVE_DIR/$NEW" "Screenshot" "Saved: $NEW"
+      notify-send "Screenshot" "Saved: $NEW"
     else
-      notify-send -i camera-screenshot "Screenshot" "Copied to clipboard"
+      notify-send "Screenshot" "Copied to clipboard"
     fi
   '';
 in [ region full ]
