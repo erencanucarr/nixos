@@ -50,6 +50,13 @@ ShellRoot {
     property real netLastAt: 0
     property bool networkOpen: false
     property bool calendarOpen: false
+    property bool audioOpen: false
+    property var audioSinks: []
+    property var audioSources: []
+    property var audioStreams: []
+    property string audioDefaultSinkName: "—"
+    property string audioDefaultSinkVol: "—"
+    property bool audioDefaultSinkMuted: false
 
     function formatBytes(bytes, suffix) {
         let n = Number(bytes) || 0
@@ -81,6 +88,75 @@ ShellRoot {
     function firstDayOffset(date) {
         const day = new Date(date.getFullYear(), date.getMonth(), 1).getDay()
         return day === 0 ? 6 : day - 1
+    }
+
+    function audioPercent(vol) {
+        return Math.round((Number(vol) || 0) * 100) + "%"
+    }
+
+    function closePopupsExcept(name) {
+        if (name !== "audio") root.audioOpen = false
+        if (name !== "network") root.networkOpen = false
+        if (name !== "calendar") root.calendarOpen = false
+        if (name !== "notif") root.notifOpen = false
+    }
+
+    function refreshAudio() {
+        audioProc.running = true
+    }
+
+    function bumpPercentText(text, delta) {
+        const current = parseInt(text) || 0
+        const step = parseInt(delta) || 5
+        const next = delta.indexOf("-") >= 0 ? Math.max(0, current - step) : Math.min(150, current + step)
+        return next + "%"
+    }
+
+    function patchStream(id, fn) {
+        let next = []
+        for (const s of root.audioStreams) {
+            let copy = {
+                kind: s.kind,
+                id: s.id,
+                active: s.active,
+                name: s.name,
+                vol: s.vol,
+                muted: s.muted,
+            }
+            if (String(copy.id) === String(id)) fn(copy)
+            next.push(copy)
+        }
+        root.audioStreams = next
+    }
+
+    function setAudioDefault(id) {
+        Quickshell.execDetached(["wpctl", "set-default", String(id)])
+        audioRefreshTimer.restart()
+    }
+
+    function changeAudioVolume(target, delta) {
+        Quickshell.execDetached(["wpctl", "set-volume", String(target), delta])
+        if (String(target) === "@DEFAULT_AUDIO_SINK@") {
+            root.audioDefaultSinkMuted = false
+            root.audioDefaultSinkVol = root.bumpPercentText(root.audioDefaultSinkVol, delta)
+        } else {
+            root.patchStream(target, s => {
+                s.muted = false
+                const pct = root.bumpPercentText(root.audioPercent(s.vol), delta)
+                s.vol = String((parseInt(pct) || 0) / 100)
+            })
+        }
+        audioRefreshTimer.restart()
+    }
+
+    function toggleAudioMute(target) {
+        Quickshell.execDetached(["wpctl", "set-mute", String(target), "toggle"])
+        if (String(target) === "@DEFAULT_AUDIO_SINK@") {
+            root.audioDefaultSinkMuted = !root.audioDefaultSinkMuted
+        } else {
+            root.patchStream(target, s => s.muted = !s.muted)
+        }
+        audioRefreshTimer.restart()
     }
 
     // ---- notifications ---------------------------------------------------
@@ -121,8 +197,8 @@ ShellRoot {
     // IPC: `qs ipc call notif toggle | open | close | toggleDnd | dismissAll`
     IpcHandler {
         target: "notif"
-        function toggle():     void { root.networkOpen = false; root.calendarOpen = false; root.notifOpen = !root.notifOpen }
-        function open():       void { root.networkOpen = false; root.calendarOpen = false; root.notifOpen = true }
+        function toggle():     void { root.closePopupsExcept("notif"); root.notifOpen = !root.notifOpen }
+        function open():       void { root.closePopupsExcept("notif"); root.notifOpen = true }
         function close():      void { root.notifOpen = false }
         function toggleDnd():  void { root.dnd = !root.dnd }
         function dismissAll(): void {
@@ -134,7 +210,7 @@ ShellRoot {
     Process {
         id: netProc
         running: true
-        command: ["sh", "-c",
+        command: ["bash", "-lc",
             "entry=$(nmcli -t -f DEVICE,STATE,CONNECTION,TYPE device status 2>/dev/null | awk -F: '$2==\"connected\" && $4!=\"loopback\" {print $1\"\\t\"$4\"\\t\"$3; exit}'); " +
             "[ -z \"$entry\" ] && exit 0; " +
             "iface=$(printf '%s' \"$entry\" | cut -f1); " +
@@ -222,6 +298,68 @@ ShellRoot {
 
     // ---- audio tracker ---------------------------------------------------
     PwObjectTracker { objects: Pipewire.defaultAudioSink ? [Pipewire.defaultAudioSink] : [] }
+
+    Process {
+        id: audioProc
+        running: true
+        command: ["sh", "-c",
+            "tmp=$(mktemp); " +
+            "wpctl status 2>/dev/null | awk '" +
+            "/^[[:space:]]*├─ Sinks:/ {sec=\"sink\"; next} " +
+            "/^[[:space:]]*├─ Sources:/ {sec=\"source\"; next} " +
+            "/^[[:space:]]*└─ Streams:/ {sec=\"stream\"; next} " +
+            "/^[[:space:]]*├─/ {sec=\"\"; next} " +
+            "(sec==\"sink\" || sec==\"source\") && match($0, /([* ]) *([0-9]+)\\. (.*) \\[vol: ([0-9.]+)( MUTED)?\\]/, m) { " +
+            "active=(index($0, \"*\") ? \"1\" : \"0\"); name=m[3]; sub(/[[:space:]]+$/, \"\", name); " +
+            "print sec \"\\t\" m[2] \"\\t\" active \"\\t\" name \"\\t\" m[4] \"\\t\" (m[5] ? \"1\" : \"0\"); next } " +
+            "sec==\"stream\" && $0 !~ />/ && match($0, /^[[:space:]]*([0-9]+)\\. (.*[^[:space:]])[[:space:]]*$/, m) { " +
+            "name=m[2]; sub(/[[:space:]]+$/, \"\", name); print \"stream\\t\" m[1] \"\\t0\\t\" name \"\\t0\\t0\" }' > \"$tmp\"; " +
+            "while IFS=$'\\t' read -r kind id active name vol muted; do " +
+            "if [ \"$kind\" = stream ]; then gv=$(wpctl get-volume \"$id\" 2>/dev/null); vol=$(printf '%s' \"$gv\" | awk '{print $2}'); printf '%s' \"$gv\" | grep -q MUTED && muted=1; fi; " +
+            "printf '%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' \"$kind\" \"$id\" \"$active\" \"$name\" \"${vol:-0}\" \"${muted:-0}\"; " +
+            "done < \"$tmp\"; rm -f \"$tmp\""]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().length > 0 ? text.trim().split("\n") : []
+                let sinks = []
+                let sources = []
+                let streams = []
+                for (const line of lines) {
+                    const p = line.split("\t")
+                    if (p.length < 6) continue
+                    const item = {
+                        kind: p[0],
+                        id: p[1],
+                        active: p[2] === "1",
+                        name: p[3],
+                        vol: p[4],
+                        muted: p[5] === "1",
+                    }
+                    if (item.kind === "sink") sinks.push(item)
+                    else if (item.kind === "source") sources.push(item)
+                    else if (item.kind === "stream") streams.push(item)
+                }
+                root.audioSinks = sinks
+                root.audioSources = sources
+                root.audioStreams = streams
+                const activeSink = sinks.find(s => s.active) || sinks[0]
+                root.audioDefaultSinkName = activeSink ? activeSink.name : "—"
+                root.audioDefaultSinkVol = activeSink ? root.audioPercent(activeSink.vol) : "—"
+                root.audioDefaultSinkMuted = activeSink ? activeSink.muted : false
+            }
+        }
+    }
+
+    Timer {
+        interval: 3000; running: true; repeat: true
+        onTriggered: audioProc.running = true
+    }
+
+    Timer {
+        id: audioRefreshTimer
+        interval: 350; repeat: false
+        onTriggered: audioProc.running = true
+    }
 
     // ---- system clock ----------------------------------------------------
     SystemClock { id: clock; precision: SystemClock.Minutes }
@@ -432,9 +570,13 @@ ShellRoot {
                                               :               "\u{F0580}"   // volume-medium
                 readonly property string text: muted ? "muted" : Math.round(vol * 100) + "%"
                 readonly property string tone: muted ? "on" : "normal"
-                property var onClick: () => Quickshell.execDetached(["pavucontrol"])
+                property var onClick: () => {
+                    root.closePopupsExcept("audio")
+                    root.audioOpen = !root.audioOpen
+                    root.refreshAudio()
+                }
                 property var onClickRight: () => {
-                    if (sink && sink.audio) sink.audio.muted = !sink.audio.muted
+                    root.toggleAudioMute("@DEFAULT_AUDIO_SINK@")
                 }
             }
 
@@ -478,13 +620,11 @@ ShellRoot {
                 readonly property string text: root.netLabel
                 readonly property string tone: "normal"
                 property var onClick: () => {
-                    root.notifOpen = false
-                    root.calendarOpen = false
+                    root.closePopupsExcept("network")
                     root.networkOpen = !root.networkOpen
                 }
                 property var onClickRight: () => {
-                    root.notifOpen = false
-                    root.calendarOpen = false
+                    root.closePopupsExcept("network")
                     root.networkOpen = !root.networkOpen
                 }
             }
@@ -495,13 +635,11 @@ ShellRoot {
                 readonly property string text: Qt.formatDateTime(clock.date, "ddd d MMM  HH:mm")
                 readonly property string tone: "normal"
                 property var onClick: () => {
-                    root.notifOpen = false
-                    root.networkOpen = false
+                    root.closePopupsExcept("calendar")
                     root.calendarOpen = !root.calendarOpen
                 }
                 property var onClickRight: () => {
-                    root.notifOpen = false
-                    root.networkOpen = false
+                    root.closePopupsExcept("calendar")
                     root.calendarOpen = !root.calendarOpen
                 }
             }
@@ -802,6 +940,299 @@ ShellRoot {
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- audio popup -----------------------------------------------------
+    Variants {
+        model: Quickshell.screens
+
+        PanelWindow {
+            id: audioShade
+            required property var modelData
+            screen: modelData
+            WlrLayershell.namespace: "quickshell-audio-shade"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.exclusiveZone: 0
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            anchors { top: true; left: true; right: true; bottom: true }
+            margins { top: 34 }
+            color: "transparent"
+            visible: root.audioOpen
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.audioOpen = false
+            }
+
+            Rectangle {
+                id: audioBox
+                x: parent.width - width - 12
+                y: 8
+                width: 430
+                height: 420
+                color: root.chip
+                border { color: "#8A8A8A"; width: 2 }
+                radius: 7
+                MouseArea { anchors.fill: parent; onClicked: {} }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 16
+                    spacing: 10
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Audio"
+                            color: root.accent
+                            font { family: root.fontFamily; pixelSize: 20; weight: Font.Bold }
+                        }
+                        Rectangle {
+                            property bool hover: false
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 28
+                            color: hover ? root.chipHover : "transparent"
+                            border { color: "#6A6A6A"; width: 1 }
+                            radius: 8
+                            Text {
+                                anchors.centerIn: parent
+                                text: ""
+                                color: root.accent
+                                font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onEntered: parent.hover = true
+                                onExited: parent.hover = false
+                                onClicked: {
+                                    root.audioOpen = false
+                                    Quickshell.execDetached(["pavucontrol"])
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Text {
+                            text: root.audioDefaultSinkName
+                            color: root.fg
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            font { family: root.fontFamily; pixelSize: 12; weight: Font.Bold }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                text: root.audioDefaultSinkMuted ? "muted" : root.audioDefaultSinkVol
+                                color: root.accent
+                                Layout.preferredWidth: 58
+                                font { family: root.fontFamily; pixelSize: 18; weight: Font.Bold }
+                            }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 8
+                                color: root.line
+                                radius: 4
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width * Math.min(1, Math.max(0, (parseInt(root.audioDefaultSinkVol) || 0) / 100))
+                                    height: parent.height
+                                    radius: 4
+                                    color: root.audioDefaultSinkMuted ? root.muted : root.accent
+                                }
+                            }
+                            Repeater {
+                                model: ["-", "+", root.audioDefaultSinkMuted ? "unmute" : "mute"]
+                                delegate: Rectangle {
+                                    required property string modelData
+                                    property bool hover: false
+                                    Layout.preferredWidth: modelData.length > 1 ? 56 : 30
+                                    Layout.preferredHeight: 28
+                                    color: hover ? root.chipHover : "transparent"
+                                    border { color: "#6A6A6A"; width: 1 }
+                                    radius: 7
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: modelData
+                                        color: root.accent
+                                        font { family: root.fontFamily; pixelSize: 12; weight: Font.Bold }
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onEntered: parent.hover = true
+                                        onExited: parent.hover = false
+                                        onClicked: {
+                                            if (modelData === "-") root.changeAudioVolume("@DEFAULT_AUDIO_SINK@", "5%-")
+                                            else if (modelData === "+") root.changeAudioVolume("@DEFAULT_AUDIO_SINK@", "5%+")
+                                            else root.toggleAudioMute("@DEFAULT_AUDIO_SINK@")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
+
+                    Text { text: "OUTPUT"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 5
+                        Repeater {
+                            model: root.audioSinks
+                            delegate: Rectangle {
+                                required property var modelData
+                                property bool hover: false
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 30
+                                color: modelData.active ? root.chipOn : (hover ? root.chipHover : "transparent")
+                                border { color: modelData.active ? root.accent : root.line; width: 1 }
+                                radius: 6
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 9
+                                    anchors.rightMargin: 9
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData.name
+                                        color: modelData.active ? root.accent : root.fg
+                                        elide: Text.ElideRight
+                                        font { family: root.fontFamily; pixelSize: 12; weight: Font.Bold }
+                                    }
+                                    Text {
+                                        text: root.audioPercent(modelData.vol)
+                                        color: root.fg
+                                        font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
+                                    }
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: parent.hover = true
+                                    onExited: parent.hover = false
+                                    onClicked: root.setAudioDefault(modelData.id)
+                                }
+                            }
+                        }
+                        Text {
+                            text: "no outputs"
+                            color: root.muted
+                            visible: root.audioSinks.length === 0
+                            font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
+                        }
+                    }
+
+                    Text { text: "INPUT"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Repeater {
+                            model: root.audioSources
+                            delegate: Rectangle {
+                                required property var modelData
+                                property bool hover: false
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 30
+                                color: modelData.active ? root.chipOn : (hover ? root.chipHover : "transparent")
+                                border { color: modelData.active ? root.accent : root.line; width: 1 }
+                                radius: 6
+                                Text {
+                                    anchors.centerIn: parent
+                                    width: parent.width - 12
+                                    text: modelData.name
+                                    color: modelData.active ? root.accent : root.fg
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: parent.hover = true
+                                    onExited: parent.hover = false
+                                    onClicked: root.setAudioDefault(modelData.id)
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
+
+                    Text { text: "APPS"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 5
+                        Repeater {
+                            model: root.audioStreams.slice(0, 3)
+                            delegate: Rectangle {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 30
+                                color: "transparent"
+                                border { color: root.line; width: 1 }
+                                radius: 6
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 9
+                                    anchors.rightMargin: 6
+                                    spacing: 6
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData.name
+                                        color: root.fg
+                                        elide: Text.ElideRight
+                                        font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
+                                    }
+                                    Text {
+                                        text: modelData.muted ? "muted" : root.audioPercent(modelData.vol)
+                                        color: root.accent
+                                        font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
+                                    }
+                                    Text {
+                                        text: "-"
+                                        color: root.accent
+                                        font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
+                                        MouseArea { anchors.fill: parent; onClicked: root.changeAudioVolume(modelData.id, "5%-") }
+                                    }
+                                    Text {
+                                        text: "+"
+                                        color: root.accent
+                                        font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold }
+                                        MouseArea { anchors.fill: parent; onClicked: root.changeAudioVolume(modelData.id, "5%+") }
+                                    }
+                                    Text {
+                                        text: modelData.muted ? "unmute" : "mute"
+                                        color: root.accent
+                                        font { family: root.fontFamily; pixelSize: 10; weight: Font.Bold }
+                                        MouseArea { anchors.fill: parent; onClicked: root.toggleAudioMute(modelData.id) }
+                                    }
+                                }
+                            }
+                        }
+                        Text {
+                            text: "no active streams"
+                            color: root.muted
+                            visible: root.audioStreams.length === 0
+                            font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
                         }
                     }
                 }
