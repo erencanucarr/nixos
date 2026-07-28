@@ -22,8 +22,8 @@
     "Print" = "exec screenshot-region";
     "Mod4+Print" = "exec screenshot-full";
     "Mod4+q" = "kill";
-    "Mod4+Escape" = "exec powermenu";
-    "Mod4+p" = "exec powermenu";
+    "Mod4+Escape" = "exec qs ipc call power toggle";
+    "Mod4+p" = "exec qs ipc call power toggle";
     "Mod4+Shift+i" = "exec sysinfo";
     "Mod4+Shift+r" = "exec recording-toggle";
   };

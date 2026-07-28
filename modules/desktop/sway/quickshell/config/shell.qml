@@ -53,6 +53,7 @@ ShellRoot {
     property bool audioOpen: false
     property bool batteryOpen: false
     property bool keybindsOpen: false
+    property bool powerOpen: false
     property var audioSinks: []
     property var audioSources: []
     property var audioStreams: []
@@ -119,6 +120,7 @@ ShellRoot {
         if (name !== "calendar") root.calendarOpen = false
         if (name !== "battery") root.batteryOpen = false
         if (name !== "keybinds") root.keybindsOpen = false
+        if (name !== "power") root.powerOpen = false
         if (name !== "notif") root.notifOpen = false
     }
 
@@ -266,6 +268,21 @@ ShellRoot {
             root.keybindsOpen = true
         }
         function close(): void { root.keybindsOpen = false }
+    }
+
+    IpcHandler {
+        target: "power"
+        function toggle(): void {
+            root.closePopupsExcept("power")
+            root.powerOpen = !root.powerOpen
+            if (root.powerOpen) root.refreshPowerProfile()
+        }
+        function open(): void {
+            root.closePopupsExcept("power")
+            root.powerOpen = true
+            root.refreshPowerProfile()
+        }
+        function close(): void { root.powerOpen = false }
     }
 
     // ---- network poller (nmcli) ------------------------------------------
@@ -1046,5 +1063,11 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         KeybindsPopup { rootRef: root }
+    }
+
+    // ---- power menu ------------------------------------------------------
+    Variants {
+        model: Quickshell.screens
+        PowerMenu { rootRef: root }
     }
 }
