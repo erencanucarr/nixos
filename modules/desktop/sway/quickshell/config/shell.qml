@@ -52,6 +52,7 @@ ShellRoot {
     property bool calendarOpen: false
     property bool audioOpen: false
     property bool batteryOpen: false
+    property bool keybindsOpen: false
     property var audioSinks: []
     property var audioSources: []
     property var audioStreams: []
@@ -117,6 +118,7 @@ ShellRoot {
         if (name !== "network") root.networkOpen = false
         if (name !== "calendar") root.calendarOpen = false
         if (name !== "battery") root.batteryOpen = false
+        if (name !== "keybinds") root.keybindsOpen = false
         if (name !== "notif") root.notifOpen = false
     }
 
@@ -251,6 +253,19 @@ ShellRoot {
         function dismissAll(): void {
             for (const n of notifServer.trackedNotifications.values.slice()) n.dismiss()
         }
+    }
+
+    IpcHandler {
+        target: "keybinds"
+        function toggle(): void {
+            root.closePopupsExcept("keybinds")
+            root.keybindsOpen = !root.keybindsOpen
+        }
+        function open(): void {
+            root.closePopupsExcept("keybinds")
+            root.keybindsOpen = true
+        }
+        function close(): void { root.keybindsOpen = false }
     }
 
     // ---- network poller (nmcli) ------------------------------------------
@@ -608,7 +623,10 @@ ShellRoot {
                     : "\u{F009A}"   // md-bell
                 readonly property string text: count > 0 ? String(count) : ""
                 readonly property string tone: (root.dnd || count > 0) ? "on" : "normal"
-                property var onClick:      () => root.notifOpen = !root.notifOpen
+                property var onClick:      () => {
+                    root.closePopupsExcept("notif")
+                    root.notifOpen = !root.notifOpen
+                }
                 property var onClickRight: () => root.dnd = !root.dnd
             }
         }
@@ -1017,5 +1035,11 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         NotificationCenter { rootRef: root; notificationServer: notifServer }
+    }
+
+    // ---- keybinds help ---------------------------------------------------
+    Variants {
+        model: Quickshell.screens
+        KeybindsPopup { rootRef: root }
     }
 }

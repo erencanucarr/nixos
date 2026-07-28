@@ -118,7 +118,7 @@ in {
              resume 'swaymsg "output * dpms on"' \
         before-sleep 'swaylock -f'
 
-      bindsym --no-warn Mod4+k exec qs ipc call notif toggle
+      bindsym --no-warn Mod4+k exec qs ipc call keybinds toggle
 
       bindswitch --locked lid:on output eDP-1 disable
       bindswitch --locked lid:off output eDP-1 enable
