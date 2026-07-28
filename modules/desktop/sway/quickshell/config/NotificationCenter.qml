@@ -12,7 +12,7 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-notif-shade"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.exclusiveZone: 0
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     anchors { top: true; left: true; right: true; bottom: true }
     margins { top: 34 }
     color: "transparent"
@@ -31,6 +31,11 @@ PanelWindow {
         height: Math.min(parent.height - 20, 100 + notifCol.implicitHeight)
         color: rootRef.chip
         border { color: rootRef.line; width: 1 }
+        focus: visible
+        Keys.onEscapePressed: event => {
+            rootRef.notifOpen = false
+            event.accepted = true
+        }
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         ColumnLayout {

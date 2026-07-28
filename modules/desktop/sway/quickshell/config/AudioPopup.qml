@@ -14,7 +14,7 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-audio-shade"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.exclusiveZone: 0
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     anchors { top: true; left: true; right: true; bottom: true }
     margins { top: 34 }
     color: "transparent"
@@ -34,6 +34,11 @@ PanelWindow {
         color: rootRef.chip
         border { color: "#8A8A8A"; width: 2 }
         radius: 7
+        focus: visible
+        Keys.onEscapePressed: event => {
+            rootRef.audioOpen = false
+            event.accepted = true
+        }
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         ColumnLayout {

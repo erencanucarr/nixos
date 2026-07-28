@@ -206,39 +206,49 @@ PanelWindow {
 
             Rectangle { Layout.fillWidth: true; height: 1; color: rootRef.line }
 
-            ColumnLayout {
+            Flickable {
+                id: rowScroll
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 5
+                clip: true
+                contentWidth: width
+                contentHeight: rowColumn.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
 
-                Repeater {
-                    model: keybindsShade.visibleRows()
-                    delegate: Rectangle {
-                        required property var modelData
-                        required property int index
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 30
-                        color: index % 2 === 0 ? "#171719" : "#0A0A0A"
-                        border { color: "#1F1F22"; width: 1 }
-                        radius: 4
+                Column {
+                    id: rowColumn
+                    width: rowScroll.width
+                    spacing: 5
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 12
-                            Text {
-                                Layout.preferredWidth: 205
-                                text: modelData[0]
-                                color: "#FFFFFF"
-                                font { family: rootRef.fontFamily; pixelSize: 12; weight: Font.Bold }
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: modelData.length > 2 ? modelData[2] + "  /  " + modelData[1] : modelData[1]
-                                color: "#A0A0A0"
-                                elide: Text.ElideRight
-                                font { family: rootRef.fontFamily; pixelSize: 12 }
+                    Repeater {
+                        model: keybindsShade.visibleRows()
+                        delegate: Rectangle {
+                            required property var modelData
+                            required property int index
+                            width: rowColumn.width
+                            height: 30
+                            color: index % 2 === 0 ? "#171719" : "#0A0A0A"
+                            border { color: "#1F1F22"; width: 1 }
+                            radius: 4
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                spacing: 12
+                                Text {
+                                    Layout.preferredWidth: 205
+                                    text: modelData[0]
+                                    color: "#FFFFFF"
+                                    font { family: rootRef.fontFamily; pixelSize: 12; weight: Font.Bold }
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.length > 2 ? modelData[2] + "  /  " + modelData[1] : modelData[1]
+                                    color: "#A0A0A0"
+                                    elide: Text.ElideRight
+                                    font { family: rootRef.fontFamily; pixelSize: 12 }
+                                }
                             }
                         }
                     }
