@@ -91,12 +91,7 @@ in {
         { app_id = "pavucontrol"; }
         { app_id = "nm-connection-editor"; }
       ];
-      bars = [
-        {
-          hiddenState = "hide";
-          mode = "invisible";
-        }
-      ];
+      bars = [ { command = "true"; } ];
     };
     extraConfig = ''
       workspace_auto_back_and_forth yes
@@ -115,7 +110,7 @@ in {
              resume 'swaymsg "output * dpms on"' \
         before-sleep 'swaylock -f'
 
-      bindsym --no-warn Mod4+k exec keybinds-help
+      bindsym --no-warn Mod4+k exec qs ipc call notif toggle
 
       bindswitch --locked lid:on output eDP-1 disable
       bindswitch --locked lid:off output eDP-1 enable

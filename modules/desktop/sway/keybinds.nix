@@ -7,7 +7,7 @@
     "Mod4+c" = "exec cliphist-menu";
     "Mod4+e" = "exec thunar";
     "Mod4+Shift+space" = "floating toggle";
-    "Mod4+m" = "exec ags -t quicksettings";
+    "Mod4+m" = "exec qs ipc call notif toggle";
     "XF86AudioRaiseVolume" = "exec swayosd-client --output-volume raise";
     "XF86AudioLowerVolume" = "exec swayosd-client --output-volume lower";
     "XF86AudioMute" = "exec swayosd-client --output-volume mute-toggle";

@@ -208,8 +208,6 @@ in
     tesseract5
     alacritty
     fuzzel
-    waybar
-    swaynotificationcenter
     swaylock swayidle swaybg
     networkmanagerapplet pavucontrol
     swayosd
