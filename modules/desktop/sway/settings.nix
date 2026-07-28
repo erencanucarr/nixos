@@ -25,10 +25,12 @@ in {
         "QT_QPA_PLATFORM"
         "SWAYSOCK"
         "WAYLAND_DISPLAY"
+        "WEBRTC_USE_PIPEWIRE"
         "XCURSOR_SIZE"
         "XCURSOR_THEME"
         "XDG_CURRENT_DESKTOP"
         "XDG_DATA_DIRS"
+        "XDG_SESSION_DESKTOP"
         "XDG_SESSION_TYPE"
       ];
       xdgAutostart = true;
@@ -93,6 +95,12 @@ in {
       ];
       bars = [ { command = "true"; } ];
     };
+    extraSessionCommands = ''
+      export XDG_CURRENT_DESKTOP=sway
+      export XDG_SESSION_DESKTOP=sway
+      export XDG_SESSION_TYPE=wayland
+      export WEBRTC_USE_PIPEWIRE=1
+    '';
     extraConfig = ''
       workspace_auto_back_and_forth yes
       smart_gaps on

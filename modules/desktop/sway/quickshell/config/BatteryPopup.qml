@@ -62,7 +62,7 @@ PanelWindow {
 
     Rectangle {
         x: parent.width - width - 12
-        y: 8
+        y: 1
         width: 360
         height: 352
         color: rootRef.chip

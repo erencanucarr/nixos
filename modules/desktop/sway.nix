@@ -14,20 +14,19 @@
 
   services.gvfs.enable = true;
 
-  xdg.portal = {
-    enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-wlr
-      xdg-desktop-portal-gtk
-    ];
-    config.sway = {
-      default = [ "gtk" ];
-      "org.freedesktop.impl.portal.Screenshot" = "wlr";
-      "org.freedesktop.impl.portal.ScreenCast" = "wlr";
-    };
-    wlr = {
+    xdg.portal = {
       enable = true;
-      settings = {
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-wlr
+        xdg-desktop-portal-gtk
+      ];
+    config = {
+      common.default = [ "gtk" ];
+      sway.default = lib.mkForce [ "wlr" "gtk" ];
+    };
+      wlr = {
+        enable = true;
+        settings = {
         screencast = {
           chooser_type = "simple";
           chooser_cmd = "${pkgs.slurp}/bin/slurp -f '%o' -or";

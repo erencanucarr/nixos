@@ -178,6 +178,12 @@ ShellRoot {
         audioRefreshTimer.restart()
     }
 
+    function setAudioVolume(target, percent) {
+        const value = Math.max(0, Math.min(150, Math.round(Number(percent) || 0)))
+        Quickshell.execDetached(["wpctl", "set-volume", String(target), value + "%"])
+        audioRefreshTimer.restart()
+    }
+
     function toggleAudioMute(target) {
         Quickshell.execDetached(["wpctl", "set-mute", String(target), "toggle"])
         if (String(target) === "@DEFAULT_AUDIO_SINK@") {
@@ -780,6 +786,16 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         CalendarPopup { rootRef: root; clockRef: clock }
+    }
+
+    // ---- OSD (volume / mic / brightness, triggered through IPC) --------
+    Osd {
+        bg: root.bg
+        fg: root.fg
+        muted: root.muted
+        accent: root.accent
+        line: root.line
+        fontFamily: root.fontFamily
     }
 
     // ---- network details popup ------------------------------------------

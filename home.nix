@@ -108,7 +108,7 @@ in
       free = "free -h";
       ports = "ss -tulanp";
       nixs = "sudo nixos-rebuild switch";
-      nixup = "nix flake update";
+      nixup = "nix flake update --flake /etc/nixos";
       nixq = "nix search nixpkgs";
       ip = "ip -c";
       myip = "curl -s ifconfig.me";
@@ -210,7 +210,6 @@ in
     fuzzel
     swaylock swayidle swaybg
     networkmanagerapplet pavucontrol
-    swayosd
     ags
     swappy
     imv
@@ -220,10 +219,10 @@ in
     file-roller
   ];
   home.sessionVariables = {
-    XDG_CURRENT_DESKTOP = "KDE";
     XDG_SESSION_TYPE = "wayland";
     QT_QPA_PLATFORM = "wayland;xcb";
     NIXOS_OZONE_WL = "1";
+    WEBRTC_USE_PIPEWIRE = "1";
   };
 
   stylix.targets.fuzzel.enable = false;
@@ -252,32 +251,32 @@ in
     settings = {
       main = {
         terminal = "alacritty";
-        font = "JetBrains Mono:size=12";
+        font = "JetBrainsMono Nerd Font:size=12";
         dpi-aware = false;
         width = 40;
         lines = 15;
-        horizontal-pad = 16;
-        vertical-pad = 8;
+        horizontal-pad = 14;
+        vertical-pad = 10;
         inner-pad = 4;
-        prompt = ">> ";
+        prompt = "> ";
         icon-theme = "Papirus-Dark";
       };
       colors = {
-        background = "#1e1e1edd";
-        text = "#ccccccff";
+        background = "#000000ee";
+        text = "#a0a0a0ff";
         match = "#ffffffff";
-        selection = "#3a3a3aff";
+        selection = "#1e1e22ff";
         selection-text = "#ffffffff";
         selection-match = "#ffffffff";
-        border = "#888888ff";
-        prompt = "#ccccccff";
-        input = "#ccccccff";
-        placeholder = "#777777ff";
-        counter = "#777777ff";
-        message = "#ccccccff";
+        border = "#8a8a8aff";
+        prompt = "#ffffffff";
+        input = "#ffffffff";
+        placeholder = "#6a6a6aff";
+        counter = "#6a6a6aff";
+        message = "#a0a0a0ff";
       };
       border = {
-        radius = 8;
+        radius = 7;
         width = 2;
       };
     };
