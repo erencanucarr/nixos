@@ -30,7 +30,10 @@ PanelWindow {
         x: parent.width - width - 12
         y: 0
         width: 430
-        height: rootRef.mediaPlayer ? 482 : 420
+        // İçeriğe göre otomatik boyutlanır (cihaz sayısı değişse de sığar),
+        // ekran yüksekliğini aşmayacak şekilde sınırlanır.
+        height: Math.min((audioBox.parent ? audioBox.parent.height - 24 : 1080),
+                         mainCol.implicitHeight + 28)
         color: rootRef.chip
         border { color: "#8A8A8A"; width: 2 }
         radius: 7
@@ -42,6 +45,7 @@ PanelWindow {
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         ColumnLayout {
+            id: mainCol
             anchors.fill: parent
             anchors.margins: 14
             spacing: 10
@@ -82,7 +86,7 @@ PanelWindow {
                 }
             }
 
-            Rectangle { Layout.fillWidth: true; height: 1; color: rootRef.line }
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; height: 1; color: rootRef.line }
 
             RowLayout {
                 Layout.fillWidth: true
@@ -119,7 +123,7 @@ PanelWindow {
                 }
             }
 
-            Rectangle { Layout.fillWidth: true; height: 1; color: rootRef.line }
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; height: 1; color: rootRef.line }
 
             StackLayout {
                 id: pages
@@ -129,7 +133,9 @@ PanelWindow {
                 clip: true
 
                 Item {
+                    implicitHeight: mixerCol.implicitHeight
                     ColumnLayout {
+                        id: mixerCol
                         anchors.fill: parent
                         spacing: 8
 
@@ -181,7 +187,7 @@ PanelWindow {
                             }
                         }
 
-                        Rectangle { Layout.fillWidth: true; height: 1; color: rootRef.line }
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; height: 1; color: rootRef.line }
                         Text { text: "OUTPUT DEVICES"; color: rootRef.fg; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
                         ColumnLayout {
                             Layout.fillWidth: true
@@ -206,25 +212,6 @@ PanelWindow {
                                 }
                             }
                             Text { text: "no outputs"; visible: rootRef.audioSinks.length === 0; color: rootRef.muted; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
-                        }
-
-                        Text { text: "INPUT DEVICES"; color: rootRef.fg; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 5
-                            Repeater {
-                                model: rootRef.audioSources
-                                delegate: Rectangle {
-                                    required property var modelData
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 32
-                                    color: modelData.active ? rootRef.chipOn : "transparent"
-                                    border { color: modelData.active ? rootRef.accent : rootRef.line; width: 1 }
-                                    radius: 5
-                                    Text { anchors.centerIn: parent; width: parent.width - 12; text: modelData.name; color: modelData.active ? rootRef.accent : rootRef.fg; elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter; font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold } }
-                                    MouseArea { anchors.fill: parent; onClicked: rootRef.setAudioDefault(modelData.id) }
-                                }
-                            }
                         }
 
                         Text { text: "MICROPHONE"; color: rootRef.fg; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
@@ -288,7 +275,9 @@ PanelWindow {
                 }
 
                 Item {
+                    implicitHeight: appsCol.implicitHeight
                     ColumnLayout {
+                        id: appsCol
                         anchors.fill: parent
                         spacing: 8
                         Text { text: "APPLICATION STREAMS"; color: rootRef.fg; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
@@ -351,7 +340,9 @@ PanelWindow {
                 }
 
                 Item {
+                    implicitHeight: mediaCol.implicitHeight
                     ColumnLayout {
+                        id: mediaCol
                         anchors.fill: parent
                         spacing: 10
                         Text { text: "MEDIA CONTROL"; color: rootRef.fg; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
