@@ -30,5 +30,5 @@ pkgs.writeShellScriptBin "sysinfo" ''
     printf "    RAM: %s\n" "$mem"
     printf "%s\n" "$battery"
     printf "%s" "$disk"
-  } | fuzzel --dmenu --prompt="" --width=55 --lines=12
+  } | vicinae dmenu --placeholder="System Info" --height=520 --width=620 --no-footer
 ''

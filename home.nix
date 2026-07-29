@@ -207,13 +207,13 @@ in
     playerctl
     tesseract5
     alacritty
-    fuzzel
     swaylock swayidle swaybg
     networkmanagerapplet pavucontrol
     ags
     swappy
     imv
     mpv
+    vicinae
     wf-recorder
     brightnessctl
     file-roller
@@ -225,7 +225,6 @@ in
     WEBRTC_USE_PIPEWIRE = "1";
   };
 
-  stylix.targets.fuzzel.enable = false;
   stylix.targets.sway.enable = false;
   stylix.targets.alacritty.enable = false;
 
@@ -246,39 +245,123 @@ in
     transparency=50
   '';
 
-  programs.fuzzel = {
-    enable = true;
-    settings = {
-      main = {
-        terminal = "alacritty";
-        font = "JetBrainsMono Nerd Font:size=12";
-        dpi-aware = false;
-        width = 40;
-        lines = 15;
-        horizontal-pad = 14;
-        vertical-pad = 10;
-        inner-pad = 4;
-        prompt = "> ";
-        icon-theme = "Papirus-Dark";
+  xdg.configFile."vicinae/settings.json".text = builtins.toJSON {
+    telemetry = { system_info = false; };
+    search_files_in_root = false;
+    close_on_focus_loss = true;
+    pop_to_root_on_close = true;
+    font = {
+      rendering = "qt";
+      normal = {
+        family = "JetBrainsMono Nerd Font";
+        size = 12;
       };
-      colors = {
-        background = "#000000ee";
-        text = "#a0a0a0ff";
-        match = "#ffffffff";
-        selection = "#1e1e22ff";
-        selection-text = "#ffffffff";
-        selection-match = "#ffffffff";
-        border = "#8a8a8aff";
-        prompt = "#ffffffff";
-        input = "#ffffffff";
-        placeholder = "#6a6a6aff";
-        counter = "#6a6a6aff";
-        message = "#a0a0a0ff";
+    };
+    theme = {
+      light = {
+        name = "can-dark";
+        icon_theme = "Papirus-Dark";
       };
-      border = {
-        radius = 7;
-        width = 2;
+      dark = {
+        name = "can-dark";
+        icon_theme = "Papirus-Dark";
       };
+    };
+    launcher_window = {
+      opacity = 0.96;
+      blur = { enabled = true; };
+      material = "blur";
+      rounding = 7;
+      layer_shell = {
+        enabled = true;
+        keyboard_interactivity = "exclusive";
+        layer = "overlay";
+      };
+      client_side_decorations = {
+        enabled = true;
+        border_width = 1;
+        shadow_size = 12;
+      };
+      size = {
+        width = 620;
+        height = 460;
+      };
+    };
+  };
+
+  xdg.configFile."vicinae/themes/can-dark.toml".text = ''
+    [meta]
+    name = "can-dark"
+    description = "Can dark monochrome theme"
+    variant = "dark"
+    inherits = "vicinae-dark"
+
+    [colors.core]
+    accent = "#FFFFFF"
+    accent_foreground = "#000000"
+    background = "#000000"
+    foreground = "#FFFFFF"
+    secondary_background = "#0A0A0A"
+    border = "#1F1F22"
+
+    [colors.main_window]
+    border = "#1F1F22"
+
+    [colors.accents]
+    blue = "#A0A0A0"
+    green = "#FFFFFF"
+    magenta = "#A0A0A0"
+    orange = "#A0A0A0"
+    red = "#FFFFFF"
+    yellow = "#FFFFFF"
+    cyan = "#A0A0A0"
+    purple = "#A0A0A0"
+
+    [colors.text]
+    default = "colors.core.foreground"
+    muted = "#A0A0A0"
+    placeholder = "#666666"
+    selection = { background = "#1E1E22", foreground = "#FFFFFF" }
+
+    [colors.text.links]
+    default = "#FFFFFF"
+    visited = "#A0A0A0"
+
+    [colors.input]
+    border = "#1F1F22"
+    border_focus = "#FFFFFF"
+
+    [colors.list.item.selection]
+    background = "#1E1E22"
+    foreground = "#FFFFFF"
+    secondary_background = "#1E1E22"
+    secondary_foreground = "#A0A0A0"
+
+    [colors.list.item.hover]
+    foreground = "#FFFFFF"
+    secondary_foreground = "#A0A0A0"
+
+    [colors.scrollbars]
+    background = "#333333"
+
+    [colors.loading]
+    bar = "#FFFFFF"
+    spinner = "#FFFFFF"
+  '';
+
+  systemd.user.services.vicinae = {
+    Unit = {
+      Description = "Vicinae Launcher Daemon";
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.vicinae}/bin/vicinae server";
+      Environment = [ "USE_LAYER_SHELL=1" ];
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install = {
+      WantedBy = [ "default.target" ];
     };
   };
 

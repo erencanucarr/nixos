@@ -38,7 +38,7 @@ in {
     config = {
       modifier = "Mod4";
       terminal = "alacritty";
-      menu = "fuzzel";
+      menu = "vicinae dmenu";
       gaps = {
         inner = 1;
         outer = 0;

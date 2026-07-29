@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }: {
   wayland.windowManager.sway.config.keybindings = lib.mkOptionDefault {
     "Mod4+l" = "exec swaylock -f";
-    "Alt+Space" = "exec fuzzel";
+    "Alt+Space" = "exec vicinae toggle";
     "Mod4+Shift+s" = "exec grim -g \"$(slurp -d)\" - | wl-copy";
     "Mod4+Shift+a" = "exec grim -g \"$(slurp)\" - | tesseract stdin stdout -l tur | wl-copy";
     "Mod4+c" = "exec cliphist-menu";
