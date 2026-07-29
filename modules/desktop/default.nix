@@ -1,6 +1,6 @@
 {
   imports = [
-    ./kde.nix
+    ./ly.nix
     ./stylix.nix
     ./sway.nix
   ];

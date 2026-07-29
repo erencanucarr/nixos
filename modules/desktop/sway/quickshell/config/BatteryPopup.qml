@@ -9,12 +9,12 @@ PanelWindow {
     required property var rootRef
 
     readonly property var dev: {
+        if (UPower.displayDevice && UPower.displayDevice.isPresent)
+            return UPower.displayDevice
         const list = UPower.devices ? UPower.devices.values : []
-        for (const d of list) {
-            if (d && d.nativePath && d.nativePath.indexOf("battery_") === 0)
-                return d
-        }
-        return UPower.displayDevice
+        for (const d of list)
+            if (d && d.isPresent && d.percentage !== undefined) return d
+        return null
     }
     readonly property bool hasBattery: dev && dev.isPresent
     readonly property int percent: hasBattery ? Math.round(dev.percentage * 100) : 0

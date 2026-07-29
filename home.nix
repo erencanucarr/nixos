@@ -1,4 +1,4 @@
-{ config, pkgs, lib, plasma-manager, stylix, ihtc, ... }:
+{ config, pkgs, lib, stylix, ihtc, ... }:
 let
   colors = with config.lib.stylix.colors; {
     withHashtag = {
@@ -30,7 +30,6 @@ let
 in
 {
   imports = [
-    plasma-manager.homeModules.plasma-manager
     ./modules/desktop/sway
   ];
   home = {
@@ -84,7 +83,6 @@ in
     enable = true;
 
     shellAliases = {
-      # Directory
       ".." = "cd ..";
       "..." = "cd ../..";
       "...." = "cd ../../..";
@@ -92,7 +90,6 @@ in
       "-" = "cd -";
       tmp = "cd /tmp";
 
-      # Git
       gs = "git status";
       ga = "git add";
       gc = "git commit";
@@ -102,7 +99,6 @@ in
       gco = "git checkout";
       gb = "git branch";
 
-      # System
       cls = "clear";
       df = "df -h";
       free = "free -h";
@@ -387,41 +383,4 @@ in
     };
   };
 
-  programs.plasma = {
-    enable = true;
-    shortcuts = {
-      "kwin" = {
-        "Switch One Desktop to the Left" = "Ctrl+Left";
-        "Switch One Desktop to the Right" = "Ctrl+Right";
-        "Window to Previous Desktop" = "Ctrl+Shift+Left";
-        "Window to Next Desktop" = "Ctrl+Shift+Right";
-      };
-    };
-    panels = [
-      {
-        location = "bottom";
-        height = 44;
-        widgets = [
-          "org.kde.plasma.kickoff"
-          "org.kde.plasma.pager"
-          { panelSpacer = { expanding = true; }; }
-          {
-            iconTasks = {
-              settings = {
-                General = {
-                  useCustomStyle = true;
-                  customIconStyle = 2;
-                };
-              };
-            };
-          }
-          { panelSpacer = { expanding = true; }; }
-          "org.kde.plasma.marginsseparator"
-          "org.kde.plasma.systemtray"
-          "org.kde.plasma.digitalclock"
-          "org.kde.plasma.showdesktop"
-        ];
-      }
-    ];
-  };
 }

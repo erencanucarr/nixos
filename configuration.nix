@@ -41,6 +41,8 @@
   };
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
+  services.upower.enable = true;
+  services.power-profiles-daemon.enable = true;
   services.udev.extraRules = ''
     SUBSYSTEM=="leds", KERNEL=="tpacpi::kbd_backlight", ACTION=="add", RUN+="${pkgs.coreutils}/bin/chmod 666 /sys/class/leds/tpacpi::kbd_backlight/brightness"
   '';
@@ -48,9 +50,6 @@
     isNormalUser = true;
     description = "Can";
     extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      kdePackages.kate
-    ];
   };
   programs.firefox.enable = true;
   nixpkgs.config.allowUnfree = true;

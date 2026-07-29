@@ -1,19 +1,24 @@
 import Quickshell.I3
 import QtQuick
 
-Row {
+ListView {
     required property var rootRef
 
+    width: 220
+    height: 20
     spacing: 16
+    orientation: ListView.Horizontal
+    interactive: false
+    clip: false
 
-    Repeater {
-        model: I3.workspaces
+    model: I3.workspaces
 
-        delegate: Item {
+    delegate: Item {
             required property I3Workspace modelData
             readonly property bool focused: modelData.focused
             readonly property bool urgent:  modelData.urgent
 
+            width: Math.max(wsLabel.implicitWidth, 8)
             implicitWidth: Math.max(wsLabel.implicitWidth, 8)
             implicitHeight: 20
 
@@ -49,6 +54,5 @@ Row {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: modelData.activate()
             }
-        }
     }
 }

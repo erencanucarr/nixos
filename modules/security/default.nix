@@ -13,12 +13,8 @@
     };
   };
   systemd.services.fprintd.wantedBy = [ "multi-user.target" ];
-  systemd.services.sddm.after = [ "fprintd.service" ];
-  systemd.services.sddm.wants = [ "fprintd.service" ];
   security.pam.services = {
     "login".fprintAuth = true;
-    "sddm".fprintAuth = true;
-    "sddm-autologin".fprintAuth = true;
   };
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {

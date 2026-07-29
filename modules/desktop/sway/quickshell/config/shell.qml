@@ -745,12 +745,12 @@ ShellRoot {
             QtObject {
                 id: batteryC
                 readonly property var dev: {
+                    if (UPower.displayDevice && UPower.displayDevice.isPresent)
+                        return UPower.displayDevice
                     const list = UPower.devices ? UPower.devices.values : []
-                    for (const d of list) {
-                        if (d && d.nativePath && d.nativePath.indexOf("battery_") === 0)
-                            return d
-                    }
-                    return UPower.displayDevice
+                    for (const d of list)
+                        if (d && d.isPresent && d.percentage !== undefined) return d
+                    return null
                 }
                 readonly property bool ok: dev && dev.isPresent
                 readonly property int pct: ok ? Math.round(dev.percentage * 100) : 0
