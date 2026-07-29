@@ -54,6 +54,7 @@ ShellRoot {
     property bool batteryOpen: false
     property bool keybindsOpen: false
     property bool powerOpen: false
+    property bool brightnessOpen: false
     property var audioSinks: []
     property var audioSources: []
     property var audioStreams: []
@@ -62,6 +63,16 @@ ShellRoot {
     property bool audioDefaultSinkMuted: false
     property string powerProfile: ""
     property int brightnessPercent: 0
+
+    function setBrightnessPercent(value) {
+        const next = Math.max(1, Math.min(100, Math.round(Number(value) || 0)))
+        root.brightnessPercent = next
+        Quickshell.execDetached(["brightnessctl", "set", next + "%"])
+    }
+
+    function refreshBrightness() {
+        brightnessProc.running = true
+    }
     readonly property var mediaPlayer: {
         const list = Mpris.players ? Mpris.players.values : []
         for (const p of list) {
@@ -122,6 +133,7 @@ ShellRoot {
         if (name !== "battery") root.batteryOpen = false
         if (name !== "keybinds") root.keybindsOpen = false
         if (name !== "power") root.powerOpen = false
+        if (name !== "brightness") root.brightnessOpen = false
         if (name !== "notif") root.notifOpen = false
     }
 
@@ -587,8 +599,16 @@ ShellRoot {
                     : "\u{F00DB}"
                 readonly property string text: root.brightnessPercent + "%"
                 readonly property string tone: "normal"
-                property var onClick: () => Quickshell.execDetached(["brightness-menu"])
-                property var onClickRight: () => Quickshell.execDetached(["brightness-menu"])
+                property var onClick: () => {
+                    root.closePopupsExcept("brightness")
+                    root.brightnessOpen = !root.brightnessOpen
+                    root.refreshBrightness()
+                }
+                property var onClickRight: () => {
+                    root.closePopupsExcept("brightness")
+                    root.brightnessOpen = !root.brightnessOpen
+                    root.refreshBrightness()
+                }
             }
 
             QtObject {
@@ -852,6 +872,11 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         CalendarPopup { rootRef: root; clockRef: clock }
+    }
+
+    Variants {
+        model: Quickshell.screens
+        BrightnessPopup { rootRef: root }
     }
 
     // ---- OSD (volume / mic / brightness, triggered through IPC) --------
