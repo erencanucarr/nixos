@@ -770,7 +770,6 @@ ShellRoot {
                     !ok            ? "normal"
                     : charging     ? "on"
                     : pct <= 15    ? "danger"
-                    : pct <= 30    ? "warn"
                     :                "normal"
                 property var onClick: () => {
                     root.closePopupsExcept("battery")
