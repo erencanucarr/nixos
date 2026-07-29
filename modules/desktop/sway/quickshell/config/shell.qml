@@ -43,6 +43,9 @@ ShellRoot {
     property string netTxRate: "—"
     property string netRxTotal: "—"
     property string netTxTotal: "—"
+    property var wifiNetworks: []
+    property string wifiSelectedSsid: ""
+    property string wifiPassword: ""
     property string netPing: "—"
     property string netLoss: "—"
     property real netRxPrev: 0
@@ -55,6 +58,8 @@ ShellRoot {
     property bool keybindsOpen: false
     property bool powerOpen: false
     property bool brightnessOpen: false
+    property bool windowSwitcherOpen: false
+    property bool bluetoothOpen: false
     property var audioSinks: []
     property var audioSources: []
     property var audioStreams: []
@@ -63,6 +68,8 @@ ShellRoot {
     property bool audioDefaultSinkMuted: false
     property string powerProfile: ""
     property int brightnessPercent: 0
+    property bool bluetoothPowered: false
+    property var bluetoothDevices: []
 
     function setBrightnessPercent(value) {
         const next = Math.max(1, Math.min(100, Math.round(Number(value) || 0)))
@@ -72,6 +79,21 @@ ShellRoot {
 
     function refreshBrightness() {
         brightnessProc.running = true
+    }
+
+    function refreshBluetooth() {
+        bluetoothProc.running = true
+    }
+
+    function toggleBluetoothPower() {
+        Quickshell.execDetached(["bluetoothctl", "power", root.bluetoothPowered ? "off" : "on"])
+        bluetoothRefreshTimer.restart()
+    }
+
+    function toggleBluetoothDevice(device) {
+        if (!device) return
+        Quickshell.execDetached(["bluetoothctl", device.connected ? "disconnect" : "connect", device.mac])
+        bluetoothRefreshTimer.restart()
     }
     readonly property var mediaPlayer: {
         const list = Mpris.players ? Mpris.players.values : []
@@ -113,6 +135,20 @@ ShellRoot {
         root.netLastAt = now
     }
 
+    function refreshWifi() {
+        wifiScanProc.running = true
+    }
+
+    function connectWifi(network) {
+        if (!network || !network.ssid) return
+        const args = ["nmcli", "device", "wifi", "connect", network.ssid]
+        if (wifiPassword.length > 0) args.push("password", wifiPassword)
+        Quickshell.execDetached(args)
+        wifiPassword = ""
+        wifiSelectedSsid = ""
+        wifiRefreshTimer.restart()
+    }
+
     function daysInMonth(date) {
         return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
     }
@@ -134,6 +170,8 @@ ShellRoot {
         if (name !== "keybinds") root.keybindsOpen = false
         if (name !== "power") root.powerOpen = false
         if (name !== "brightness") root.brightnessOpen = false
+        if (name !== "windowSwitcher") root.windowSwitcherOpen = false
+        if (name !== "bluetooth") root.bluetoothOpen = false
         if (name !== "notif") root.notifOpen = false
     }
 
@@ -298,6 +336,15 @@ ShellRoot {
         function close(): void { root.powerOpen = false }
     }
 
+    IpcHandler {
+        target: "windows"
+        function toggle(): void {
+            root.closePopupsExcept("windowSwitcher")
+            root.windowSwitcherOpen = !root.windowSwitcherOpen
+        }
+        function close(): void { root.windowSwitcherOpen = false }
+    }
+
     // ---- network poller (nmcli) ------------------------------------------
     Process {
         id: netProc
@@ -344,6 +391,36 @@ ShellRoot {
     Timer {
         interval: 2000; running: true; repeat: true
         onTriggered: netProc.running = true
+    }
+
+    Process {
+        id: wifiScanProc
+        running: true
+        command: ["sh", "-c", "nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list --rescan no 2>/dev/null"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const networks = []
+                for (const line of text.trim().split("\n")) {
+                    const parts = line.split(":")
+                    if (parts.length < 4 || !parts[1]) continue
+                    networks.push({ active: parts[0] === "*", ssid: parts[1], signal: Number(parts[2]) || 0, security: parts.slice(3).join(":") })
+                }
+                networks.sort((a, b) => Number(b.active) - Number(a.active) || b.signal - a.signal)
+                root.wifiNetworks = networks
+            }
+        }
+    }
+    Timer {
+        id: wifiRefreshTimer
+        interval: 1500; repeat: false
+        onTriggered: {
+            wifiScanProc.running = true
+            netProc.running = true
+        }
+    }
+    Timer {
+        interval: 15000; running: true; repeat: true
+        onTriggered: wifiScanProc.running = true
     }
 
     Process {
@@ -487,6 +564,39 @@ ShellRoot {
         onTriggered: brightnessProc.running = true
     }
 
+    Process {
+        id: bluetoothProc
+        running: true
+        command: ["bash", "-lc",
+            "powered=$(bluetoothctl show 2>/dev/null | awk '/Powered:/{print $2; exit}'); " +
+            "printf 'POWERED\\t%s\\n' \"${powered:-no}\"; " +
+            "bluetoothctl devices Paired 2>/dev/null | while read -r _ mac name; do " +
+            "connected=$(bluetoothctl info \"$mac\" 2>/dev/null | awk '/Connected:/{print $2; exit}'); " +
+            "printf 'DEVICE\\t%s\\t%s\\t%s\\n' \"$mac\" \"${connected:-no}\" \"$name\"; " +
+            "done"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const devices = []
+                for (const line of text.trim().split("\n")) {
+                    const parts = line.split("\t")
+                    if (parts[0] === "POWERED") root.bluetoothPowered = parts[1] === "yes"
+                    else if (parts[0] === "DEVICE" && parts.length >= 4)
+                        devices.push({ mac: parts[1], connected: parts[2] === "yes", name: parts.slice(3).join(" ") })
+                }
+                root.bluetoothDevices = devices
+            }
+        }
+    }
+    Timer {
+        id: bluetoothRefreshTimer
+        interval: 1000; repeat: false
+        onTriggered: bluetoothProc.running = true
+    }
+    Timer {
+        interval: 10000; running: true; repeat: true
+        onTriggered: bluetoothProc.running = true
+    }
+
     // ---- system clock ----------------------------------------------------
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
@@ -549,6 +659,7 @@ ShellRoot {
                     Chip { rootRef: root; props: soundC }
                     Chip { rootRef: root; props: brightnessC }
                     Chip { rootRef: root; props: networkC }
+                    Chip { rootRef: root; props: bluetoothC }
                     Chip { rootRef: root; props: dateC }
                     Chip { rootRef: root; props: batteryC }
                     Chip { rootRef: root; props: notifC }
@@ -608,6 +719,23 @@ ShellRoot {
                     root.closePopupsExcept("brightness")
                     root.brightnessOpen = !root.brightnessOpen
                     root.refreshBrightness()
+                }
+            }
+
+            QtObject {
+                id: bluetoothC
+                readonly property string icon: "\u{F00AF}"
+                readonly property string text: root.bluetoothPowered ? "" : "off"
+                readonly property string tone: root.bluetoothPowered ? "normal" : "warn"
+                property var onClick: () => {
+                    root.closePopupsExcept("bluetooth")
+                    root.bluetoothOpen = !root.bluetoothOpen
+                    root.refreshBluetooth()
+                }
+                property var onClickRight: () => {
+                    root.closePopupsExcept("bluetooth")
+                    root.bluetoothOpen = !root.bluetoothOpen
+                    root.refreshBluetooth()
                 }
             }
 
@@ -879,6 +1007,16 @@ ShellRoot {
         BrightnessPopup { rootRef: root }
     }
 
+    Variants {
+        model: Quickshell.screens
+        BluetoothPopup { rootRef: root }
+    }
+
+    Variants {
+        model: Quickshell.screens
+        WindowSwitcher { rootRef: root }
+    }
+
     // ---- OSD (volume / mic / brightness, triggered through IPC) --------
     Osd {
         bg: root.bg
@@ -916,7 +1054,7 @@ ShellRoot {
                 x: parent.width - width - 12
                 y: 0
                 width: 460
-                height: 300
+                height: 620
                 color: root.chip
                 border { color: "#8A8A8A"; width: 2 }
                 radius: 7
@@ -1006,6 +1144,86 @@ ShellRoot {
                             }
                         }
                     }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text { Layout.fillWidth: true; text: "WI-FI NETWORKS"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                        Text {
+                            text: "REFRESH"
+                            color: wifiRefreshArea.containsMouse ? root.accent : root.muted
+                            font { family: root.fontFamily; pixelSize: 9; weight: Font.Bold }
+                            MouseArea { id: wifiRefreshArea; anchors.fill: parent; hoverEnabled: true; onClicked: root.refreshWifi() }
+                        }
+                    }
+
+                    ListView {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 130
+                        clip: true
+                        spacing: 4
+                        model: root.wifiNetworks
+                        delegate: Rectangle {
+                            required property var modelData
+                            width: ListView.view.width
+                            height: 30
+                            color: modelData.active ? root.chipOn : (wifiArea.containsMouse ? root.chipHover : "transparent")
+                            border { color: modelData.active ? root.accent : root.line; width: 1 }
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                Text { text: modelData.active ? "󰤨" : "󰤯"; color: modelData.active ? root.accent : root.fg; font { family: root.fontFamily; pixelSize: 14 } }
+                                Text { Layout.fillWidth: true; text: modelData.ssid; color: root.accent; elide: Text.ElideRight; font { family: root.fontFamily; pixelSize: 10; weight: Font.Bold } }
+                                Text { text: modelData.signal + "%"; color: root.fg; font { family: root.fontFamily; pixelSize: 9 } }
+                                Text { text: modelData.security ? "" : ""; color: root.muted; font { family: root.fontFamily; pixelSize: 10 } }
+                            }
+                            MouseArea {
+                                id: wifiArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: {
+                                    root.wifiSelectedSsid = modelData.ssid
+                                    root.wifiPassword = ""
+                                    if (!modelData.security) root.connectWifi(modelData)
+                                }
+                            }
+                        }
+                        Text { anchors.centerIn: parent; visible: root.wifiNetworks.length === 0; text: "NO WI-FI NETWORKS"; color: root.muted; font { family: root.fontFamily; pixelSize: 10; weight: Font.Bold } }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: root.wifiSelectedSsid.length > 0
+                        Text { text: root.wifiSelectedSsid; color: root.accent; elide: Text.ElideRight; Layout.preferredWidth: 130; font { family: root.fontFamily; pixelSize: 10; weight: Font.Bold } }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 30
+                            color: root.bg
+                            border { color: root.line; width: 1 }
+                            TextInput {
+                                id: wifiPasswordInput
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: root.accent
+                                echoMode: TextInput.Password
+                                text: root.wifiPassword
+                                onTextChanged: root.wifiPassword = text
+                                font { family: root.fontFamily; pixelSize: 10 }
+                            }
+                        }
+                        Rectangle {
+                            Layout.preferredWidth: 70
+                            Layout.preferredHeight: 30
+                            color: connectWifiArea.containsMouse ? root.accent : "transparent"
+                            border { color: root.accent; width: 1 }
+                            Text { anchors.centerIn: parent; text: "CONNECT"; color: connectWifiArea.containsMouse ? root.bg : root.accent; font { family: root.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                            MouseArea { id: connectWifiArea; anchors.fill: parent; hoverEnabled: true; onClicked: root.connectWifi({ ssid: root.wifiSelectedSsid }) }
+                        }
+                    }
+
+                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
 
                     GridLayout {
                         Layout.fillWidth: true

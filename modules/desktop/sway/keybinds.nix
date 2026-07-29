@@ -6,7 +6,7 @@
     "Mod4+Shift+a" = "exec grim -g \"$(slurp)\" - | tesseract stdin stdout -l tur | wl-copy";
     "Mod4+c" = "exec cliphist-menu";
     "Mod4+e" = "exec thunar";
-    "Mod4+Shift+space" = "floating toggle";
+    "Mod4+Shift+space" = "exec qs ipc call windows toggle";
     "Mod4+m" = "exec qs ipc call notif toggle";
     "XF86AudioRaiseVolume" = "exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ --limit 1.0 && qs ipc call osd volume";
     "XF86AudioLowerVolume" = "exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && qs ipc call osd volume";

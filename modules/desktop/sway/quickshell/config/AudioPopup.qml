@@ -226,6 +226,64 @@ PanelWindow {
                                 }
                             }
                         }
+
+                        Text { text: "MICROPHONE"; color: rootRef.fg; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 5
+                            Repeater {
+                                model: rootRef.audioSources
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 42
+                                    color: modelData.active ? rootRef.chipOn : "transparent"
+                                    border { color: modelData.active ? rootRef.accent : rootRef.line; width: 1 }
+                                    radius: 5
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 7
+                                        spacing: 4
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Text { Layout.fillWidth: true; text: modelData.name; color: modelData.active ? rootRef.accent : rootRef.fg; elide: Text.ElideRight; font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold } }
+                                            Text { text: modelData.muted ? "MUTED" : rootRef.audioPercent(modelData.vol); color: rootRef.accent; font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                                        }
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 6
+                                            Rectangle {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 5
+                                                color: rootRef.line
+                                                radius: 3
+                                                Rectangle { width: parent.width * Math.min(1, Math.max(0, Number(modelData.vol) || 0)); height: parent.height; color: modelData.muted ? rootRef.muted : rootRef.accent; radius: 3 }
+                                            }
+                                            Text {
+                                                text: "-"
+                                                color: rootRef.fg
+                                                font { family: rootRef.fontFamily; pixelSize: 13; weight: Font.Bold }
+                                                MouseArea { anchors.fill: parent; onClicked: rootRef.changeAudioVolume(modelData.id, "5%-") }
+                                            }
+                                            Text {
+                                                text: "+"
+                                                color: rootRef.fg
+                                                font { family: rootRef.fontFamily; pixelSize: 13; weight: Font.Bold }
+                                                MouseArea { anchors.fill: parent; onClicked: rootRef.changeAudioVolume(modelData.id, "5%+") }
+                                            }
+                                            Text {
+                                                text: modelData.muted ? "unmute" : "mute"
+                                                color: rootRef.accent
+                                                font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
+                                                MouseArea { anchors.fill: parent; onClicked: rootRef.toggleAudioMute(modelData.id) }
+                                            }
+                                        }
+                                    }
+                                    MouseArea { anchors.fill: parent; z: -1; onClicked: rootRef.setAudioDefault(modelData.id) }
+                                }
+                            }
+                            Text { text: "no microphones"; visible: rootRef.audioSources.length === 0; color: rootRef.muted; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                        }
                     }
                 }
 
