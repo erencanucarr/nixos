@@ -205,6 +205,7 @@ in
     libnotify
     cliphist
     playerctl
+    claude-code
     tesseract5
     alacritty
     swaylock swayidle swaybg
@@ -364,11 +365,11 @@ in
   systemd.user.services.vicinae = {
     Unit = {
       Description = "Vicinae Launcher Daemon";
-      After = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" "sway-session.target" ];
     };
     Service = {
       ExecStart = "${pkgs.vicinae}/bin/vicinae server";
-      Environment = [ "USE_LAYER_SHELL=1" ];
+      Environment = [ "USE_LAYER_SHELL=1" "QT_QPA_PLATFORM=wayland" ];
       Restart = "on-failure";
       RestartSec = 2;
     };
