@@ -275,7 +275,7 @@ in
       rounding = 7;
       layer_shell = {
         enabled = true;
-        keyboard_interactivity = "exclusive";
+        keyboard_interactivity = "on_demand";
         layer = "overlay";
       };
       client_side_decorations = {
@@ -366,15 +366,24 @@ in
     Unit = {
       Description = "Vicinae Launcher Daemon";
       After = [ "graphical-session.target" "sway-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+      Requires = [ "dbus.socket" ];
     };
     Service = {
-      ExecStart = "${pkgs.vicinae}/bin/vicinae server";
-      Environment = [ "USE_LAYER_SHELL=1" "QT_QPA_PLATFORM=wayland" ];
-      Restart = "on-failure";
+      Type = "simple";
+      Environment = [
+        "QT_QPA_PLATFORM=wayland"
+        "WAYLAND_DISPLAY=wayland-1"
+        "USE_LAYER_SHELL=1"
+      ];
+      ExecStartPre = "${pkgs.bash}/bin/bash -c 'n=0; while [ ! -S \"$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY\" ]; do n=$((n+1)); [ $n -ge 100 ] && exit 1; ${pkgs.coreutils}/bin/sleep 0.1; done'";
+      ExecStart = "${pkgs.vicinae}/bin/vicinae server --replace";
+      Restart = "always";
       RestartSec = 2;
+      KillMode = "process";
     };
     Install = {
-      WantedBy = [ "default.target" ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
 
