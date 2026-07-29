@@ -661,7 +661,7 @@ ShellRoot {
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.exclusiveZone: 0
             anchors { top: true; right: true }
-            margins { top: 40; right: 12 }
+            margins { top: 0; right: 12 }
             color: "transparent"
             implicitWidth: 380
             implicitHeight: Math.max(1, toastCol.implicitHeight + 4)
@@ -846,7 +846,7 @@ ShellRoot {
             WlrLayershell.exclusiveZone: 0
             WlrLayershell.keyboardFocus: root.networkOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             anchors { top: true; left: true; right: true; bottom: true }
-            margins { top: 34 }
+            margins { top: 0 }
             color: "transparent"
             visible: root.networkOpen
 
@@ -858,7 +858,7 @@ ShellRoot {
             Rectangle {
                 id: networkBox
                 x: parent.width - width - 12
-                y: 8
+                y: 0
                 width: 460
                 height: 300
                 color: root.chip

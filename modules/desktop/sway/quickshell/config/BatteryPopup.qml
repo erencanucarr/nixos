@@ -51,7 +51,7 @@ PanelWindow {
     WlrLayershell.exclusiveZone: 0
     WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     anchors { top: true; left: true; right: true; bottom: true }
-    margins { top: 34 }
+    margins { top: 0 }
     color: "transparent"
     visible: rootRef.batteryOpen
 
@@ -63,7 +63,7 @@ PanelWindow {
     Rectangle {
         id: batteryBox
         x: parent.width - width - 12
-        y: 1
+        y: 0
         width: 360
         height: 352
         color: rootRef.chip

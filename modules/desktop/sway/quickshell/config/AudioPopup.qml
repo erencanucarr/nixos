@@ -16,7 +16,7 @@ PanelWindow {
     WlrLayershell.exclusiveZone: 0
     WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     anchors { top: true; left: true; right: true; bottom: true }
-    margins { top: 34 }
+    margins { top: 0 }
     color: "transparent"
     visible: rootRef.audioOpen
 
@@ -28,7 +28,7 @@ PanelWindow {
     Rectangle {
         id: audioBox
         x: parent.width - width - 12
-        y: 8
+        y: 0
         width: 430
         height: rootRef.mediaPlayer ? 482 : 420
         color: rootRef.chip
