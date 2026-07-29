@@ -349,6 +349,18 @@ in
     spinner = "#FFFFFF"
   '';
 
+  xdg.dataFile."applications/vesktop.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Vesktop
+    Comment=Discord client
+    Exec=vesktop %U
+    Icon=vesktop
+    Terminal=false
+    Categories=Network;InstantMessaging;
+    StartupWMClass=Vesktop
+  '';
+
   systemd.user.services.vicinae = {
     Unit = {
       Description = "Vicinae Launcher Daemon";
