@@ -61,6 +61,7 @@ ShellRoot {
     property string audioDefaultSinkVol: "—"
     property bool audioDefaultSinkMuted: false
     property string powerProfile: ""
+    property int brightnessPercent: 0
     readonly property var mediaPlayer: {
         const list = Mpris.players ? Mpris.players.values : []
         for (const p of list) {
@@ -458,6 +459,22 @@ ShellRoot {
         onTriggered: root.refreshPowerProfile()
     }
 
+    Process {
+        id: brightnessProc
+        running: true
+        command: ["sh", "-c", "brightnessctl -m 2>/dev/null | awk -F, 'NR==1 {gsub(/%/,\"\",$4); print $4}'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const value = parseInt(text.trim())
+                if (!isNaN(value)) root.brightnessPercent = value
+            }
+        }
+    }
+    Timer {
+        interval: 10000; running: true; repeat: true
+        onTriggered: brightnessProc.running = true
+    }
+
     // ---- system clock ----------------------------------------------------
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
@@ -518,6 +535,7 @@ ShellRoot {
 
                     Chip { rootRef: root; props: idleInhibitorC }
                     Chip { rootRef: root; props: soundC }
+                    Chip { rootRef: root; props: brightnessC }
                     Chip { rootRef: root; props: networkC }
                     Chip { rootRef: root; props: dateC }
                     Chip { rootRef: root; props: batteryC }
@@ -558,6 +576,19 @@ ShellRoot {
                 property var onClickRight: () => {
                     root.toggleAudioMute("@DEFAULT_AUDIO_SINK@")
                 }
+            }
+
+            QtObject {
+                id: brightnessC
+                readonly property string icon: root.brightnessPercent > 66
+                    ? "\u{F00DE}"
+                    : root.brightnessPercent > 33
+                    ? "\u{F00DC}"
+                    : "\u{F00DB}"
+                readonly property string text: root.brightnessPercent + "%"
+                readonly property string tone: "normal"
+                property var onClick: () => Quickshell.execDetached(["brightness-menu"])
+                property var onClickRight: () => Quickshell.execDetached(["brightness-menu"])
             }
 
             QtObject {
