@@ -399,12 +399,15 @@ ShellRoot {
         command: ["sh", "-c", "nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list --rescan no 2>/dev/null"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const networks = []
+                const bySsid = {}
                 for (const line of text.trim().split("\n")) {
                     const parts = line.split(":")
                     if (parts.length < 4 || !parts[1]) continue
-                    networks.push({ active: parts[0] === "*", ssid: parts[1], signal: Number(parts[2]) || 0, security: parts.slice(3).join(":") })
+                    const network = { active: parts[0] === "*", ssid: parts[1], signal: Number(parts[2]) || 0, security: parts.slice(3).join(":") }
+                    const existing = bySsid[network.ssid]
+                    if (!existing || network.active || network.signal > existing.signal) bySsid[network.ssid] = network
                 }
+                const networks = Object.keys(bySsid).map(ssid => bySsid[ssid])
                 networks.sort((a, b) => Number(b.active) - Number(a.active) || b.signal - a.signal)
                 root.wifiNetworks = networks
             }
