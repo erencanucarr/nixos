@@ -14,16 +14,33 @@ let
   c = colors.withHashtag;
 
   vesktop-wrapped = pkgs.writeShellScriptBin "vesktop" ''
-    ${ihtc.packages.x86_64-linux.ihtc}/bin/ihtc --listen 127.0.0.1:4452 --verbose --regex 'discord|discordapp|googleapis' &
-    for i in $(seq 1 15); do
-      if ss -tlnp 2>/dev/null | grep -q 4452; then
-        break
-      fi
-      sleep 1
-    done
+    ss=${pkgs.iproute2}/bin/ss
+    if ! $ss -tln 2>/dev/null | grep -q '127.0.0.1:4452'; then
+      ${pkgs.util-linux}/bin/setsid ${ihtc.packages.x86_64-linux.ihtc}/bin/ihtc \
+        --listen 127.0.0.1:4452 --regex 'discord|discordapp|googleapis' >/dev/null 2>&1 &
+      for i in $(seq 1 30); do
+        $ss -tln 2>/dev/null | grep -q '127.0.0.1:4452' && break
+        sleep 0.1
+      done
+    fi
     export HTTP_PROXY="http://127.0.0.1:4452"
     export HTTPS_PROXY="http://127.0.0.1:4452"
-    exec ${pkgs.vesktop}/bin/vesktop "$@"
+
+    if ${pkgs.procps}/bin/pgrep -f 'Vesktop/resources/app.asar' >/dev/null 2>&1; then
+      ${pkgs.sway}/bin/swaymsg '[app_id="vesktop"] focus' >/dev/null 2>&1 \
+        || ${pkgs.sway}/bin/swaymsg '[class="vesktop"] focus' >/dev/null 2>&1
+      exec ${pkgs.vesktop}/bin/vesktop --ozone-platform=wayland "$@"
+    fi
+
+    lock="$HOME/.config/vesktop/SingletonLock"
+    if [ -L "$lock" ]; then
+      owner=$(readlink "$lock")
+      pid=''${owner##*-}
+      if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
+        rm -f "$lock"
+      fi
+    fi
+    exec ${pkgs.vesktop}/bin/vesktop --ozone-platform=wayland "$@"
   '';
 
   scripts = import ./modules/desktop/sway/scripts { inherit pkgs; };
@@ -117,6 +134,8 @@ in
       unalias zcat zhelp zedit zreload 2>/dev/null
 
       mkcd() { mkdir -p "$1" && cd "$1"; }
+
+      shell() { nix shell "nixpkgs#$1"; }
 
       extract() {
         case "$1" in
