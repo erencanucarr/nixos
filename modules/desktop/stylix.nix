@@ -10,16 +10,16 @@
     cursor.size = 24;
     fonts = {
       monospace = {
-        package = pkgs.jetbrains-mono;
-        name = "JetBrains Mono";
+        package = pkgs.nerd-fonts.jetbrains-mono;
+        name = "JetBrainsMono Nerd Font";
       };
       sansSerif = {
-        package = pkgs.jetbrains-mono;
-        name = "JetBrains Mono";
+        package = pkgs.dejavu_fonts;
+        name = "DejaVu Sans";
       };
       serif = {
-        package = pkgs.jetbrains-mono;
-        name = "JetBrains Mono";
+        package = pkgs.dejavu_fonts;
+        name = "DejaVu Serif";
       };
       sizes = {
         applications = 10;

@@ -195,7 +195,6 @@ in
   home.packages = with pkgs; [
     vesktop-wrapped
   ] ++ scripts ++ [
-    jetbrains-mono
     nerd-fonts.jetbrains-mono
     grim slurp wl-clipboard
     libnotify
@@ -356,6 +355,11 @@ in
     Terminal=false
     Categories=Network;InstantMessaging;
     StartupWMClass=Vesktop
+  '';
+
+  xdg.configFile."mozilla/firefox/r8rx6oul.default/chrome/userChrome.css".text = ''
+    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+    * { font-size: 14px !important; }
   '';
 
   systemd.user.services.vicinae = {

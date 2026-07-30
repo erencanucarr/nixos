@@ -51,7 +51,16 @@
     description = "Can";
     extraGroups = [ "networkmanager" "wheel" ];
   };
-  programs.firefox.enable = true;
+  programs.firefox = {
+    enable = true;
+    preferencesStatus = "default";
+    preferences = {
+      "font.name.serif.x-western" = "DejaVu Serif";
+      "font.name.sans-serif.x-western" = "DejaVu Sans";
+      "font.name.monospace.x-western" = "JetBrainsMono Nerd Font";
+      "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+    };
+  };
   nixpkgs.config.allowUnfree = true;
   nix = {
     gc = {
