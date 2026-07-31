@@ -217,7 +217,6 @@ in
     nerd-fonts.jetbrains-mono
     grim slurp wl-clipboard
     libnotify
-    cliphist
     playerctl
     claude-code
     tesseract5

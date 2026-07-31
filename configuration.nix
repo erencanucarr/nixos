@@ -45,6 +45,13 @@
   services.power-profiles-daemon.enable = true;
   services.udev.extraRules = ''
     SUBSYSTEM=="leds", KERNEL=="tpacpi::kbd_backlight", ACTION=="add", RUN+="${pkgs.coreutils}/bin/chmod 666 /sys/class/leds/tpacpi::kbd_backlight/brightness"
+    ACTION=="add", SUBSYSTEM=="sound", KERNEL=="controlC1", RUN+="${pkgs.writeShellScript "micmute-led-wrapper" ''
+      exec ${pkgs.systemd}/bin/systemd-run --no-block --unit=micmute-led-setup ${pkgs.writeShellScript "micmute-led-setup" ''
+        ${pkgs.kmod}/bin/modprobe snd_ctl_led
+        ${pkgs.alsa-utils}/bin/alsactl init 1 || true
+        echo 'Mic ACP LED Capture Switch' | ${pkgs.coreutils}/bin/tee /sys/class/sound/ctl-led/mic/card1/attach 2>/dev/null || true
+      ''}
+    ''}"
   '';
   users.users."can" = {
     isNormalUser = true;

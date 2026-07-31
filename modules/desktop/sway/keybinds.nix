@@ -4,7 +4,6 @@
     "Alt+Space" = "exec vicinae toggle";
     "Mod4+Shift+s" = "exec grim -g \"$(slurp -d)\" - | wl-copy";
     "Mod4+Shift+a" = "exec grim -g \"$(slurp)\" - | tesseract stdin stdout -l tur | wl-copy";
-    "Mod4+c" = "exec cliphist-menu";
     "Mod4+e" = "exec thunar";
     "Mod4+Shift+space" = "exec qs ipc call windows toggle";
     "Mod4+m" = "exec qs ipc call notif toggle";
@@ -25,7 +24,6 @@
     "Mod4+q" = "kill";
     "Mod4+Escape" = "exec qs ipc call power toggle";
     "Mod4+p" = "exec qs ipc call power toggle";
-    "Mod4+Shift+i" = "exec sysinfo";
     "Mod4+Shift+r" = "exec recording-toggle";
   };
 }

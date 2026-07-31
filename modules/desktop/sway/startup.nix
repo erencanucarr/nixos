@@ -5,7 +5,5 @@
     { command = "swaymsg workspace number 1"; }
     { command = "nm-applet"; }
     { command = "blueman-applet"; }
-    { command = "wl-paste --type text --watch cliphist store"; }
-    { command = "wl-paste --type image --watch cliphist store"; }
   ];
 }
