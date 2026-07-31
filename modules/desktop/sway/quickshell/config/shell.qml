@@ -107,9 +107,10 @@ ShellRoot {
         return null
     }
     readonly property var microphoneC: ({
-        icon: "\u{F036D}",
-        text: "mic muted",
-        tone: "danger",
+        icon: root.microphoneMuted ? "\u{F036D}" : "\u{F036C}",
+        text: "",
+        tone: root.microphoneMuted ? "danger" : "normal",
+        blink: false,
         onClick: () => Quickshell.execDetached(["micmute"])
     })
     readonly property string mediaTitle: mediaPlayer && mediaPlayer.trackTitle ? mediaPlayer.trackTitle : ""
@@ -670,7 +671,7 @@ ShellRoot {
 
                     Chip { rootRef: root; props: idleInhibitorC }
                     Chip { rootRef: root; props: soundC }
-                    Chip { rootRef: root; props: microphoneC; visible: root.microphoneMuted }
+                    Chip { rootRef: root; props: microphoneC }
                     Chip { rootRef: root; props: brightnessC }
                     Chip { rootRef: root; props: networkC }
                     Chip { rootRef: root; props: bluetoothC }

@@ -9,11 +9,11 @@ PanelWindow {
     required property var rootRef
 
     readonly property var dev: {
-        if (UPower.displayDevice && UPower.displayDevice.isPresent)
-            return UPower.displayDevice
         const list = UPower.devices ? UPower.devices.values : []
         for (const d of list)
-            if (d && d.isPresent && d.percentage !== undefined) return d
+            if (d && d.isPresent && d.percentage !== undefined && String(d.nativePath || "").toLowerCase().indexOf("bat") >= 0) return d
+        if (UPower.displayDevice && UPower.displayDevice.isPresent)
+            return UPower.displayDevice
         return null
     }
     readonly property bool hasBattery: dev && dev.isPresent
@@ -21,6 +21,12 @@ PanelWindow {
     readonly property bool charging: hasBattery && (
         dev.state === UPowerDeviceState.Charging ||
         dev.state === UPowerDeviceState.FullyCharged)
+    readonly property real wattage: hasBattery ? Math.abs(Number(dev.changeRate) || 0) : 0
+    readonly property string wattageLabel: {
+        if (!hasBattery || wattage <= 0) return ""
+        const direction = charging ? "Charging" : "Discharging"
+        return direction + " " + wattage.toFixed(1) + " W"
+    }
     readonly property int secondsRemaining: {
         if (!hasBattery) return 0
         const value = charging ? dev.timeToFull : dev.timeToEmpty
@@ -142,6 +148,8 @@ PanelWindow {
                 Text { text: timeLabel; color: rootRef.accent; horizontalAlignment: Text.AlignRight; Layout.fillWidth: true; font { family: rootRef.fontFamily; pixelSize: 12; weight: Font.Bold } }
                 Text { text: "Device"; color: rootRef.fg; font { family: rootRef.fontFamily; pixelSize: 12 } }
                 Text { text: hasBattery && dev.model ? dev.model : "display battery"; color: rootRef.fg; horizontalAlignment: Text.AlignRight; elide: Text.ElideMiddle; Layout.fillWidth: true; font { family: rootRef.fontFamily; pixelSize: 12; weight: Font.Bold } }
+                Text { text: "Power"; color: rootRef.fg; visible: wattageLabel.length > 0; font { family: rootRef.fontFamily; pixelSize: 12 } }
+                Text { text: wattageLabel; color: rootRef.accent; visible: wattageLabel.length > 0; horizontalAlignment: Text.AlignRight; Layout.fillWidth: true; font { family: rootRef.fontFamily; pixelSize: 12; weight: Font.Bold } }
             }
 
             Rectangle { Layout.fillWidth: true; height: 1; color: rootRef.line }

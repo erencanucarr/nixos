@@ -7,7 +7,7 @@ Item {
     required property var rootRef
     property bool hover: false
 
-    readonly property bool blink: props.tone === "warn" || props.tone === "danger"
+    readonly property bool blink: props.blink === true || (props.blink !== false && (props.tone === "warn" || props.tone === "danger"))
     readonly property color activeColor:
         props.tone === "on"     ? rootRef.accent
       : props.tone === "warn"   ? rootRef.warn
