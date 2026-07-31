@@ -29,7 +29,6 @@
     variant = "";
   };
   console.keyMap = "trq";
-  services.printing.enable = true;
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -39,7 +38,10 @@
     pulse.enable = true;
     wireplumber.enable = true;
   };
-  hardware.bluetooth.enable = true;
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = false;
+  };
   services.blueman.enable = true;
   services.upower.enable = true;
   services.power-profiles-daemon.enable = true;

@@ -14,7 +14,9 @@
   };
   systemd.services.fprintd.wantedBy = [ "multi-user.target" ];
   security.pam.services = {
-    "login".fprintAuth = true;
+    "login".fprintAuth = false;
+    "ly".fprintAuth = false;
+    "sudo".fprintAuth = true;
   };
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {
