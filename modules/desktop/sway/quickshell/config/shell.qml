@@ -66,6 +66,10 @@ ShellRoot {
     property string audioDefaultSinkName: "—"
     property string audioDefaultSinkVol: "—"
     property bool audioDefaultSinkMuted: false
+    readonly property bool microphoneMuted: {
+        const source = audioSources.find(s => s.active) || audioSources[0]
+        return source ? source.muted : false
+    }
     property string powerProfile: ""
     property int brightnessPercent: 0
     property bool bluetoothPowered: false
@@ -102,6 +106,12 @@ ShellRoot {
         }
         return null
     }
+    readonly property var microphoneC: ({
+        icon: "\u{F036D}",
+        text: "mic muted",
+        tone: "danger",
+        onClick: () => Quickshell.execDetached(["micmute"])
+    })
     readonly property string mediaTitle: mediaPlayer && mediaPlayer.trackTitle ? mediaPlayer.trackTitle : ""
     readonly property string mediaArtists: {
         if (!mediaPlayer) return ""
@@ -660,6 +670,7 @@ ShellRoot {
 
                     Chip { rootRef: root; props: idleInhibitorC }
                     Chip { rootRef: root; props: soundC }
+                    Chip { rootRef: root; props: microphoneC; visible: root.microphoneMuted }
                     Chip { rootRef: root; props: brightnessC }
                     Chip { rootRef: root; props: networkC }
                     Chip { rootRef: root; props: bluetoothC }

@@ -11,7 +11,8 @@
     "XF86AudioRaiseVolume" = "exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ --limit 1.0 && qs ipc call osd volume";
     "XF86AudioLowerVolume" = "exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && qs ipc call osd volume";
     "XF86AudioMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && qs ipc call osd volume";
-    "XF86AudioMicMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && qs ipc call osd mic";
+    "XF86AudioMicMute" = "exec micmute";
+    "F4" = "exec micmute";
     "XF86MonBrightnessUp" = "exec brightnessctl s +5% && qs ipc call osd brightness";
     "XF86MonBrightnessDown" = "exec brightnessctl s 5%- && qs ipc call osd brightness";
     "Caps_Lock" = "exec qs ipc call osd caps";

@@ -14,11 +14,12 @@ ListView {
     model: I3.workspaces
 
     delegate: Item {
-            required property I3Workspace modelData
-            readonly property bool focused: modelData.focused
-            readonly property bool urgent:  modelData.urgent
+            property var workspace: modelData
+            readonly property bool focused: workspace !== null && workspace.focused
+            readonly property bool urgent: workspace !== null && workspace.urgent
 
-            width: Math.max(wsLabel.implicitWidth, 8)
+            visible: workspace !== null
+            width: workspace === null ? 0 : Math.max(wsLabel.implicitWidth, 8)
             implicitWidth: Math.max(wsLabel.implicitWidth, 8)
             implicitHeight: 20
 
@@ -26,7 +27,7 @@ ListView {
                 id: wsLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
-                text: modelData.name
+                text: workspace === null ? "" : workspace.name
                 color: urgent                ? rootRef.danger
                      : focused               ? rootRef.accent
                      : wsMouse.containsMouse ? rootRef.accent
@@ -52,7 +53,8 @@ ListView {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: modelData.activate()
+                enabled: workspace !== null
+                onClicked: workspace && workspace.activate()
             }
     }
 }
