@@ -100,7 +100,7 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         text: charging ? "󰂄" : "󰁹"
-                        color: rootRef.accent
+                        color: charging ? "#8BE28B" : rootRef.accent
                         font { family: rootRef.fontFamily; pixelSize: 22; weight: Font.Bold }
                     }
                 }

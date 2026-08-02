@@ -9,7 +9,8 @@ Item {
 
     readonly property bool blink: props.blink === true || (props.blink !== false && (props.tone === "warn" || props.tone === "danger"))
     readonly property color activeColor:
-        props.tone === "on"     ? rootRef.accent
+        props.tone === "charging" ? "#8BE28B"
+      : props.tone === "on"     ? rootRef.accent
       : props.tone === "warn"   ? rootRef.warn
       : props.tone === "danger" ? rootRef.danger
       : hover                    ? rootRef.accent

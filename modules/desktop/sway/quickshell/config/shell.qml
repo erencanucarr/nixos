@@ -780,7 +780,7 @@ ShellRoot {
                 readonly property string text: ok ? pct + "%" : "—"
                 readonly property string tone:
                     !ok            ? "normal"
-                    : charging     ? "on"
+                    : charging     ? "charging"
                     : pct <= 15    ? "danger"
                     :                "normal"
                 property var onClick: () => {
