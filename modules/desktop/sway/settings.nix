@@ -111,6 +111,8 @@ in {
       bindsym Ctrl+Shift+Tab workspace prev
       bindsym Mod4+Tab workspace next
       bindsym Mod4+Shift+Tab workspace prev
+      bindgesture swipe:3:left workspace next
+      bindgesture swipe:3:right workspace prev
 
       exec swayidle -w \
         timeout 300 'swaylock -f' \
