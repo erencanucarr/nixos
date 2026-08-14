@@ -35,10 +35,20 @@ ShellRoot {
     property string netKind: ""
     property string netLabel: ""
     property string netIcon:  "\u{F0C9B}"   // md-network-off (default)
+    readonly property bool netIsWifi: netKind === "wifi" || netKind === "wireless"
     property string netIp: "—"
     property string netPublicIp: "—"
     property string netGateway: "—"
     property string netDns: "—"
+    readonly property string netDnsProvider:
+        netDns.indexOf("1.1.1.1") >= 0 ? "Cloudflare"
+      : netDns.indexOf("8.8.8.8") >= 0 ? "Google"
+      : netDns === "—" ? "Unknown"
+      : "DHCP"
+    property string dnsStatus: ""
+    property string dnsCustom: ""
+    property string wifiQrPath: ""
+    property bool wifiQrVisible: false
     property string netRxRate: "—"
     property string netTxRate: "—"
     property string netRxTotal: "—"
@@ -160,6 +170,36 @@ ShellRoot {
         wifiRefreshTimer.restart()
     }
 
+    function setDnsProvider(provider, customServers) {
+        if (!root.netIface) return
+        const servers = provider === "Cloudflare" ? "1.1.1.1,1.0.0.1"
+            : provider === "Google" ? "8.8.8.8,8.8.4.4"
+            : provider === "Custom" ? String(customServers || "").trim() : ""
+        if (provider === "Custom" && !servers) {
+            root.dnsStatus = "Enter DNS servers"
+            return
+        }
+        const script = provider === "DHCP"
+            ? "connection=$(nmcli -g GENERAL.CONNECTION device show \"$1\"); nmcli connection modify \"$connection\" ipv4.ignore-auto-dns no ipv4.dns \"\" && nmcli connection up \"$connection\""
+            : "connection=$(nmcli -g GENERAL.CONNECTION device show \"$1\"); nmcli connection modify \"$connection\" ipv4.ignore-auto-dns yes ipv4.dns \"$2\" && nmcli connection up \"$connection\""
+        root.dnsStatus = "Applying " + provider + "..."
+        Quickshell.execDetached(["sh", "-c", script, "dns-set", root.netIface, servers])
+        dnsRefreshTimer.restart()
+    }
+
+    function generateWifiQr() {
+        if (!root.netIsWifi || !root.netIface) return
+        root.wifiQrVisible = false
+        root.wifiQrPath = ""
+        wifiQrProc.running = true
+    }
+
+    function clearWifiQr() {
+        root.wifiQrVisible = false
+        Quickshell.execDetached(["rm", "-f", "/tmp/quickshell-wifi-qr.png"])
+        root.wifiQrPath = ""
+    }
+
     function daysInMonth(date) {
         return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
     }
@@ -276,10 +316,148 @@ ShellRoot {
     // IPC-driven state (super+k / DND toggle in center / bar chip).
     property bool notifOpen: false
     property bool dnd:       false
+    property var reminders: []
+    property bool remindersLoaded: false
     // Short-lived toast queue. Each entry = { n: Notification, expiresAt: ms }.
     property var activeToasts: []
     function removeToast(target) {
         root.activeToasts = root.activeToasts.filter(t => t && t.n && t.n !== target)
+    }
+
+    function saveReminders() {
+        Quickshell.execDetached([
+            "sh", "-c",
+            "mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/quickshell\"; " +
+            "printf '%s' \"$1\" > \"${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/reminders.json\"",
+            "reminder-save", JSON.stringify(root.reminders)
+        ])
+    }
+
+    function addReminder(minutes, message) {
+        const duration = Math.max(1, Math.min(10080, Math.round(Number(minutes) || 0)))
+        const text = String(message || "").trim()
+        if (!text || !duration) return false
+        return root.addReminderAt(Date.now() + duration * 60000, text)
+    }
+
+    function addReminderAt(dueAt, message) {
+        const timestamp = Number(dueAt)
+        const text = String(message || "").trim()
+        if (!text || !Number.isFinite(timestamp) || timestamp <= Date.now()) return false
+        root.reminders = root.reminders.concat([{
+            id: Date.now(),
+            message: text,
+            dueAt: timestamp,
+        }])
+        root.reminders.sort((a, b) => a.dueAt - b.dueAt)
+        root.saveReminders()
+        return true
+    }
+
+    function parseReminderDate(dateText, timeText) {
+        const dateValue = String(dateText || "").trim().toLocaleLowerCase("tr-TR")
+        const timeValue = String(timeText || "").trim()
+        if (!dateValue && !timeValue) return null
+
+        let hours = 0
+        let minutes = 0
+        const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(timeValue)
+        if (timeValue && (!timeMatch || Number(timeMatch[1]) > 23 || Number(timeMatch[2]) > 59)) return 0
+        if (timeMatch) {
+            hours = Number(timeMatch[1])
+            minutes = Number(timeMatch[2])
+        }
+
+        const monthNames = {
+            ocak: 0, şubat: 1, mart: 2, nisan: 3, mayıs: 4, haziran: 5,
+            temmuz: 6, ağustos: 7, eylül: 8, ekim: 9, kasım: 10, aralık: 11,
+        }
+        let day
+        let month
+        let year
+        let dateMatch = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(dateValue)
+        if (dateMatch) {
+            day = Number(dateMatch[1])
+            month = Number(dateMatch[2]) - 1
+            year = Number(dateMatch[3])
+        } else {
+            dateMatch = /^(\d{1,2})\s+([a-zçğıöşü]+)\s+(\d{4})$/.exec(dateValue)
+            if (dateMatch && monthNames[dateMatch[2]] !== undefined) {
+                day = Number(dateMatch[1])
+                month = monthNames[dateMatch[2]]
+                year = Number(dateMatch[3])
+            } else {
+                dateMatch = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(dateValue)
+                if (dateMatch) {
+                    year = Number(dateMatch[1])
+                    month = Number(dateMatch[2]) - 1
+                    day = Number(dateMatch[3])
+                }
+            }
+        }
+
+        const now = new Date()
+        if (day === undefined) {
+            if (dateValue) return 0
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes)
+            if (today.getTime() <= now.getTime()) today.setDate(today.getDate() + 1)
+            return today.getTime()
+        }
+
+        const result = new Date(year, month, day, hours, minutes, 0, 0)
+        if (result.getFullYear() !== year || result.getMonth() !== month || result.getDate() !== day)
+            return 0
+        return result.getTime() > now.getTime() ? result.getTime() : 0
+    }
+
+    function removeReminder(id) {
+        root.reminders = root.reminders.filter(reminder => String(reminder.id) !== String(id))
+        root.saveReminders()
+    }
+
+    function clearReminders() {
+        root.reminders = []
+        root.saveReminders()
+    }
+
+    function checkReminders() {
+        if (!root.remindersLoaded) return
+        const now = Date.now()
+        const due = root.reminders.filter(reminder => Number(reminder.dueAt) <= now)
+        if (due.length > 0) {
+            for (const reminder of due) {
+                Quickshell.execDetached(["notify-send", "-u", "critical", "Reminder", reminder.message])
+            }
+            root.reminders = root.reminders.filter(reminder => Number(reminder.dueAt) > now)
+            root.saveReminders()
+        }
+    }
+
+    Process {
+        id: reminderLoadProc
+        running: true
+        command: ["sh", "-c",
+            "cat \"${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/reminders.json\" 2>/dev/null || printf '[]'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const parsed = JSON.parse(text.trim() || "[]")
+                    root.reminders = Array.isArray(parsed) ? parsed.filter(reminder =>
+                        reminder && reminder.message && Number(reminder.dueAt) > Date.now()) : []
+                } catch (error) {
+                    root.reminders = []
+                }
+                root.remindersLoaded = true
+                root.saveReminders()
+            }
+        }
+    }
+
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: root.checkReminders()
     }
 
     NotificationServer {
@@ -361,7 +539,10 @@ ShellRoot {
         id: netProc
         running: true
         command: ["bash", "-lc",
-            "entry=$(nmcli -t -f DEVICE,STATE,CONNECTION,TYPE device status 2>/dev/null | awk -F: '$2==\"connected\" && $4!=\"loopback\" {print $1\"\\t\"$4\"\\t\"$3; exit}'); " +
+            "rows=$(nmcli -t -f DEVICE,STATE,CONNECTION,TYPE device status 2>/dev/null); " +
+            "default_iface=$(ip route show default 2>/dev/null | awk 'NR==1 {print $5}'); " +
+            "entry=$(printf '%s\\n' \"$rows\" | awk -F: -v iface=\"$default_iface\" '$1==iface && $2 ~ /^connected/ && $4!=\"loopback\" {print $1\"\\t\"$4\"\\t\"$3; exit}'); " +
+            "[ -z \"$entry\" ] && entry=$(printf '%s\\n' \"$rows\" | awk -F: '$2 ~ /^connected/ && $4!=\"loopback\" {print $1\"\\t\"$4\"\\t\"$3; exit}'); " +
             "[ -z \"$entry\" ] && exit 0; " +
             "iface=$(printf '%s' \"$entry\" | cut -f1); " +
             "kind=$(printf '%s' \"$entry\" | cut -f2); " +
@@ -407,7 +588,7 @@ ShellRoot {
     Process {
         id: wifiScanProc
         running: true
-        command: ["sh", "-c", "nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list --rescan no 2>/dev/null"]
+        command: ["sh", "-c", "nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list --rescan yes 2>/dev/null"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const bySsid = {}
@@ -435,6 +616,42 @@ ShellRoot {
     Timer {
         interval: 15000; running: true; repeat: true
         onTriggered: wifiScanProc.running = true
+    }
+
+    Timer {
+        id: dnsRefreshTimer
+        interval: 2500
+        repeat: false
+        onTriggered: {
+            netProc.running = true
+            root.dnsStatus = ""
+        }
+    }
+
+    Process {
+        id: wifiQrProc
+        command: ["sh", "-c",
+            "set -eu; umask 077; " +
+            "iface=\"$1\"; output=\"$2\"; connection=$(nmcli -g GENERAL.CONNECTION device show \"$iface\"); " +
+            "ssid=$(nmcli -g 802-11-wireless.ssid connection show \"$connection\" 2>/dev/null | head -n1); " +
+            "keymgmt=$(nmcli -g 802-11-wireless-security.key-mgmt connection show \"$connection\" 2>/dev/null | head -n1); " +
+            "password=$(nmcli --show-secrets -g 802-11-wireless-security.psk connection show \"$connection\" 2>/dev/null | head -n1); " +
+            "[ -n \"$ssid\" ] || exit 1; " +
+            "escape() { printf '%s' \"$1\" | sed 's/[\\\\;,:]/\\\\&/g'; }; " +
+            "type=\"WPA\"; case \"$keymgmt\" in \"\"|none|NONE) type=\"nopass\";; esac; " +
+            "printf 'WIFI:T:%s;S:%s;P:%s;;' \"$type\" \"$(escape \"$ssid\")\" \"$(escape \"$password\")\" | qrencode -o \"$output\" -s 8 -m 2; " +
+            "printf 'ok\\n'",
+            "wifi-qr", root.netIface, "/tmp/quickshell-wifi-qr.png"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() === "ok") {
+                    root.wifiQrPath = "/tmp/quickshell-wifi-qr.png"
+                    root.wifiQrVisible = true
+                } else {
+                    root.wifiQrPath = ""
+                }
+            }
+        }
     }
 
     Process {
@@ -1068,7 +1285,7 @@ ShellRoot {
                 x: parent.width - width - 12
                 y: 0
                 width: 460
-                height: 620
+                height: Math.min(parent.height - 12, 720)
                 color: root.chip
                 border { color: "#8A8A8A"; width: 2 }
                 radius: 7
@@ -1106,7 +1323,7 @@ ShellRoot {
                             Layout.fillWidth: true
                             spacing: 2
                             Text {
-                                text: root.netKind === "wifi" || root.netKind === "wireless" ? "Wi-Fi" : "Ethernet"
+                                text: root.netIsWifi ? "Wi-Fi" : root.netKind === "ethernet" ? "Ethernet" : "Network"
                                 color: root.accent
                                 font { family: root.fontFamily; pixelSize: 20; weight: Font.Bold }
                             }
@@ -1161,6 +1378,7 @@ ShellRoot {
 
                     RowLayout {
                         Layout.fillWidth: true
+                        visible: root.netIsWifi
                         Text { Layout.fillWidth: true; text: "WI-FI NETWORKS"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
                         Text {
                             text: "REFRESH"
@@ -1172,7 +1390,8 @@ ShellRoot {
 
                     ListView {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 130
+                        Layout.preferredHeight: root.netIsWifi ? 190 : 0
+                        visible: root.netIsWifi
                         clip: true
                         spacing: 4
                         model: root.wifiNetworks
@@ -1207,7 +1426,7 @@ ShellRoot {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        visible: root.wifiSelectedSsid.length > 0
+                        visible: root.netIsWifi && root.wifiSelectedSsid.length > 0
                         Text { text: root.wifiSelectedSsid; color: root.accent; elide: Text.ElideRight; Layout.preferredWidth: 130; font { family: root.fontFamily; pixelSize: 10; weight: Font.Bold } }
                         Rectangle {
                             Layout.fillWidth: true
@@ -1235,6 +1454,35 @@ ShellRoot {
                             Text { anchors.centerIn: parent; text: "CONNECT"; color: connectWifiArea.containsMouse ? root.bg : root.accent; font { family: root.fontFamily; pixelSize: 9; weight: Font.Bold } }
                             MouseArea { id: connectWifiArea; anchors.fill: parent; hoverEnabled: true; onClicked: root.connectWifi({ ssid: root.wifiSelectedSsid }) }
                         }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: root.netIsWifi
+                        Text { Layout.fillWidth: true; text: "WI-FI QR CODE"; color: root.fg; font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                        Rectangle {
+                            Layout.preferredWidth: 92
+                            Layout.preferredHeight: 30
+                            color: qrArea.containsMouse ? root.accent : "transparent"
+                            border { color: root.accent; width: 1 }
+                            Text { anchors.centerIn: parent; text: root.wifiQrVisible ? "HIDE QR" : "SHOW QR"; color: qrArea.containsMouse ? root.bg : root.accent; font { family: root.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                            MouseArea {
+                                id: qrArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: root.wifiQrVisible ? root.clearWifiQr() : root.generateWifiQr()
+                            }
+                        }
+                    }
+
+                    Image {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 176
+                        Layout.preferredHeight: 176
+                        visible: root.netIsWifi && root.wifiQrVisible
+                        fillMode: Image.PreserveAspectFit
+                        source: root.wifiQrPath ? "file://" + root.wifiQrPath : ""
+                        cache: false
                     }
 
                     Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
@@ -1266,31 +1514,6 @@ ShellRoot {
                         Text { text: root.netPublicIp; color: root.accent; horizontalAlignment: Text.AlignRight; Layout.fillWidth: true; font { family: root.fontFamily; pixelSize: 13; weight: Font.Bold } }
                     }
 
-                    Rectangle { Layout.fillWidth: true; height: 1; color: root.line }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text {
-                            Layout.fillWidth: true
-                            text: "SPEED TEST"
-                            color: root.fg
-                            font { family: root.fontFamily; pixelSize: 12; weight: Font.Bold }
-                        }
-                        Rectangle {
-                            Layout.preferredWidth: 58
-                            Layout.preferredHeight: 32
-                            color: "transparent"
-                            border { color: "#6A6A6A"; width: 1 }
-                            radius: 8
-                            Text {
-                                anchors.centerIn: parent
-                                text: "Run"
-                                color: root.accent
-                                font { family: root.fontFamily; pixelSize: 13 }
-                            }
-                        }
-                    }
-
                     GridLayout {
                         Layout.fillWidth: true
                         columns: 4
@@ -1304,7 +1527,7 @@ ShellRoot {
                         Text {
                             Layout.columnSpan: 2
                             Layout.alignment: Qt.AlignRight
-                            text: root.netDns
+                            text: root.netDnsProvider + " · " + root.netDns
                             color: root.fg
                             elide: Text.ElideMiddle
                             font { family: root.fontFamily; pixelSize: 11; weight: Font.Bold }
@@ -1317,7 +1540,7 @@ ShellRoot {
                                 property bool hover: false
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 34
-                                color: modelData === "Cloudflare" ? root.chipOn : (hover ? root.chipHover : "transparent")
+                                color: modelData === root.netDnsProvider ? root.chipOn : (hover ? root.chipHover : "transparent")
                                 border { color: "#6A6A6A"; width: 1 }
                                 radius: 7
                                 Text {
@@ -1332,9 +1555,58 @@ ShellRoot {
                                     cursorShape: Qt.PointingHandCursor
                                     onEntered: parent.hover = true
                                     onExited: parent.hover = false
+                                    onClicked: root.setDnsProvider(modelData, dnsCustomInput.text)
                                 }
                             }
                         }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 30
+                            color: root.bg
+                            border { color: root.line; width: 1 }
+                            TextInput {
+                                id: dnsCustomInput
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: root.accent
+                                font { family: root.fontFamily; pixelSize: 10 }
+                                Text {
+                                    anchors.fill: parent
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: "Custom DNS: 9.9.9.9,149.112.112.112"
+                                    color: root.muted
+                                    visible: !parent.text
+                                    font { family: root.fontFamily; pixelSize: 9 }
+                                }
+                            }
+                        }
+                        Rectangle {
+                            Layout.preferredWidth: 70
+                            Layout.preferredHeight: 30
+                            color: customDnsArea.containsMouse ? root.accent : "transparent"
+                            border { color: root.accent; width: 1 }
+                            Text { anchors.centerIn: parent; text: "APPLY"; color: customDnsArea.containsMouse ? root.bg : root.accent; font { family: root.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                            MouseArea {
+                                id: customDnsArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: root.setDnsProvider("Custom", dnsCustomInput.text)
+                            }
+                        }
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        visible: root.dnsStatus.length > 0
+                        text: root.dnsStatus
+                        color: root.dnsStatus.indexOf("Applying") === 0 ? root.fg : root.danger
+                        font { family: root.fontFamily; pixelSize: 9; weight: Font.Bold }
                     }
                 }
             }

@@ -10,6 +10,30 @@ PanelWindow {
     required property var modelData
     required property var rootRef
     required property var notificationServer
+    property bool reminderTab: false
+    property int reminderTick: 0
+    property string reminderError: ""
+
+    function submitReminder() {
+        const message = reminderMessageInput.text
+        const dueAt = rootRef.parseReminderDate(reminderDateInput.text, reminderTimeInput.text)
+        if (dueAt === 0) {
+            reminderError = "Use 18 Ağustos 2026 and 18:00"
+            return
+        }
+        const added = dueAt === null
+            ? rootRef.addReminder(reminderMinutesInput.text, message)
+            : rootRef.addReminderAt(dueAt, message)
+        if (!added) {
+            reminderError = dueAt === null ? "Enter a message" : "That time is in the past"
+            return
+        }
+        reminderError = ""
+        reminderMessageInput.text = ""
+        reminderDateInput.text = ""
+        reminderTimeInput.text = ""
+        reminderMinutesInput.text = "10"
+    }
 
     screen: modelData
     WlrLayershell.namespace: "quickshell-notifications"
@@ -41,6 +65,13 @@ PanelWindow {
         }
         MouseArea { anchors.fill: parent; onClicked: {} }
 
+        Timer {
+            interval: 1000
+            running: notifShade.visible && notifShade.reminderTab
+            repeat: true
+            onTriggered: notifShade.reminderTick++
+        }
+
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 12
@@ -50,13 +81,19 @@ PanelWindow {
                 Layout.fillWidth: true
                 Text {
                     Layout.fillWidth: true
-                    text: "󰂚  NOTIFICATIONS"
+                    text: reminderTab ? "󰃰  REMINDERS" : "󰂚  NOTIFICATIONS"
                     color: "#FFFFFF"
                     font { family: rootRef.fontFamily; pixelSize: 16; weight: Font.Bold }
+                }
+                Text {
+                    text: reminderTab ? rootRef.reminders.length + " ACTIVE" : notificationServer.trackedNotifications.values.length + " ACTIVE"
+                    color: "#A0A0A0"
+                    font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
                 }
                 Rectangle {
                     Layout.preferredWidth: clearLabel.implicitWidth + 20
                     Layout.preferredHeight: 28
+                    visible: !reminderTab
                     color: clearArea.containsMouse ? "#2E2E30" : "transparent"
                     border { color: "#333337"; width: 1 }
                     Text {
@@ -79,9 +116,43 @@ PanelWindow {
 
             Rectangle { Layout.fillWidth: true; height: 1; color: "#333337" }
 
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    color: !reminderTab ? "#FFFFFF" : "transparent"
+                    border { color: "#555555"; width: 1 }
+                    Text {
+                        anchors.centerIn: parent
+                        text: "NOTIFICATIONS"
+                        color: !reminderTab ? "#0D0D0D" : "#A0A0A0"
+                        font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
+                    }
+                    MouseArea { anchors.fill: parent; onClicked: reminderTab = false }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    color: reminderTab ? "#FFFFFF" : "transparent"
+                    border { color: "#555555"; width: 1 }
+                    Text {
+                        anchors.centerIn: parent
+                        text: "REMINDERS"
+                        color: reminderTab ? "#0D0D0D" : "#A0A0A0"
+                        font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
+                    }
+                    MouseArea { anchors.fill: parent; onClicked: reminderTab = true }
+                }
+            }
+
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 44
+                visible: !reminderTab
                 color: dndArea.containsMouse ? "#202022" : "transparent"
                 border { color: "#333337"; width: 1 }
                 Text {
@@ -120,6 +191,7 @@ PanelWindow {
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                visible: !reminderTab
                 clip: true
                 spacing: 6
                 model: notificationServer.trackedNotifications
@@ -259,6 +331,237 @@ PanelWindow {
                     text: "NO NOTIFICATIONS"
                     color: "#555555"
                     font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold }
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: reminderTab
+                spacing: 8
+
+                Text {
+                    text: "ADD A REMINDER"
+                    color: "#A0A0A0"
+                    font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Rectangle {
+                        Layout.preferredWidth: 62
+                        Layout.preferredHeight: 32
+                        color: "#080808"
+                        border { color: "#333337"; width: 1 }
+                        TextInput {
+                            id: reminderMinutesInput
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: "#FFFFFF"
+                            text: "10"
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            font { family: rootRef.fontFamily; pixelSize: 10 }
+                        }
+                    }
+
+                    Text { text: "MIN"; color: "#555555"; font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold } }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 32
+                        color: "#080808"
+                        border { color: "#333337"; width: 1 }
+                        TextInput {
+                            id: reminderMessageInput
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: "#FFFFFF"
+                            clip: true
+                            font { family: rootRef.fontFamily; pixelSize: 10 }
+                            Keys.onReturnPressed: notifShade.submitReminder()
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: 58
+                        Layout.preferredHeight: 32
+                        color: addReminderArea.containsMouse ? "#FFFFFF" : "transparent"
+                        border { color: "#FFFFFF"; width: 1 }
+                        Text {
+                            anchors.centerIn: parent
+                            text: "ADD"
+                            color: addReminderArea.containsMouse ? "#0D0D0D" : "#FFFFFF"
+                            font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
+                        }
+                        MouseArea {
+                            id: addReminderArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: {
+                                notifShade.submitReminder()
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text { Layout.fillWidth: true; text: "OPTIONAL DATE"; color: "#555555"; font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                    Text { text: "TIME"; color: "#555555"; font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 32
+                        color: "#080808"
+                        border { color: "#333337"; width: 1 }
+                        TextInput {
+                            id: reminderDateInput
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: "#FFFFFF"
+                            clip: true
+                            font { family: rootRef.fontFamily; pixelSize: 10 }
+                            Text {
+                                anchors.fill: parent
+                                verticalAlignment: Text.AlignVCenter
+                                text: "18 Ağustos 2026 / 18.08.2026"
+                                color: "#333333"
+                                visible: !parent.text
+                                font { family: rootRef.fontFamily; pixelSize: 9 }
+                            }
+                        }
+                    }
+                    Rectangle {
+                        Layout.preferredWidth: 92
+                        Layout.preferredHeight: 32
+                        color: "#080808"
+                        border { color: "#333337"; width: 1 }
+                        TextInput {
+                            id: reminderTimeInput
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: "#FFFFFF"
+                            clip: true
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            font { family: rootRef.fontFamily; pixelSize: 10 }
+                            Text {
+                                anchors.fill: parent
+                                verticalAlignment: Text.AlignVCenter
+                                text: "18:00"
+                                color: "#333333"
+                                visible: !parent.text
+                                font { family: rootRef.fontFamily; pixelSize: 10 }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: reminderError.length > 0
+                    text: reminderError
+                    color: "#e46876"
+                    elide: Text.ElideRight
+                    font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text { Layout.fillWidth: true; text: "ACTIVE REMINDERS"; color: "#A0A0A0"; font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold } }
+                    Text {
+                        text: "CLEAR ALL"
+                        color: clearRemindersArea.containsMouse ? "#FFFFFF" : "#555555"
+                        font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
+                        MouseArea {
+                            id: clearRemindersArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: rootRef.clearReminders()
+                        }
+                    }
+                }
+
+                ListView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    spacing: 6
+                    model: rootRef.reminders
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: ListView.view.width
+                        height: 54
+                        color: "#141416"
+                        border { color: "#333337"; width: 1 }
+
+                        ColumnLayout {
+                            anchors.left: parent.left
+                            anchors.right: removeReminderButton.left
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 3
+                            Text {
+                                Layout.fillWidth: true
+                                text: modelData.message
+                                color: "#FFFFFF"
+                                elide: Text.ElideRight
+                                font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold }
+                            }
+                            Text {
+                                readonly property int remaining: Math.max(0, Number(modelData.dueAt) - Date.now())
+                                text: {
+                                    void notifShade.reminderTick
+                                    const totalSeconds = Math.ceil(remaining / 1000)
+                                    const minutes = Math.floor(totalSeconds / 60)
+                                    const seconds = totalSeconds % 60
+                                    return minutes + ":" + (seconds < 10 ? "0" : "") + seconds
+                                }
+                                color: "#A0A0A0"
+                                font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
+                            }
+                        }
+
+                        Rectangle {
+                            id: removeReminderButton
+                            anchors.right: parent.right
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 24
+                            height: 24
+                            color: removeArea.containsMouse ? "#2E2E30" : "transparent"
+                            Text { anchors.centerIn: parent; text: "×"; color: "#777777"; font { family: rootRef.fontFamily; pixelSize: 15; weight: Font.Bold } }
+                            MouseArea {
+                                id: removeArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: rootRef.removeReminder(modelData.id)
+                            }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: rootRef.reminders.length === 0
+                        text: "NO REMINDERS"
+                        color: "#555555"
+                        font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold }
+                    }
                 }
             }
         }
