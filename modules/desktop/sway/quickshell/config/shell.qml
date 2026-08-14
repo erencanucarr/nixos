@@ -70,6 +70,7 @@ ShellRoot {
     property bool brightnessOpen: false
     property bool windowSwitcherOpen: false
     property bool bluetoothOpen: false
+    property bool captureOpen: false
     property var audioSinks: []
     property var audioSources: []
     property var audioStreams: []
@@ -223,6 +224,7 @@ ShellRoot {
         if (name !== "brightness") root.brightnessOpen = false
         if (name !== "windowSwitcher") root.windowSwitcherOpen = false
         if (name !== "bluetooth") root.bluetoothOpen = false
+        if (name !== "capture") root.captureOpen = false
         if (name !== "notif") root.notifOpen = false
     }
 
@@ -579,6 +581,19 @@ ShellRoot {
         function dismissAll(): void {
             for (const n of notifServer.trackedNotifications.values.slice()) n.dismiss()
         }
+    }
+
+    IpcHandler {
+        target: "capture"
+        function toggle(): void {
+            root.closePopupsExcept("capture")
+            root.captureOpen = !root.captureOpen
+        }
+        function open(): void {
+            root.closePopupsExcept("capture")
+            root.captureOpen = true
+        }
+        function close(): void { root.captureOpen = false }
     }
 
     IpcHandler {
@@ -1701,6 +1716,11 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         NotificationCenter { rootRef: root; notificationServer: notifServer }
+    }
+
+    Variants {
+        model: Quickshell.screens
+        CaptureCenter { rootRef: root }
     }
 
     // ---- keybinds help ---------------------------------------------------

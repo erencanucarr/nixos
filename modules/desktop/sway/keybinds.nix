@@ -19,7 +19,8 @@
     "XF86AudioPause" = "exec playerctl play-pause";
     "XF86AudioPlay" = "exec playerctl play-pause";
     "XF86AudioPrev" = "exec playerctl previous";
-    "Print" = "exec screenshot-region";
+    "Print" = "exec qs ipc call capture toggle";
+    "Mod4+Ctrl+c" = "exec qs ipc call capture toggle";
     "Mod4+Print" = "exec screenshot-full";
     "Mod4+q" = "kill";
     "Mod4+Escape" = "exec qs ipc call power toggle";

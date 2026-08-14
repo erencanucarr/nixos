@@ -216,7 +216,9 @@ in
   ] ++ scripts ++ [
     nerd-fonts.jetbrains-mono
     grim slurp wl-clipboard
+    imagemagick
     qrencode
+    zbar
     libnotify
     playerctl
     claude-code
