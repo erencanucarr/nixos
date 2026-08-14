@@ -316,12 +316,64 @@ ShellRoot {
     // IPC-driven state (super+k / DND toggle in center / bar chip).
     property bool notifOpen: false
     property bool dnd:       false
+    property var notificationHistory: []
+    property bool notificationHistoryLoaded: false
     property var reminders: []
     property bool remindersLoaded: false
     // Short-lived toast queue. Each entry = { n: Notification, expiresAt: ms }.
     property var activeToasts: []
     function removeToast(target) {
         root.activeToasts = root.activeToasts.filter(t => t && t.n && t.n !== target)
+    }
+
+    function saveNotificationHistory() {
+        Quickshell.execDetached([
+            "sh", "-c",
+            "mkdir -p \"${XDG_STATE_HOME:-$HOME/.local/state}/quickshell\"; " +
+            "printf '%s' \"$1\" > \"${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/notification-history.json\"",
+            "notification-history-save", JSON.stringify(root.notificationHistory)
+        ])
+    }
+
+    function recordNotification(notification) {
+        if (!root.notificationHistoryLoaded || !notification) return
+        const notificationId = String(notification.id || "")
+        if (notificationId && root.notificationHistory.some(item => item.notificationId === notificationId)) return
+        const entry = {
+            id: Date.now(),
+            notificationId: notificationId,
+            appName: notification.appName || "Notification",
+            summary: notification.summary || "",
+            body: notification.body || "",
+            urgency: notification.urgency || 0,
+            createdAt: Date.now(),
+        }
+        root.notificationHistory = [entry].concat(root.notificationHistory).slice(0, 100)
+        root.saveNotificationHistory()
+    }
+
+    function clearNotificationHistory() {
+        root.notificationHistory = []
+        root.saveNotificationHistory()
+    }
+
+    Process {
+        id: notificationHistoryLoadProc
+        running: true
+        command: ["sh", "-c",
+            "cat \"${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/notification-history.json\" 2>/dev/null || printf '[]'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const parsed = JSON.parse(text.trim() || "[]")
+                    root.notificationHistory = Array.isArray(parsed) ? parsed.slice(0, 100) : []
+                } catch (error) {
+                    root.notificationHistory = []
+                }
+                root.notificationHistoryLoaded = true
+                root.saveNotificationHistory()
+            }
+        }
     }
 
     function saveReminders() {
@@ -333,14 +385,14 @@ ShellRoot {
         ])
     }
 
-    function addReminder(minutes, message) {
+    function addReminder(minutes, message, repeat) {
         const duration = Math.max(1, Math.min(10080, Math.round(Number(minutes) || 0)))
         const text = String(message || "").trim()
         if (!text || !duration) return false
-        return root.addReminderAt(Date.now() + duration * 60000, text)
+        return root.addReminderAt(Date.now() + duration * 60000, text, repeat)
     }
 
-    function addReminderAt(dueAt, message) {
+    function addReminderAt(dueAt, message, repeat) {
         const timestamp = Number(dueAt)
         const text = String(message || "").trim()
         if (!text || !Number.isFinite(timestamp) || timestamp <= Date.now()) return false
@@ -348,6 +400,7 @@ ShellRoot {
             id: Date.now(),
             message: text,
             dueAt: timestamp,
+            repeat: repeat === "daily" || repeat === "weekly" ? repeat : "none",
         }])
         root.reminders.sort((a, b) => a.dueAt - b.dueAt)
         root.saveReminders()
@@ -415,6 +468,16 @@ ShellRoot {
         root.saveReminders()
     }
 
+    function snoozeReminder(id, minutes) {
+        const delay = Math.max(1, Math.min(1440, Number(minutes) || 10))
+        root.reminders = root.reminders.map(reminder => {
+            if (String(reminder.id) !== String(id)) return reminder
+            return { id: reminder.id, message: reminder.message, dueAt: Date.now() + delay * 60000, repeat: reminder.repeat || "none" }
+        })
+        root.reminders.sort((a, b) => a.dueAt - b.dueAt)
+        root.saveReminders()
+    }
+
     function clearReminders() {
         root.reminders = []
         root.saveReminders()
@@ -428,7 +491,22 @@ ShellRoot {
             for (const reminder of due) {
                 Quickshell.execDetached(["notify-send", "-u", "critical", "Reminder", reminder.message])
             }
-            root.reminders = root.reminders.filter(reminder => Number(reminder.dueAt) > now)
+            const next = []
+            for (const reminder of root.reminders) {
+                if (Number(reminder.dueAt) > now) {
+                    next.push(reminder)
+                    continue
+                }
+                const repeat = reminder.repeat || "none"
+                const interval = repeat === "daily" ? 86400000 : repeat === "weekly" ? 604800000 : 0
+                if (interval > 0) {
+                    let nextDue = Number(reminder.dueAt)
+                    while (nextDue <= now) nextDue += interval
+                    next.push({ id: reminder.id, message: reminder.message, dueAt: nextDue, repeat: repeat })
+                }
+            }
+            next.sort((a, b) => a.dueAt - b.dueAt)
+            root.reminders = next
             root.saveReminders()
         }
     }
@@ -443,7 +521,12 @@ ShellRoot {
                 try {
                     const parsed = JSON.parse(text.trim() || "[]")
                     root.reminders = Array.isArray(parsed) ? parsed.filter(reminder =>
-                        reminder && reminder.message && Number(reminder.dueAt) > Date.now()) : []
+                        reminder && reminder.message && Number(reminder.dueAt) > Date.now()).map(reminder => ({
+                            id: reminder.id,
+                            message: reminder.message,
+                            dueAt: reminder.dueAt,
+                            repeat: reminder.repeat === "daily" || reminder.repeat === "weekly" ? reminder.repeat : "none",
+                        })) : []
                 } catch (error) {
                     root.reminders = []
                 }
@@ -470,8 +553,9 @@ ShellRoot {
         keepOnReload: true
         persistenceSupported: true
         onNotification: n => {
-            if (root.dnd) { n.dismiss(); return }
             n.tracked = true
+            root.recordNotification(n)
+            if (root.dnd) return
             const to = (n.expireTimeout && n.expireTimeout > 0) ? n.expireTimeout : 5000
             root.activeToasts = root.activeToasts.concat([{ n: n, expiresAt: Date.now() + to }])
         }

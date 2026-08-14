@@ -11,8 +11,10 @@ PanelWindow {
     required property var rootRef
     required property var notificationServer
     property bool reminderTab: false
+    property bool historyTab: false
     property int reminderTick: 0
     property string reminderError: ""
+    property string repeatMode: "none"
 
     function submitReminder() {
         const message = reminderMessageInput.text
@@ -22,8 +24,8 @@ PanelWindow {
             return
         }
         const added = dueAt === null
-            ? rootRef.addReminder(reminderMinutesInput.text, message)
-            : rootRef.addReminderAt(dueAt, message)
+            ? rootRef.addReminder(reminderMinutesInput.text, message, repeatMode)
+            : rootRef.addReminderAt(dueAt, message, repeatMode)
         if (!added) {
             reminderError = dueAt === null ? "Enter a message" : "That time is in the past"
             return
@@ -33,6 +35,7 @@ PanelWindow {
         reminderDateInput.text = ""
         reminderTimeInput.text = ""
         reminderMinutesInput.text = "10"
+        repeatMode = "none"
     }
 
     screen: modelData
@@ -81,19 +84,19 @@ PanelWindow {
                 Layout.fillWidth: true
                 Text {
                     Layout.fillWidth: true
-                    text: reminderTab ? "󰃰  REMINDERS" : "󰂚  NOTIFICATIONS"
+                    text: historyTab ? "󰋼  HISTORY" : reminderTab ? "󰃰  REMINDERS" : "󰂚  NOTIFICATIONS"
                     color: "#FFFFFF"
                     font { family: rootRef.fontFamily; pixelSize: 16; weight: Font.Bold }
                 }
                 Text {
-                    text: reminderTab ? rootRef.reminders.length + " ACTIVE" : notificationServer.trackedNotifications.values.length + " ACTIVE"
+                    text: historyTab ? rootRef.notificationHistory.length + " SAVED" : reminderTab ? rootRef.reminders.length + " ACTIVE" : notificationServer.trackedNotifications.values.length + " ACTIVE"
                     color: "#A0A0A0"
                     font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
                 }
                 Rectangle {
                     Layout.preferredWidth: clearLabel.implicitWidth + 20
                     Layout.preferredHeight: 28
-                    visible: !reminderTab
+                    visible: !reminderTab && !historyTab
                     color: clearArea.containsMouse ? "#2E2E30" : "transparent"
                     border { color: "#333337"; width: 1 }
                     Text {
@@ -123,15 +126,15 @@ PanelWindow {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 30
-                    color: !reminderTab ? "#FFFFFF" : "transparent"
+                    color: !reminderTab && !historyTab ? "#FFFFFF" : "transparent"
                     border { color: "#555555"; width: 1 }
                     Text {
                         anchors.centerIn: parent
                         text: "NOTIFICATIONS"
-                        color: !reminderTab ? "#0D0D0D" : "#A0A0A0"
+                        color: !reminderTab && !historyTab ? "#0D0D0D" : "#A0A0A0"
                         font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
                     }
-                    MouseArea { anchors.fill: parent; onClicked: reminderTab = false }
+                    MouseArea { anchors.fill: parent; onClicked: { reminderTab = false; historyTab = false } }
                 }
 
                 Rectangle {
@@ -145,14 +148,28 @@ PanelWindow {
                         color: reminderTab ? "#0D0D0D" : "#A0A0A0"
                         font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
                     }
-                    MouseArea { anchors.fill: parent; onClicked: reminderTab = true }
+                    MouseArea { anchors.fill: parent; onClicked: { reminderTab = true; historyTab = false } }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    color: historyTab ? "#FFFFFF" : "transparent"
+                    border { color: "#555555"; width: 1 }
+                    Text {
+                        anchors.centerIn: parent
+                        text: "HISTORY"
+                        color: historyTab ? "#0D0D0D" : "#A0A0A0"
+                        font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold }
+                    }
+                    MouseArea { anchors.fill: parent; onClicked: { reminderTab = false; historyTab = true } }
                 }
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 44
-                visible: !reminderTab
+                visible: !reminderTab && !historyTab
                 color: dndArea.containsMouse ? "#202022" : "transparent"
                 border { color: "#333337"; width: 1 }
                 Text {
@@ -191,7 +208,7 @@ PanelWindow {
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: !reminderTab
+                visible: !reminderTab && !historyTab
                 clip: true
                 spacing: 6
                 model: notificationServer.trackedNotifications
@@ -481,6 +498,31 @@ PanelWindow {
 
                 RowLayout {
                     Layout.fillWidth: true
+                    Text { Layout.fillWidth: true; text: "REPEAT"; color: "#555555"; font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                    Repeater {
+                        model: ["none", "daily", "weekly"]
+                        delegate: Rectangle {
+                            required property string modelData
+                            Layout.preferredWidth: 58
+                            Layout.preferredHeight: 26
+                            color: repeatMode === modelData ? "#FFFFFF" : "transparent"
+                            border { color: "#555555"; width: 1 }
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData === "none" ? "ONCE" : modelData.toUpperCase()
+                                color: repeatMode === modelData ? "#0D0D0D" : "#A0A0A0"
+                                font { family: rootRef.fontFamily; pixelSize: 8; weight: Font.Bold }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: repeatMode = modelData
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
                     Text { Layout.fillWidth: true; text: "ACTIVE REMINDERS"; color: "#A0A0A0"; font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold } }
                     Text {
                         text: "CLEAR ALL"
@@ -504,8 +546,9 @@ PanelWindow {
 
                     delegate: Rectangle {
                         required property var modelData
+                        property var reminderData: modelData
                         width: ListView.view.width
-                        height: 54
+                        height: 78
                         color: "#141416"
                         border { color: "#333337"; width: 1 }
 
@@ -535,13 +578,39 @@ PanelWindow {
                                 color: "#A0A0A0"
                                 font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
                             }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.repeat === "daily" ? "DAILY" : modelData.repeat === "weekly" ? "WEEKLY" : "ONCE"
+                                    color: "#555555"
+                                    font { family: rootRef.fontFamily; pixelSize: 8; weight: Font.Bold }
+                                }
+                                Repeater {
+                                    model: [5, 10, 30]
+                                    delegate: Rectangle {
+                                        required property int modelData
+                                        Layout.preferredWidth: 34
+                                        Layout.preferredHeight: 20
+                                        color: "transparent"
+                                        border { color: "#333337"; width: 1 }
+                                        Text { anchors.centerIn: parent; text: "+" + modelData + "m"; color: "#A0A0A0"; font { family: rootRef.fontFamily; pixelSize: 8; weight: Font.Bold } }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: rootRef.snoozeReminder(reminderData.id, modelData)
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         Rectangle {
                             id: removeReminderButton
                             anchors.right: parent.right
                             anchors.rightMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.top: parent.top
+                            anchors.topMargin: 8
                             width: 24
                             height: 24
                             color: removeArea.containsMouse ? "#2E2E30" : "transparent"
@@ -559,6 +628,67 @@ PanelWindow {
                         anchors.centerIn: parent
                         visible: rootRef.reminders.length === 0
                         text: "NO REMINDERS"
+                        color: "#555555"
+                        font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold }
+                    }
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: historyTab
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text { Layout.fillWidth: true; text: "SAVED NOTIFICATIONS"; color: "#A0A0A0"; font { family: rootRef.fontFamily; pixelSize: 10; weight: Font.Bold } }
+                    Text {
+                        text: "CLEAR HISTORY"
+                        color: clearHistoryArea.containsMouse ? "#FFFFFF" : "#555555"
+                        font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
+                        MouseArea {
+                            id: clearHistoryArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: rootRef.clearNotificationHistory()
+                        }
+                    }
+                }
+
+                ListView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    spacing: 6
+                    model: rootRef.notificationHistory
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: ListView.view.width
+                        implicitHeight: Math.max(62, historyColumn.implicitHeight + 20)
+                        color: "#141416"
+                        border { color: "#333337"; width: 1 }
+
+                        ColumnLayout {
+                            id: historyColumn
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            spacing: 3
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Text { Layout.fillWidth: true; text: modelData.appName || "Notification"; color: "#A0A0A0"; elide: Text.ElideRight; font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold } }
+                                Text { text: Qt.formatDateTime(new Date(modelData.createdAt), "dd.MM HH:mm"); color: "#555555"; font { family: rootRef.fontFamily; pixelSize: 8 } }
+                            }
+                            Text { Layout.fillWidth: true; text: modelData.summary || ""; color: "#FFFFFF"; elide: Text.ElideRight; font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold } }
+                            Text { Layout.fillWidth: true; visible: text.length > 0; text: modelData.body || ""; color: "#A0A0A0"; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight; font { family: rootRef.fontFamily; pixelSize: 9 } }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: rootRef.notificationHistory.length === 0
+                        text: "NO HISTORY"
                         color: "#555555"
                         font { family: rootRef.fontFamily; pixelSize: 11; weight: Font.Bold }
                     }
