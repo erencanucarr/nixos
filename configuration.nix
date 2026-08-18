@@ -95,6 +95,7 @@
     age
     sops
     usbutils
+    openfortivpn
   ];
   system.stateVersion = "26.05";
 }

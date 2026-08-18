@@ -43,6 +43,40 @@ let
     exec ${pkgs.vesktop}/bin/vesktop --ozone-platform=wayland "$@"
   '';
 
+  fortivpn = pkgs.writeShellScriptBin "fortivpn" ''
+    set -u
+
+    if ${pkgs.tmux}/bin/tmux has-session -t fortivpn 2>/dev/null; then
+      echo "fortivpn zaten çalışıyor. Bağlanmak için: tmux attach -t fortivpn"
+      exit 1
+    fi
+
+    read -r -p "VPN IP: " vpn_ip
+    read -r -p "VPN port: " vpn_port
+    read -r -p "Username: " vpn_user
+    read -r -p "Trusted certificate SHA-256: " trusted_cert
+
+    if [ -z "$vpn_ip" ] || [ -z "$vpn_port" ] || [ -z "$vpn_user" ] || [ -z "$trusted_cert" ]; then
+      echo "IP, port, kullanıcı adı ve sertifika özeti boş bırakılamaz." >&2
+      exit 1
+    fi
+
+    printf -v vpn_target '%q' "$vpn_ip:$vpn_port"
+    printf -v vpn_username '%q' "$vpn_user"
+    printf -v vpn_cert '%q' "$trusted_cert"
+    ${pkgs.tmux}/bin/tmux new-session -d -s fortivpn \
+      "sudo ${pkgs.openfortivpn}/bin/openfortivpn $vpn_target --username=$vpn_username --no-ftm-push --trusted-cert=$vpn_cert"
+    exec ${pkgs.tmux}/bin/tmux attach-session -t fortivpn
+  '';
+
+  fortioff = pkgs.writeShellScriptBin "fortioff" ''
+    if ${pkgs.tmux}/bin/tmux has-session -t fortivpn 2>/dev/null; then
+      ${pkgs.tmux}/bin/tmux kill-session -t fortivpn
+    fi
+    sudo ${pkgs.procps}/bin/pkill -TERM -x openfortivpn 2>/dev/null || true
+    echo "FortiVPN kapatıldı."
+  '';
+
   scripts = import ./modules/desktop/sway/scripts { inherit pkgs; };
 in
 {
@@ -213,6 +247,9 @@ in
 
   home.packages = with pkgs; [
     vesktop-wrapped
+    fortivpn
+    fortioff
+    tmux
   ] ++ scripts ++ [
     nerd-fonts.jetbrains-mono
     grim slurp wl-clipboard
