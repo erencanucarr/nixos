@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 {
   imports = [
+    ./modules/virtualisation.nix
     ./hardware-configuration.nix
     ./modules/security
     ./modules/desktop
