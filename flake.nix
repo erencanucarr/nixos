@@ -31,7 +31,7 @@
       system = "x86_64-linux";
       specialArgs = { inherit unstable; };
       modules = [
-         ./hosts/e16-gen3/configuration.nix
+         ./hosts/e16-gen3
         ihtc.nixosModules.default
         stylix.nixosModules.stylix
         sops-nix.nixosModules.sops
