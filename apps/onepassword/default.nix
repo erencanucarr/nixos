@@ -1,7 +1,4 @@
-{ config, pkgs, ... }:
-let
-  user = config.users.users.can;
-in
+{ pkgs, ... }:
 {
   programs = {
     _1password.enable = true;
@@ -28,10 +25,4 @@ in
     '';
     mode = "0755";
   };
-  environment.sessionVariables = {
-    SSH_AUTH_SOCK = "${user.home}/.1password/agent.sock";
-  };
-  programs.ssh.extraConfig = ''
-    IdentityAgent ${user.home}/.1password/agent.sock
-  '';
 }
