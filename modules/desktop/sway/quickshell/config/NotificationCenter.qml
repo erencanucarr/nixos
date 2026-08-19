@@ -315,12 +315,19 @@ PanelWindow {
                                         color: "#FFFFFF"
                                         font { family: rootRef.fontFamily; pixelSize: 9; weight: Font.Bold }
                                     }
-                                    MouseArea {
-                                        id: actionArea
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: modelData.invoke()
-                                    }
+                                     MouseArea {
+                                         id: actionArea
+                                         anchors.fill: parent
+                                         hoverEnabled: true
+                                         onClicked: {
+                                             const isView = (modelData.text || "").toLowerCase() === "view"
+                                             modelData.invoke()
+                                             if (isView && modelData.appName) {
+                                                 Quickshell.execDetached(["focus-notification-app", modelData.appName])
+                                                 modelData.dismiss()
+                                             }
+                                         }
+                                     }
                                 }
                             }
                         }

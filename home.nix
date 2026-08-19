@@ -446,3 +446,38 @@ in
   };
 
 }
+  obsidian-wrapped = pkgs.writeShellScriptBin "obsidian" ''
+    exec ${pkgs.obsidian}/bin/obsidian --ozone-platform=x11 --disable-gpu "$@"
+  '';
+
+      minikube() {
+        command minikube "$@"
+        local status=$?
+
+        if [ "$1" = "stop" ] && [ "$status" -eq 0 ]; then
+          virsh -c qemu:///system net-destroy mk-minikube >/dev/null 2>&1 || true
+          virsh -c qemu:///system net-destroy default >/dev/null 2>&1 || true
+          for _ in $(seq 1 15); do
+            [ "$(systemctl is-active libvirtd 2>/dev/null || true)" = "inactive" ] && break
+            sleep 1
+          done
+          printf 'libvirtd durumu: '
+          systemctl is-active libvirtd 2>/dev/null || true
+        fi
+
+        return "$status"
+      }
+
+    obsidian-wrapped
+    ddcutil
+    jq
+    LD_LIBRARY_PATH = "/run/current-system/sw/lib";
+    MINIKUBE_HOME = "/home/can/minikube";
+  };
+
+  xdg.desktopEntries.obsidian = {
+    name = "Obsidian";
+    exec = "obsidian --ozone-platform=x11 --disable-gpu %U";
+    icon = "obsidian";
+    terminal = false;
+    type = "Application";

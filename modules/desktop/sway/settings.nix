@@ -39,6 +39,14 @@ in {
       modifier = "Mod4";
       terminal = "alacritty";
       menu = "vicinae dmenu";
+      output = {
+        "eDP-1" = {
+          position = "0 0";
+        };
+        "HDMI-A-1" = {
+          position = "1920 0";
+        };
+      };
       gaps = {
         inner = 1;
         outer = 0;

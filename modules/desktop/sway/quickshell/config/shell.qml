@@ -83,13 +83,26 @@ ShellRoot {
     }
     property string powerProfile: ""
     property int brightnessPercent: 0
+    property int pendingExternalBrightness: 0
     property bool bluetoothPowered: false
     property var bluetoothDevices: []
 
     function setBrightnessPercent(value) {
         const next = Math.max(1, Math.min(100, Math.round(Number(value) || 0)))
         root.brightnessPercent = next
+        root.pendingExternalBrightness = next
         Quickshell.execDetached(["brightnessctl", "set", next + "%"])
+        externalBrightnessTimer.restart()
+    }
+
+    Timer {
+        id: externalBrightnessTimer
+        interval: 80
+        repeat: false
+        onTriggered: Quickshell.execDetached([
+            "ddcutil", "setvcp", "10", String(root.pendingExternalBrightness),
+            "--display", "1", "--noverify"
+        ])
     }
 
     function refreshBrightness() {

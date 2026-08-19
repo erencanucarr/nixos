@@ -12,8 +12,8 @@
     "XF86AudioMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && qs ipc call osd volume";
     "XF86AudioMicMute" = "exec micmute";
     "F4" = "exec micmute";
-    "XF86MonBrightnessUp" = "exec brightnessctl s +5% && qs ipc call osd brightness";
-    "XF86MonBrightnessDown" = "exec brightnessctl s 5%- && qs ipc call osd brightness";
+    "XF86MonBrightnessUp" = "exec sh -c 'brightnessctl s +5%; ddcutil setvcp 10 + 5 --display 1 --noverify 2>/dev/null || true; qs ipc call osd brightness'";
+    "XF86MonBrightnessDown" = "exec sh -c 'brightnessctl s 5%-; ddcutil setvcp 10 - 5 --display 1 --noverify 2>/dev/null || true; qs ipc call osd brightness'";
     "Caps_Lock" = "exec qs ipc call osd caps";
     "XF86AudioNext" = "exec playerctl next";
     "XF86AudioPause" = "exec playerctl play-pause";

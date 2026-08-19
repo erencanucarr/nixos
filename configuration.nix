@@ -100,3 +100,4 @@
   ];
   system.stateVersion = "26.05";
 }
+  hardware.i2c.enable = true;
