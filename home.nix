@@ -77,6 +77,10 @@ let
     echo "FortiVPN kapatıldı."
   '';
 
+  obsidian-wrapped = pkgs.writeShellScriptBin "obsidian" ''
+    exec ${pkgs.obsidian}/bin/obsidian --ozone-platform=x11 --disable-gpu "$@"
+  '';
+
   scripts = import ./modules/desktop/sway/scripts { inherit pkgs; };
 in
 {
@@ -166,6 +170,24 @@ in
 
     bashrcExtra = ''
       unalias zcat zhelp zedit zreload 2>/dev/null
+
+      minikube() {
+        command minikube "$@"
+        local status=$?
+
+        if [ "$1" = "stop" ] && [ "$status" -eq 0 ]; then
+          virsh -c qemu:///system net-destroy mk-minikube >/dev/null 2>&1 || true
+          virsh -c qemu:///system net-destroy default >/dev/null 2>&1 || true
+          for _ in $(seq 1 15); do
+            [ "$(systemctl is-active libvirtd 2>/dev/null || true)" = "inactive" ] && break
+            sleep 1
+          done
+          printf 'libvirtd durumu: '
+          systemctl is-active libvirtd 2>/dev/null || true
+        fi
+
+        return "$status"
+      }
 
       mkcd() { mkdir -p "$1" && cd "$1"; }
 
@@ -268,6 +290,9 @@ in
     imv
     mpv
     vicinae
+    obsidian-wrapped
+    ddcutil
+    jq
     wf-recorder
     brightnessctl
     file-roller
@@ -277,6 +302,17 @@ in
     QT_QPA_PLATFORM = "wayland;xcb";
     NIXOS_OZONE_WL = "1";
     WEBRTC_USE_PIPEWIRE = "1";
+    LD_LIBRARY_PATH = "/run/current-system/sw/lib";
+    MINIKUBE_HOME = "/home/can/minikube";
+  };
+
+  xdg.desktopEntries.obsidian = {
+    name = "Obsidian";
+    exec = "obsidian --ozone-platform=x11 --disable-gpu %U";
+    icon = "obsidian";
+    terminal = false;
+    type = "Application";
+    categories = [ "Office" ];
   };
 
   stylix.targets.sway.enable = false;
@@ -445,39 +481,5 @@ in
     };
   };
 
+  stylix.targets.xresources.enable = false;
 }
-  obsidian-wrapped = pkgs.writeShellScriptBin "obsidian" ''
-    exec ${pkgs.obsidian}/bin/obsidian --ozone-platform=x11 --disable-gpu "$@"
-  '';
-
-      minikube() {
-        command minikube "$@"
-        local status=$?
-
-        if [ "$1" = "stop" ] && [ "$status" -eq 0 ]; then
-          virsh -c qemu:///system net-destroy mk-minikube >/dev/null 2>&1 || true
-          virsh -c qemu:///system net-destroy default >/dev/null 2>&1 || true
-          for _ in $(seq 1 15); do
-            [ "$(systemctl is-active libvirtd 2>/dev/null || true)" = "inactive" ] && break
-            sleep 1
-          done
-          printf 'libvirtd durumu: '
-          systemctl is-active libvirtd 2>/dev/null || true
-        fi
-
-        return "$status"
-      }
-
-    obsidian-wrapped
-    ddcutil
-    jq
-    LD_LIBRARY_PATH = "/run/current-system/sw/lib";
-    MINIKUBE_HOME = "/home/can/minikube";
-  };
-
-  xdg.desktopEntries.obsidian = {
-    name = "Obsidian";
-    exec = "obsidian --ozone-platform=x11 --disable-gpu %U";
-    icon = "obsidian";
-    terminal = false;
-    type = "Application";
