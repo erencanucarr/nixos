@@ -47,5 +47,24 @@
         }
       ];
     };
+    nixosConfigurations.e14-gen5 = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = { inherit unstable; };
+      modules = [
+        ./hosts/e14-gen5
+        ihtc.nixosModules.default
+        stylix.nixosModules.stylix
+        sops-nix.nixosModules.sops
+        home-manager.nixosModules.home-manager
+        {
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            extraSpecialArgs = { inherit stylix ihtc; };
+            users.can = import ./home.nix;
+          };
+        }
+      ];
+    };
   };
 }
