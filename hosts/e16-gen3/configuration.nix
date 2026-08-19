@@ -1,12 +1,12 @@
 { config, pkgs, ... }:
 {
   imports = [
-    ./modules/virtualisation.nix
     ./hardware-configuration.nix
-    ./modules/security
-    ./modules/desktop
-    ./modules/network
-    ./apps
+    ../../modules/virtualisation.nix
+    ../../modules/security
+    ../../modules/desktop
+    ../../modules/network
+    ../../apps
   ];
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -43,9 +43,11 @@
     enable = true;
     powerOnBoot = false;
   };
+  hardware.i2c.enable = true;
   services.blueman.enable = true;
   services.upower.enable = true;
   services.power-profiles-daemon.enable = true;
+  services.fwupd.enable = true;
   services.udev.extraRules = ''
     SUBSYSTEM=="leds", KERNEL=="tpacpi::kbd_backlight", ACTION=="add", RUN+="${pkgs.coreutils}/bin/chmod 666 /sys/class/leds/tpacpi::kbd_backlight/brightness"
     ACTION=="add", SUBSYSTEM=="sound", KERNEL=="controlC1", RUN+="${pkgs.writeShellScript "micmute-led-wrapper" ''
@@ -100,4 +102,3 @@
   ];
   system.stateVersion = "26.05";
 }
-  hardware.i2c.enable = true;
