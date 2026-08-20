@@ -1,5 +1,6 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 {
+  programs.chromium.enable = lib.mkForce false;
   stylix = {
     enable = true;
     image = ./wallpaper.jpg;
