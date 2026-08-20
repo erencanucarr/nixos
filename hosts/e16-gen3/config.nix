@@ -98,6 +98,7 @@
     sops
     usbutils
     openfortivpn
+    ungoogled-chromium
   ];
   system.stateVersion = "26.05";
 }
