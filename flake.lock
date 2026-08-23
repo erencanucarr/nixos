@@ -145,11 +145,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787146702,
-        "narHash": "sha256-YbRcLdU/yK4gWsQg7V8WTKZHfXL33g8+wSFUX3wyevs=",
+        "lastModified": 1787377438,
+        "narHash": "sha256-Sxu1NLTD/Ern6hFGLlZmtKCSct3YQXZI/lls8RE1XeM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "173b7e8d40fdc8c296a9c99854314f17a3a1704c",
+        "rev": "65258d5c65a250189fde2e35f490d15e064c4c62",
         "type": "github"
       },
       "original": {
@@ -166,11 +166,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781643248,
-        "narHash": "sha256-WevLbLKuLqJr3qg+54GifTi957ZZRIumWKGzOU30oiA=",
+        "lastModified": 1787426740,
+        "narHash": "sha256-QEyJb1eL3qDozu3NM5OQoei/SObP7Cy9REChVg31nSk=",
         "ref": "refs/heads/main",
-        "rev": "f94e85944bf09376c208ded2dd3c8d49bbce467c",
-        "revCount": 39,
+        "rev": "c6e9e54d778c42e57de7e5d941113621ec23e3d5",
+        "revCount": 40,
         "type": "git",
         "url": "https://src.krea.to/kreato/ihtc"
       },
@@ -197,11 +197,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1787135253,
-        "narHash": "sha256-RD2kNWCG+Bjo6h+JVjWVNntZs2GtRoeY2xHjts/FNkA=",
+        "lastModified": 1787360063,
+        "narHash": "sha256-dt4WdcvsA8/RCe+VZZwqU0X+XMM3wBbGCWA0/sFWzGo=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "ffb3c9b700e759be2ef13237c9d8f953b32a1e46",
+        "rev": "2c423e03bbafcff28bfadc6781a4a8257f205cb5",
         "type": "github"
       },
       "original": {
