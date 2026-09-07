@@ -167,11 +167,11 @@
         "nlvm": "nlvm"
       },
       "locked": {
-        "lastModified": 1788630370,
-        "narHash": "sha256-0g5worhbFclQVOSfYBI/xD1Ss1Wb0A8hUHCkavwMeQ0=",
+        "lastModified": 1788714952,
+        "narHash": "sha256-PKIqxIgaX9GoQawLIttvvBcctrqvV+WoO/QesJshzqg=",
         "ref": "refs/heads/main",
-        "rev": "19a43213db2f083a5960ebad3d9a86d495ffe95f",
-        "revCount": 47,
+        "rev": "cd149254a297f28815798d1abafbc3d3ad9781af",
+        "revCount": 48,
         "type": "git",
         "url": "https://src.krea.to/kreato/ihtc"
       },
