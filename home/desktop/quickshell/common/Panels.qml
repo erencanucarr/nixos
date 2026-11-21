@@ -124,6 +124,9 @@ Singleton {
         function toggle(): void {
             root.togglePopup("audio", root.focusedScreen());
         }
+        function apps(): void {
+            root.togglePopup("audio-apps", root.focusedScreen());
+        }
         function close(): void {
             root.popup = "";
         }

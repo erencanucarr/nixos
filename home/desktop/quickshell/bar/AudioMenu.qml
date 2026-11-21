@@ -6,8 +6,9 @@ import qs.common
 
 // Volume's menu, ported from xeome's AudioMenu.qml: the default output and
 // input, each with a mute toggle, a volume bar and a collapsed device picker,
-// then Bluetooth headsets and the apps holding the mic. Per-app volume is
-// pavucontrol's, on the module's right click.
+// then Bluetooth headsets and the apps holding the mic. Per-app volume is on
+// AppsMenu, behind the top-right "Uygulamalar"; pavucontrol, on the
+// module's right click, has the rest.
 Menu {
     id: root
 
@@ -147,6 +148,33 @@ Menu {
                         dev.expanded = false;
                     }
                 }
+            }
+        }
+    }
+
+    // Top right: the apps playing sound, on a card of their own (AppsMenu).
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.bottomMargin: -2
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        BarText {
+            readonly property int count: Pipewire.nodes.values.filter(n => n.isStream && n.type === PwNodeType.AudioOutStream).length
+
+            text: count > 0 ? `Uygulamalar ${count} ${Glyph.chevronRight}` : `Uygulamalar ${Glyph.chevronRight}`
+            font.pixelSize: Theme.small
+            color: appsMa.containsMouse ? Theme.bright : Theme.dim
+
+            MouseArea {
+                id: appsMa
+                anchors.fill: parent
+                anchors.margins: -4
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Panels.popup = `audio-apps@${root.screenName}`
             }
         }
     }

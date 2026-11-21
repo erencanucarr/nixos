@@ -25,11 +25,15 @@ BarModule {
 
     // Room for "100%", so the strip does not shift as the volume changes.
     minWidth: 56
-    selected: menu.visible
+    selected: menu.visible || apps.visible
 
     onClicked: button => {
         if (button === Qt.LeftButton) {
-            Panels.togglePopup("audio", root.screenName);
+            // From the apps card, the button closes rather than going back.
+            if (apps.visible)
+                Panels.popup = "";
+            else
+                Panels.togglePopup("audio", root.screenName);
         } else if (button === Qt.RightButton) {
             Quickshell.execDetached(["pavucontrol"]);
         } else if (root.sink?.audio)
@@ -72,5 +76,13 @@ BarModule {
         screenName: root.screenName
         alignRight: true
         recorders: root.recorders
+    }
+
+    AppsMenu {
+        id: apps
+        key: "audio-apps"
+        anchorItem: root
+        screenName: root.screenName
+        alignRight: true
     }
 }
