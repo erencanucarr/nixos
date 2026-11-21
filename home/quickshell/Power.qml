@@ -28,7 +28,7 @@ Popup {
     ]
 
     function run(a: var): void {
-        root.visible = false;
+        Panels.popup = "";
         Quickshell.execDetached(a.cmd);
     }
 

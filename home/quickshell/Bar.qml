@@ -13,12 +13,7 @@ PanelWindow {
     required property var modelData
     screen: modelData
 
-    // One of this bar's popups (Power, AudioMenu) is open. They cannot take
-    // the keyboard themselves (Popup.qml), so the bar holds it for Esc.
-    readonly property bool popupOpen: Panels.popup.endsWith(`@${modelData.name}`)
-
     WlrLayershell.namespace: "can-bar"
-    WlrLayershell.keyboardFocus: popupOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     anchors {
         top: true
         left: true
@@ -26,16 +21,6 @@ PanelWindow {
     }
     implicitHeight: Theme.barHeight
     color: Theme.ground
-
-    // Focused once the compositor hands the bar the keyboard; Popup waits for
-    // that before it grabs.
-    readonly property bool holdsKeyboard: keys.activeFocus
-
-    Item {
-        id: keys
-        focus: true
-        Keys.onEscapePressed: Panels.popup = ""
-    }
 
     Rectangle {
         anchors {
