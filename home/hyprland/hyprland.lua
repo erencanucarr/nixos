@@ -89,11 +89,12 @@ hl.config({
   dwindle = {
     preserve_split = true,
   },
-  -- Hardware cursors. Hyprland draws the cursor in software on NVIDIA by
-  -- default, and with two screens that left a frozen copy of it behind on
-  -- the screen the pointer left. The 595 driver handles hardware cursors.
+  -- Software cursors, so hyprsunset's warm tint covers the cursor too: a
+  -- hardware cursor is its own plane, which the colour transform skips. One
+  -- frozen copy of the cursor was seen right after login once; moving it
+  -- across both screens afterwards left nothing behind.
   cursor = {
-    no_hardware_cursors = 0,
+    no_hardware_cursors = 1,
   },
   misc = {
     -- A plain graphite ground instead of the mascot wallpapers.
@@ -128,6 +129,13 @@ hl.layer_rule({
   ignore_alpha = 0.3,
 })
 
+-- Shot shows a frozen frame of the screen; fading that in reads as a flicker.
+hl.layer_rule({
+  name = "quickshell-shot-noanim",
+  match = { namespace = "quickshell-shot" },
+  no_anim = true,
+})
+
 ------------------------------------------------------------------- keybinds
 
 local qs = "qs ipc call "
@@ -152,12 +160,12 @@ hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(mod .. " + ESCAPE", hl.dsp.exec_cmd(qs .. "power toggle"))
 hl.bind(mod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
 
--- Screenshots go to the clipboard and ~/Resimler/Ekran Görüntüleri.
+-- Screenshots (Shot.qml) go to the clipboard and ~/Resimler/Ekran Görüntüleri.
 -- The MX Keys Mini's screenshot key (F8) sends Super+Shift+S, Windows'
--- snipping shortcut, not Print.
-hl.bind("Print", hl.dsp.exec_cmd(hypr .. "/bin/screenshot region"))
-hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(hypr .. "/bin/screenshot region"))
-hl.bind("SHIFT + Print", hl.dsp.exec_cmd(hypr .. "/bin/screenshot output"))
+-- snipping shortcut, not Print. bin/screenshot is the fallback without qs.
+hl.bind("Print", hl.dsp.exec_cmd(qs .. "shot open"))
+hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(qs .. "shot open"))
+hl.bind("SHIFT + Print", hl.dsp.exec_cmd(qs .. "shot screen"))
 
 for _, d in ipairs({ { "LEFT", "l" }, { "RIGHT", "r" }, { "UP", "u" }, { "DOWN", "d" } }) do
   hl.bind(mod .. " + " .. d[1], hl.dsp.focus({ direction = d[2] }))

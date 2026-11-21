@@ -35,6 +35,7 @@ in
     playerctl # media keys
     grim # screenshots
     slurp # pick the screenshot's area
+    vips # Shot cuts the frozen frame with it (home/quickshell/Shot.qml)
     jq
     xdg-user-dirs
   ];

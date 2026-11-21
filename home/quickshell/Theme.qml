@@ -29,6 +29,13 @@ Singleton {
     readonly property color lift: "#0dffffff"
     readonly property color sel: "#12ffffff"
 
+    // Shot's panels (Surface.qml): the corner glow on `raised`, strong
+    // top-left and weaker top-right, and their larger radius.
+    readonly property color glowPanel: "#11ffffff"
+    readonly property color glowPanelFar: "#08ffffff"
+    readonly property int radiusLg: 10
+    readonly property int ease: Easing.OutCubic
+
     readonly property int barHeight: 30
     // Space above and below a bar card: 30 - 2 * 4 makes a 22px card.
     readonly property int gap: 4
