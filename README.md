@@ -40,6 +40,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── net/          # network menu: traffic, addresses, DNS, Wi-Fi, IP settings
     │       ├── drawer/       # app drawer
     │       ├── overview/     # window overview (mouse thumb button, Super+Tab)
+    │       ├── session/      # full-screen power menu (Super+P)
     │       ├── osd/          # volume and mic pop-ups
     │       └── shot/         # screenshots and their editor
     └── apps/

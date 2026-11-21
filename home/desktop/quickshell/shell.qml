@@ -12,6 +12,7 @@ import qs.common
 import qs.drawer
 import qs.osd
 import qs.overview
+import qs.session
 import qs.shot
 
 ShellRoot {
@@ -31,6 +32,12 @@ ShellRoot {
         active: Panels.overviewOpen
 
         Overview {}
+    }
+
+    LazyLoader {
+        active: Panels.sessionOpen
+
+        Session {}
     }
 
     Osd {}

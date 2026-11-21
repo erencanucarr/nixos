@@ -170,6 +170,8 @@ hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"))
 
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(mod .. " + ESCAPE", hl.dsp.exec_cmd(qs .. "power toggle"))
+-- The full-screen power menu, in the lock screen's look.
+hl.bind(mod .. " + P", hl.dsp.exec_cmd(qs .. "session toggle"))
 hl.bind(mod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
 
 -- Screenshots (Shot.qml) go to the clipboard and ~/Resimler/Ekran Görüntüleri.

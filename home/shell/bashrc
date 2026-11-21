@@ -365,7 +365,8 @@ _zh_add " Hyprland tuşlar" "$c_purple" \
   "Super+Oklar"     "pencereler arası geç  ·  +Shift: pencereyi taşı" \
   "Super+1…0"       "çalışma alanı (1-5 sol, 6-0 sağ ekran)  ·  +Shift: taşı" \
   "Super+sürükle"   "sol tık: pencereyi taşı  ·  sağ tık: boyutlandır" \
-  "Super+L / Esc"   "kilitle / güç menüsü" \
+  "Super+L / Esc"   "kilitle / güç menüsü (barda)" \
+  "Super+P"         "tam ekran güç menüsü: kilitle, çıkış, uyku, yeniden başlat, kapat" \
   "F8 / Print"      "ekran görüntüsü: alan / pencere (Boşluk) / ekran (Tab), T gecikme; karta tıkla: düzenle  ·  Shift+Print: tüm ekran" \
   "F9"              "mikrofonu sustur / aç (barda kırmızı mikrofon)" \
   "Super+V"         "pano geçmişi (Ctrl+Alt+V de olur)"
