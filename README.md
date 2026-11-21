@@ -104,3 +104,8 @@ nixos-rebuild build --flake .#b850e-desktop
 The disk UUIDs change with every install. Copy them from the new
 `/etc/nixos/hardware-configuration.nix` into `hosts/<host>/hardware.nix`
 before the first switch, or the machine will not boot.
+
+## Thanks
+
+Some of this comes from xeome's [dots](https://github.com/xeome/dots).
+Thanks, xeome.
