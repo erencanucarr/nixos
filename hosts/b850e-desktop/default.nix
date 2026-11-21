@@ -5,6 +5,7 @@
     ./hardware.nix
     ../../modules/core/base.nix
     ../../modules/core/nvidia.nix
+    ../../modules/core/audio.nix
     ../../modules/desktop/desktop.nix
     ../../modules/apps/discord.nix
     ../../modules/desktop/mouse.nix
