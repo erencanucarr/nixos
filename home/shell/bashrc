@@ -135,7 +135,6 @@ alias nixhost='$EDITOR "$NIXDIR/hosts/$NIXHOST/default.nix"'
 alias nixbase='$EDITOR "$NIXDIR/modules/core/base.nix"'
 alias nixdesktop='$EDITOR "$NIXDIR/modules/desktop/desktop.nix"'
 alias nixhome='$EDITOR "$NIXDIR/home/can.nix"'
-alias nixmouse='$EDITOR "$NIXDIR/modules/desktop/mouse.nix"'
 alias nixflake='$EDITOR "$NIXDIR/flake.nix"'
 
 # ═══ NixOS: uygula / güncelle / temizle ═════════════════════════════════
@@ -331,7 +330,6 @@ _zh_add " Nix dosyalar" "$c_purple" \
   "nixhome"         "home/can.nix — kullanıcı paketleri, GTK görünümü" \
   "nixbase"         "modules/core/base.nix — sistem" \
   "nixdesktop"      "modules/desktop/desktop.nix — giriş ekranı, uygulamalar, fontlar" \
-  "nixmouse"        "modules/desktop/mouse.nix — fare tuşu" \
   "nixhw"           "hardware.nix — donanım, diskler" \
   "nixhost"         "hosts/…/default.nix — açık modüller" \
   "nixflake"        "flake.nix" \
@@ -358,7 +356,8 @@ _zh_add " Hyprland" "$c_cyan" \
   "network"         "ağ bağlantıları" \
   "bluetooth"       "Bluetooth cihazları"
 _zh_add " Hyprland tuşlar" "$c_purple" \
-  "Super"           "uygulama çekmecesi (fare yan tuşu da)" \
+  "Super"           "uygulama çekmecesi" \
+  "Super+Tab"       "pencere görünümü (farenin başparmak tuşu da): tıkla git, sürükle taşı, orta tık kapat" \
   "Super+Space"     "Vicinae (Spotlight)" \
   "Super+Enter / E / B" "terminal / dosyalar / Firefox" \
   "Super+Q"         "pencereyi kapat (Alt+F4 de olur)" \

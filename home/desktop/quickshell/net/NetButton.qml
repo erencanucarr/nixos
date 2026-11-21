@@ -15,7 +15,9 @@ BarModule {
     readonly property var wired: Networking.devices.values.find(d => d.connected && d.type === DeviceType.Wired) ?? null
     readonly property var network: wifi?.networks.values.find(n => n.connected) ?? null
 
-    selected: menu.visible
+    readonly property bool open: Panels.popup === `net@${root.screenName}`
+
+    selected: open
 
     onClicked: button => {
         if (button === Qt.RightButton)
@@ -31,11 +33,15 @@ BarModule {
         font.pixelSize: Theme.size + 1
     }
 
-    NetMenu {
-        id: menu
-        key: "net"
-        anchorItem: root
-        screenName: root.screenName
-        alignRight: true
+    // Built while open only, and freed on close (see Popup.qml).
+    LazyLoader {
+        active: root.open
+
+        NetMenu {
+            key: "net"
+            anchorItem: root
+            screenName: root.screenName
+            alignRight: true
+        }
     }
 }

@@ -8,7 +8,6 @@
     ../../modules/core/audio.nix
     ../../modules/desktop/desktop.nix
     ../../modules/apps/discord.nix
-    ../../modules/desktop/mouse.nix
     ../../modules/desktop/hyprland.nix
   ];
 

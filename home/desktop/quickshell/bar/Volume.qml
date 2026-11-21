@@ -25,12 +25,16 @@ BarModule {
 
     // Room for "100%", so the strip does not shift as the volume changes.
     minWidth: 56
-    selected: menu.visible || apps.visible
+
+    // The open menu on this screen: "audio", "audio-apps" or "".
+    readonly property string open: Panels.popup.endsWith(`@${root.screenName}`) ? Panels.popup.split("@")[0] : ""
+
+    selected: open === "audio" || open === "audio-apps"
 
     onClicked: button => {
         if (button === Qt.LeftButton) {
             // From the apps card, the button closes rather than going back.
-            if (apps.visible)
+            if (root.open === "audio-apps")
                 Panels.popup = "";
             else
                 Panels.togglePopup("audio", root.screenName);
@@ -69,20 +73,27 @@ BarModule {
         font.wordSpacing: Theme.glyphGap
     }
 
-    AudioMenu {
-        id: menu
-        key: "audio"
-        anchorItem: root
-        screenName: root.screenName
-        alignRight: true
-        recorders: root.recorders
+    // Built while open only, and freed on close (see Popup.qml).
+    LazyLoader {
+        active: root.open === "audio"
+
+        AudioMenu {
+            key: "audio"
+            anchorItem: root
+            screenName: root.screenName
+            alignRight: true
+            recorders: root.recorders
+        }
     }
 
-    AppsMenu {
-        id: apps
-        key: "audio-apps"
-        anchorItem: root
-        screenName: root.screenName
-        alignRight: true
+    LazyLoader {
+        active: root.open === "audio-apps"
+
+        AppsMenu {
+            key: "audio-apps"
+            anchorItem: root
+            screenName: root.screenName
+            alignRight: true
+        }
     }
 }

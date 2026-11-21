@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.common
 
 // The weather card in the bar: the condition glyph and the temperature,
@@ -10,7 +11,9 @@ BarModule {
     required property string screenName
 
     visible: WeatherData.ready
-    selected: menu.visible
+    readonly property bool open: Panels.popup === `weather@${root.screenName}`
+
+    selected: open
 
     onClicked: button => {
         if (button === Qt.MiddleButton)
@@ -27,10 +30,14 @@ BarModule {
         font.wordSpacing: Theme.glyphGap
     }
 
-    WeatherMenu {
-        id: menu
-        key: "weather"
-        anchorItem: root
-        screenName: root.screenName
+    // Built while open only, and freed on close (see Popup.qml).
+    LazyLoader {
+        active: root.open
+
+        WeatherMenu {
+            key: "weather"
+            anchorItem: root
+            screenName: root.screenName
+        }
     }
 }

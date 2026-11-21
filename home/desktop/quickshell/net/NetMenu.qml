@@ -60,6 +60,9 @@ Popup {
             root.askingFor = "";
         }
     }
+    // Built when opened and freed when closed (NetButton's LazyLoader).
+    Component.onCompleted: NetData.watching = visible
+    Component.onDestruction: NetData.watching = false
 
     Process {
         id: formReader

@@ -134,7 +134,9 @@ PanelWindow {
         BarModule {
             id: powerButton
 
-            selected: power.visible
+            readonly property bool open: Panels.popup === `power@${root.modelData.name}`
+
+            selected: open
             onClicked: Panels.togglePopup("power", root.modelData.name)
 
             // The power profile, only when it is not the default.
@@ -157,15 +159,18 @@ PanelWindow {
             BarText {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Glyph.power
-                color: power.visible ? Theme.bright : Theme.dim
+                color: powerButton.open ? Theme.bright : Theme.dim
                 font.pixelSize: Theme.size + 1
             }
 
-            Power {
-                id: power
-                key: "power"
-                anchorItem: powerButton
-                screenName: root.modelData.name
+            LazyLoader {
+                active: powerButton.open
+
+                Power {
+                    key: "power"
+                    anchorItem: powerButton
+                    screenName: root.modelData.name
+                }
             }
         }
     }

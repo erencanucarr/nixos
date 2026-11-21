@@ -121,10 +121,10 @@ hl.window_rule({
   center = true,
 })
 
--- The app drawer and power menu blur what is behind them.
+-- The app drawer, power menu and window overview blur what is behind them.
 hl.layer_rule({
   name = "shell-overlay-blur",
-  match = { namespace = "^(can-drawer|can-power)$" },
+  match = { namespace = "^(can-drawer|can-power|can-overview)$" },
   blur = true,
   ignore_alpha = 0.3,
 })
@@ -140,9 +140,16 @@ hl.layer_rule({
 
 local qs = "qs ipc call "
 
--- Super alone (and the mouse's side button, which keyd turns into Super)
--- opens the app drawer, where GNOME opened the overview.
+-- Super alone opens the app drawer.
 hl.bind(mod .. " + Super_L", hl.dsp.exec_cmd(qs .. "drawer toggle"), { release = true })
+
+-- The window overview: the MX Master 3S's thumb button (BTN_FORWARD, 277;
+-- 276 too, in case another mouse calls it BTN_EXTRA) and Super+Tab.
+local overview = hl.dsp.exec_cmd(qs .. "overview toggle")
+hl.bind("mouse:276", overview)
+hl.bind("mouse:277", overview)
+hl.bind(mod .. " + TAB", overview)
+
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("vicinae toggle"))
 -- Clipboard history (Vicinae keeps it; passwords from password managers are
 -- skipped). Super+V as on Windows, Ctrl+Alt+V and Super+Shift+V as well.

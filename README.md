@@ -23,8 +23,7 @@ Flake-based NixOS configuration with Home Manager.
 │   │   └── audio.nix         # PipeWire, realtime audio, steady USB headsets
 │   ├── desktop/
 │   │   ├── desktop.nix       # login screen, GNOME apps, theme, fonts
-│   │   ├── hyprland.nix      # Hyprland and its tools
-│   │   └── mouse.nix         # MX Master side button opens the app drawer
+│   │   └── hyprland.nix      # Hyprland and its tools
 │   └── apps/
 │       └── discord.nix       # Discord through the ByeDPI proxy
 └── home/                     # the user (Home Manager)
@@ -40,6 +39,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── weather/      # Ankara's weather beside the clock
     │       ├── net/          # network menu: traffic, addresses, DNS, Wi-Fi, IP settings
     │       ├── drawer/       # app drawer
+    │       ├── overview/     # window overview (mouse thumb button, Super+Tab)
     │       ├── osd/          # volume and mic pop-ups
     │       └── shot/         # screenshots and their editor
     └── apps/

@@ -6,9 +6,8 @@ import Quickshell.Widgets
 import qs.common
 
 // The app drawer: a search box over a grid of every installed app, on the
-// focused screen. Super (or the mouse's side button) or the bar's apps
-// button opens it. Type to filter, arrows to move, Enter to launch, Esc or a
-// click outside to close.
+// focused screen. Super or the bar's apps button opens it. Type to filter,
+// arrows to move, Enter to launch, Esc or a click outside to close.
 PanelWindow {
     id: root
 
@@ -45,13 +44,9 @@ PanelWindow {
     }
     color: "#990a0a0c"
 
-    onVisibleChanged: {
-        if (visible) {
-            search.text = "";
-            grid.currentIndex = 0;
-            search.forceActiveFocus();
-        }
-    }
+    // Built fresh on each open (shell.qml's LazyLoader): start empty, with
+    // the keyboard in the search box.
+    Component.onCompleted: search.forceActiveFocus()
 
     // A click outside the panel closes the drawer.
     MouseArea {

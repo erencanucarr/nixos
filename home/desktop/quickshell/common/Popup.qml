@@ -6,6 +6,9 @@ import Quickshell.Wayland
 // Derived menus set contentWidth and contentHeight; their children go onto
 // the Surface, which drifts down into place on the way in.
 //
+// Built only while open: each bar button holds its menu in a LazyLoader
+// keyed on Panels.popup, so a closed menu takes no memory.
+//
 // Which menu is open lives in Panels.popup as "<key>@<screen>", so the bar
 // buttons and IPC (Super+Esc) open the same one.
 //
@@ -58,13 +61,18 @@ PanelWindow {
     margins.top: Theme.barHeight
     color: "transparent"
 
-    onVisibleChanged: {
-        if (!visible)
-            return;
+    function opened(): void {
         root.buttonX = root.anchorItem.mapToItem(null, 0, 0).x;
         keys.forceActiveFocus();
         enter.restart();
     }
+
+    // The bar builds each menu in a LazyLoader while it is open, so it is
+    // usually created already visible and onVisibleChanged never fires.
+    onVisibleChanged: if (visible)
+        opened()
+    Component.onCompleted: if (visible)
+        Qt.callLater(opened)
 
     // A click anywhere outside the card.
     MouseArea {

@@ -8,12 +8,13 @@ import Quickshell.Io
 // What is open, and the idle inhibitor. Hyprland's keys reach it over IPC:
 //   qs ipc call drawer toggle    qs ipc call power toggle
 //   qs ipc call audio toggle     qs ipc call weather toggle
-//   qs ipc call net toggle
+//   qs ipc call net toggle       qs ipc call overview toggle
 // The bar popups (Power, AudioMenu) open on the focused monitor's bar.
 Singleton {
     id: root
 
     property bool drawerOpen: false
+    property bool overviewOpen: false
     // The open bar popup as "<key>@<screen>" (Popup.qml), or "".
     property string popup: ""
 
@@ -30,12 +31,14 @@ Singleton {
 
     function toggleDrawer(): void {
         root.popup = "";
+        root.overviewOpen = false;
         root.drawerOpen = !root.drawerOpen;
     }
 
     function togglePopup(key: string, screen: string): void {
         const id = `${key}@${screen}`;
         root.drawerOpen = false;
+        root.overviewOpen = false;
         root.popup = root.popup === id ? "" : id;
     }
 
@@ -71,6 +74,23 @@ Singleton {
             root.now = Date.now();
             if (root.now >= root.awakeUntil)
                 root.setAwake(-1);
+        }
+    }
+
+    function toggleOverview(): void {
+        root.popup = "";
+        root.drawerOpen = false;
+        root.overviewOpen = !root.overviewOpen;
+    }
+
+    IpcHandler {
+        target: "overview"
+
+        function toggle(): void {
+            root.toggleOverview();
+        }
+        function close(): void {
+            root.overviewOpen = false;
         }
     }
 

@@ -44,8 +44,12 @@ Scope {
         st.forceActiveFocus();
     }
 
+    // Shot holds the editor in a LazyLoader and drops it on `closed`.
+    signal closed
+
     function close(): void {
         win.visible = false;
+        root.closed();
     }
 
     function commitWord(): void {

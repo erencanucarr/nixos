@@ -208,8 +208,22 @@ Scope {
         }
     }
 
-    ShotEditor {
+    // The editor is built when a shot is opened in it and freed when it closes.
+    LazyLoader {
         id: editor
+
+        function open(path: string, screen: var): void {
+            editor.active = true;
+            editor.item.open(path, screen);
+        }
+
+        function close(): void {
+            editor.item?.close();
+        }
+
+        ShotEditor {
+            onClosed: Qt.callLater(() => editor.active = false)
+        }
     }
 
     PanelWindow {
