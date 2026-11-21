@@ -161,9 +161,11 @@ hl.bind(mod .. " + ESCAPE", hl.dsp.exec_cmd(qs .. "power toggle"))
 hl.bind(mod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
 
 -- Screenshots (Shot.qml) go to the clipboard and ~/Resimler/Ekran Görüntüleri.
--- The MX Keys Mini's screenshot key (F8) sends Super+Shift+S, Windows'
--- snipping shortcut, not Print. bin/screenshot is the fallback without qs.
+-- The MX Keys Mini's screenshot key: with Fn Lock on it sends plain F8
+-- (as F9 does, seen with libinput), without it presumably Super+Shift+S,
+-- Windows' snipping shortcut. bin/screenshot is the fallback without qs.
 hl.bind("Print", hl.dsp.exec_cmd(qs .. "shot open"))
+hl.bind("F8", hl.dsp.exec_cmd(qs .. "shot open"))
 hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(qs .. "shot open"))
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd(qs .. "shot screen"))
 
@@ -189,7 +191,9 @@ local vol = "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ "
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(vol .. "5%+"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(vol .. "5%-"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true })
+-- The MX Keys Mini's mic key sends plain F9 with Fn Lock on.
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
+hl.bind("F9", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })

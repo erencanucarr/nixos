@@ -14,5 +14,6 @@ ShellRoot {
     }
 
     AppDrawer {}
+    Osd {}
     Shot {}
 }

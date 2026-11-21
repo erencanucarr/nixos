@@ -2,8 +2,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 
-// Output volume, plus a warm mic glyph while something records (after
-// xeome's Audio.qml). Click for AudioMenu, right click for the mixer
+// Output volume, plus the mic's state (after xeome's Audio.qml): a hot
+// crossed-out mic while it is muted (F9 on the MX Keys Mini), a warm mic
+// while something records. Click for AudioMenu, right click for the mixer
 // (pavucontrol), middle click to mute, scroll to change the volume.
 BarModule {
     id: root
@@ -16,6 +17,8 @@ BarModule {
     // A noise-suppression filter chain holds a `capture.*` stream open
     // permanently; that is not someone recording.
     readonly property var recorders: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioInStream && !n.name.startsWith("capture."))
+    readonly property var source: Pipewire.defaultAudioSource
+    readonly property bool micMuted: source?.audio?.muted ?? false
 
     required property string screenName
 
@@ -39,14 +42,14 @@ BarModule {
 
     // Volume and mute are unreadable until the node is bound.
     PwObjectTracker {
-        objects: [root.sink]
+        objects: [root.sink, root.source]
     }
 
     BarText {
-        visible: root.recorders.length > 0
+        visible: root.micMuted || root.recorders.length > 0
         anchors.verticalCenter: parent.verticalCenter
-        text: Glyph.mic
-        color: Theme.warm
+        text: root.micMuted ? Glyph.micOff : Glyph.mic
+        color: root.micMuted ? Theme.hot : Theme.warm
         font.pixelSize: Theme.size + 1
     }
 
