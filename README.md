@@ -59,7 +59,9 @@ nvcc --version
 Discord is blocked in Turkey by DPI: DNS answers correctly, but the ISP resets
 any TLS connection whose SNI names Discord. `modules/discord.nix` runs ByeDPI
 as a SOCKS proxy on `127.0.0.1:1080` and starts Discord with
-`--proxy-server` pointing at it. Only Discord uses the proxy.
+`--proxy-server` pointing at it. Firefox gets a proxy auto-config file that
+sends Discord's domains, and only those, through the same proxy. Everything
+else connects directly.
 
 If Discord stops connecting, check the proxy first:
 
