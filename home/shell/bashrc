@@ -145,6 +145,7 @@ alias nixupdate='nix flake update --flake "$NIXDIR" && nixup'
 alias nixback='sudo nixos-rebuild switch --rollback'
 alias nixclean='sudo nix-collect-garbage --delete-older-than 14d && nix-collect-garbage --delete-older-than 14d'
 alias nixgit='git -C "$NIXDIR" status --short'
+alias nixpush='git -C "$NIXDIR" push'
 nixtry() { [ -z "$1" ] && { echo "Kullanım: nixtry <paket>"; return 1; }; local a=(); for p in "$@"; do a+=("nixpkgs#$p"); done; warn "geçici kabuk, çıkmak için: exit"; nix shell "${a[@]}"; }
 
 # ═══ NixOS: paketler (home/can.nix içindeki home.packages listesi) ══════
@@ -278,7 +279,8 @@ _zh_add " Nix bakım" "$c_cyan" \
   "nixback"         "önceki sisteme geri dön" \
   "nixclean"        "14 günden eski sistemleri sil" \
   "nixgit"          "~/nixos'ta neler değişti" \
-  "nixsave \"msj\"" "değişiklikleri git'e kaydet"
+  "nixsave \"msj\"" "değişiklikleri git'e kaydet (commit)" \
+  "nixpush"         "kaydedilenleri GitHub'a gönder"
 _zh_add " Klavye" "$c_green" \
   "Super+Space"     "Spotlight (Vicinae): uygulama, dosya, hesap makinesi" \
   "Ctrl+R"          "geçmişte ara" \
