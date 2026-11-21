@@ -38,8 +38,22 @@ in
   home.stateVersion = "26.05";
 
   # Apps for this user only. System-wide tools are in modules/base.nix.
+  # Terminal tools used by ~/.bashrc: eza (ls), bat (cat), fzf (fuzzy search),
+  # zoxide (smart cd), fd (find), starship (prompt), wl-clipboard (copy/paste),
+  # duf (disks), ncdu (folder sizes), trash-cli (safe delete), tealdeer (tldr).
   home.packages = with pkgs; [
     obsidian
+    eza
+    bat
+    fzf
+    zoxide
+    fd
+    starship
+    wl-clipboard
+    duf
+    ncdu
+    trash-cli
+    tealdeer
   ];
 
   dconf.settings = {
