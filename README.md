@@ -72,6 +72,10 @@ curl -sS -o /dev/null -w "%{http_code}\n" --socks5-hostname 127.0.0.1:1080 https
 
 ## Apply
 
+The system is built from this repository only. `/etc/nixos/configuration.nix`
+is left over from the installer and is not read: add packages here instead
+(`home/can.nix` for your own apps, `modules/base.nix` for system tools).
+
 ```bash
 sudo nixos-rebuild switch --flake .#b850e-desktop
 ```

@@ -24,6 +24,11 @@ in
 {
   home.stateVersion = "26.05";
 
+  # Apps for this user only. System-wide tools are in modules/base.nix.
+  home.packages = with pkgs; [
+    obsidian
+  ];
+
   dconf.settings = {
     "org/gnome/shell" = {
       disable-user-extensions = false;
