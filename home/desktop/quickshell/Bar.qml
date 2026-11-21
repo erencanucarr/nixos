@@ -2,11 +2,13 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.UPower
+import qs.weather
 
 // A 30px top bar on every screen, its modules laid out like xeome's in small
-// graphite cards: apps and workspaces on the left, the clock in the middle,
-// the tray drawer, a network and volume strip and power on the right; volume
-// and power open xeome-style menus under them (AudioMenu, Power). The bar
+// graphite cards: apps and workspaces on the left, the clock and Ankara's
+// weather (weather/) in the middle, the tray drawer, a network and volume
+// strip and power on the right; volume and power open xeome-style menus
+// under them (AudioMenu, Power). The bar
 // itself stays flat and square, with one hairline under it.
 PanelWindow {
     id: root
@@ -58,8 +60,19 @@ PanelWindow {
         }
     }
 
+    // The clock stays centred; the weather hangs on its right.
     Clock {
+        id: clock
         anchors.centerIn: parent
+    }
+
+    WeatherButton {
+        anchors {
+            left: clock.right
+            leftMargin: 4
+            verticalCenter: parent.verticalCenter
+        }
+        screenName: root.modelData.name
     }
 
     Row {

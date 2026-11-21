@@ -362,14 +362,14 @@ _zh_add " Hyprland tuşlar" "$c_purple" \
   "Super+Space"     "Vicinae (Spotlight)" \
   "Super+Enter / E / B" "terminal / dosyalar / Firefox" \
   "Super+Q"         "pencereyi kapat (Alt+F4 de olur)" \
-  "Super+F / V"     "tam ekran / yüzen pencere" \
+  "Super+F / Shift+F" "tam ekran / yüzen pencere" \
   "Super+Oklar"     "pencereler arası geç  ·  +Shift: pencereyi taşı" \
   "Super+1…0"       "çalışma alanı (1-5 sol, 6-0 sağ ekran)  ·  +Shift: taşı" \
   "Super+sürükle"   "sol tık: pencereyi taşı  ·  sağ tık: boyutlandır" \
   "Super+L / Esc"   "kilitle / güç menüsü" \
   "F8 / Print"      "ekran görüntüsü: alan / pencere (Boşluk) / ekran (Tab), T gecikme; karta tıkla: düzenle  ·  Shift+Print: tüm ekran" \
   "F9"              "mikrofonu sustur / aç (barda kırmızı mikrofon)" \
-  "Super+Shift+V"   "pano geçmişi"
+  "Super+V"         "pano geçmişi (Ctrl+Alt+V de olur)"
 _zh_add " Klavye" "$c_green" \
   "Super+Space"     "Spotlight (Vicinae): uygulama, dosya, hesap makinesi" \
   "Ctrl+R"          "geçmişte ara" \

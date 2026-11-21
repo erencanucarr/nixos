@@ -144,7 +144,12 @@ local qs = "qs ipc call "
 -- opens the app drawer, where GNOME opened the overview.
 hl.bind(mod .. " + Super_L", hl.dsp.exec_cmd(qs .. "drawer toggle"), { release = true })
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("vicinae toggle"))
-hl.bind(mod .. " + SHIFT + V", hl.dsp.exec_cmd("vicinae cmd launch clipboard:history"))
+-- Clipboard history (Vicinae keeps it; passwords from password managers are
+-- skipped). Super+V as on Windows, Ctrl+Alt+V and Super+Shift+V as well.
+local clipboard = hl.dsp.exec_cmd("vicinae cmd launch clipboard:history")
+hl.bind(mod .. " + V", clipboard)
+hl.bind("CTRL + ALT + V", clipboard)
+hl.bind(mod .. " + SHIFT + V", clipboard)
 
 hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd(terminal))
 hl.bind(mod .. " + E", hl.dsp.exec_cmd(files))
@@ -153,7 +158,7 @@ hl.bind(mod .. " + B", hl.dsp.exec_cmd(browser))
 hl.bind(mod .. " + Q", hl.dsp.window.close())
 hl.bind("ALT + F4", hl.dsp.window.close())
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen())
-hl.bind(mod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mod .. " + SHIFT + F", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"))
 
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))

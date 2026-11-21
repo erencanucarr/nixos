@@ -33,7 +33,7 @@ Flake-based NixOS configuration with Home Manager.
     ├── desktop/
     │   ├── hyprland.nix      # links hyprland/ and quickshell/
     │   ├── hyprland/         # hyprland.lua, lock, idle, notifications
-    │   └── quickshell/       # the bar, menus, app drawer, screenshots
+    │   └── quickshell/       # the bar, menus, app drawer, screenshots, weather
     └── apps/
         ├── vicinae/          # launcher on Super+Space and its theme
         └── ghostty.nix       # terminal

@@ -7,7 +7,7 @@ import Quickshell.Io
 
 // What is open, and the idle inhibitor. Hyprland's keys reach it over IPC:
 //   qs ipc call drawer toggle    qs ipc call power toggle
-//   qs ipc call audio toggle
+//   qs ipc call audio toggle     qs ipc call weather toggle
 // The bar popups (Power, AudioMenu) open on the focused monitor's bar.
 Singleton {
     id: root
@@ -89,6 +89,17 @@ Singleton {
 
         function toggle(): void {
             root.togglePopup("power", root.focusedScreen());
+        }
+        function close(): void {
+            root.popup = "";
+        }
+    }
+
+    IpcHandler {
+        target: "weather"
+
+        function toggle(): void {
+            root.togglePopup("weather", root.focusedScreen());
         }
         function close(): void {
             root.popup = "";
