@@ -1,5 +1,5 @@
-# Vicinae: a Spotlight/Raycast-style launcher. Super+Space opens it
-# (apps, files, calculator, emoji, clipboard history).
+# Vicinae: a Spotlight/Raycast-style launcher (apps, files, calculator, emoji,
+# clipboard history). Super+Space opens it; the bind is in hyprland.lua.
 # The server runs in the background so the window opens instantly.
 { config, lib, pkgs, ... }:
 {
@@ -42,22 +42,5 @@
       KillMode = "process";
     };
     Install.WantedBy = [ "graphical-session.target" ];
-  };
-
-  dconf.settings = {
-    # Super+Space belongs to the launcher, as Cmd+Space does on macOS.
-    # GNOME uses it to switch keyboard layouts; there is only one (tr).
-    "org/gnome/desktop/wm/keybindings" = {
-      switch-input-source = [ ];
-      switch-input-source-backward = [ ];
-    };
-    "org/gnome/settings-daemon/plugins/media-keys".custom-keybindings = [
-      "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae/"
-    ];
-    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae" = {
-      name = "Vicinae";
-      command = "${pkgs.vicinae}/bin/vicinae toggle";
-      binding = "<Super>space";
-    };
   };
 }

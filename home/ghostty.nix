@@ -1,7 +1,8 @@
 # Ghostty, set up like xeome/dots (home/.config/ghostty, MIT): JetBrainsMono
 # at 10pt, 15px padding, and the Caffeine colours on graphite grounds, picked
-# by the desktop's light or dark scheme. Unlike there, the titlebar stays:
-# GNOME's window buttons live in it.
+# by the desktop's light or dark scheme, and no titlebar: Hyprland tiles, so
+# its window buttons do nothing. New tab and the menu are on the right-click
+# menu and Ctrl+Shift+T.
 { ... }:
 {
   programs.ghostty = {
@@ -19,6 +20,7 @@
 
       window-padding-x = 15;
       window-padding-y = 15;
+      gtk-titlebar = false;
 
       theme = "light:caffeine-light,dark:caffeine";
       shell-integration-features = "ssh-env";

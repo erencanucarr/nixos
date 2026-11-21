@@ -19,32 +19,40 @@ Flake-based NixOS configuration with Home Manager.
 ├── modules/
 │   ├── base.nix              # boot, locale, user, network, nix
 │   ├── nvidia.nix            # NVIDIA driver, CUDA, LTS kernel
-│   ├── gnome.nix             # GNOME, WhiteSur theme, extensions, fonts
+│   ├── desktop.nix           # login screen, GNOME apps, theme, fonts
 │   ├── discord.nix           # Discord through the ByeDPI proxy
-│   └── mouse.nix             # MX Master side button opens the overview
-├── pkgs/whitesur.nix         # the WhiteSur build both GNOME and Home Manager use
-├── home/can.nix              # GNOME settings (dconf) and GTK 4 theme files
+│   ├── mouse.nix             # MX Master side button opens the overview
+│   └── hyprland.nix          # Hyprland and its tools
+├── home/can.nix              # user apps and the GTK look (dconf)
 ├── home/vicinae.nix          # Spotlight-style launcher on Super+Space
 ├── home/ghostty.nix          # Ghostty terminal, graphite and Caffeine colours
-├── home/shell.nix            # links ~/.bashrc and the prompt to home/shell/
-└── home/shell/               # bashrc (aliases, zhelp) and starship.toml
+├── home/links.nix            # links files below into place, editable
+├── home/shell.nix            # ~/.bashrc and the prompt, from home/shell/
+├── home/shell/               # bashrc (aliases, zhelp) and starship.toml
+├── home/hyprland.nix         # Hyprland and Quickshell configs, linked
+├── home/hyprland/            # hyprland.lua, lock, idle, notifications
+└── home/quickshell/          # the bar, app drawer and power menu
 ```
 
 ## Desktop
 
-GNOME on Wayland with a macOS look:
+Hyprland on Wayland in the graphite palette from
+[xeome/dots](https://github.com/xeome/dots), logged into from GDM:
 
-- **Theme:** WhiteSur GTK and GNOME Shell theme, icons and cursors, dark.
-  libadwaita apps get it through `~/.config/gtk-4.0`.
-- **Dock:** Dash to Dock at the bottom, hiding when a window covers it, with
-  the app grid button first.
-- **Panels:** Blur my Shell blurs the top bar, the overview and the dock.
-- **Windows:** close, minimise and maximise on the left; new windows centred.
-- **Tray:** AppIndicator support for tray icons.
+- **Windows:** tiled, with a 1px translucent edge, brighter on the focused
+  window, and the others dimmed a little. Config: `home/hyprland/hyprland.lua`.
+- **Bar:** Quickshell, 30px, one per screen: the app drawer button and that
+  screen's workspaces, the clock, the tray, volume and power.
+- **App drawer:** Super alone, the mouse's side button or the bar's button.
+- **Launcher:** Vicinae on Super+Space.
+- **Lock and idle:** hyprlock, locked after 15 minutes, screens off after 20.
+- **Notifications:** mako.
+- **Theme:** dark libadwaita, adw-gtk3 for GTK 3 apps, WhiteSur icons and
+  cursors, Inter and JetBrains Mono.
 
-The settings are written to dconf on every switch. A change made in GNOME's
-own settings lasts until the next switch; to keep it, set it in
-`home/can.nix`.
+The Hyprland and Quickshell files are linked from this repo rather than
+copied into the store, so an edit applies with `hyprreload` or
+`hyprbarreload`, without a rebuild. `zhelp hypr` lists the keys.
 
 ## NVIDIA and CUDA
 

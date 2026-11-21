@@ -14,7 +14,7 @@
   hardware.nvidia = {
     open = true;
     modesetting.enable = true;
-    # Saves video memory across suspend, so GNOME comes back without a
+    # Saves video memory across suspend, so the desktop comes back without a
     # black or corrupted screen.
     powerManagement.enable = true;
     nvidiaSettings = true;

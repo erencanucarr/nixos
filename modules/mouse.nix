@@ -1,6 +1,6 @@
 # Logitech MX Master 3S: the button below the thumb wheel (BTN_FORWARD)
-# opens the GNOME overview. GNOME on Wayland cannot bind mouse buttons, so
-# keyd turns the button into a tap of the left Super key.
+# opens the app drawer. keyd turns the button into a tap of the left Super
+# key, which Hyprland binds to the drawer (home/hyprland/hyprland.lua).
 { ... }:
 {
   services.keyd = {

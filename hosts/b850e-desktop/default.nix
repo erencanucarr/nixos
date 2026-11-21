@@ -5,9 +5,10 @@
     ./hardware.nix
     ../../modules/base.nix
     ../../modules/nvidia.nix
-    ../../modules/gnome.nix
+    ../../modules/desktop.nix
     ../../modules/discord.nix
     ../../modules/mouse.nix
+    ../../modules/hyprland.nix
   ];
 
   networking.hostName = "b850e-desktop";

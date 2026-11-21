@@ -133,7 +133,7 @@ alias nixcd='cd "$NIXDIR"'
 alias nixhw='$EDITOR "$NIXDIR/hosts/$NIXHOST/hardware.nix"'
 alias nixhost='$EDITOR "$NIXDIR/hosts/$NIXHOST/default.nix"'
 alias nixbase='$EDITOR "$NIXDIR/modules/base.nix"'
-alias nixgnome='$EDITOR "$NIXDIR/modules/gnome.nix"'
+alias nixdesktop='$EDITOR "$NIXDIR/modules/desktop.nix"'
 alias nixhome='$EDITOR "$NIXDIR/home/can.nix"'
 alias nixmouse='$EDITOR "$NIXDIR/modules/mouse.nix"'
 alias nixflake='$EDITOR "$NIXDIR/flake.nix"'
@@ -201,6 +201,70 @@ _nixapply_prompt() {
   case "$a" in [hHnN]*) echo "Sonra uygulamak için: nixup" ;; *) nixup ;; esac
 }
 
+# ═══ Hyprland ═══════════════════════════════════════════════════════════
+# Ayar dosyaları ~/nixos/home/hyprland ve ~/nixos/home/quickshell içinde.
+alias hyprconf='$EDITOR ~/.config/hypr/hyprland.lua'
+alias hyprlockconf='$EDITOR ~/.config/hypr/hyprlock.conf'
+alias hypridleconf='$EDITOR ~/.config/hypr/hypridle.conf'
+alias hyprnotif='$EDITOR ~/.config/hypr/mako.conf'
+alias hyprbar='$EDITOR ~/.config/quickshell/Bar.qml'
+alias hyprtheme='$EDITOR ~/.config/quickshell/Theme.qml'
+alias hyprcd='cd ~/.config/hypr'
+alias hyprcheck='Hyprland --verify-config -c ~/.config/hypr/hyprland.lua 2>&1 | tail -3'
+alias hyprreload='hyprctl reload >/dev/null && ok "Hyprland ayarları yeniden yüklendi"'
+alias hyprmon='hyprctl monitors'
+alias hyprlog='less +G "$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log"'
+hyprbarreload() {  # barı (Quickshell) yeniden başlat
+  qs kill >/dev/null 2>&1
+  hyprctl dispatch 'hl.dsp.exec_cmd("qs")' >/dev/null && ok "bar yeniden başlatıldı"
+}
+alias barlog='qs log 2>/dev/null | tail -40'
+hyprsunset() {  # ekran sıcaklığı: hyprsunset 0-100 (0 kapalı, 100 en sarı) · boş: durum
+  # Warmth percent -> Kelvin: 0 = 6500K (identity), 100 = 2500K, linear.
+  # The value is saved and restored at login by ~/.config/hypr/bin/sunset.
+  local state="${XDG_STATE_HOME:-$HOME/.local/state}/hyprsunset" p k cur
+  if [ $# -eq 0 ]; then
+    p=$(cat "$state" 2>/dev/null) || p=95
+    if cur=$(hyprctl hyprsunset temperature 2>/dev/null); then
+      if [ "$p" = 0 ]; then ok "hyprsunset çalışıyor, filtre kapalı (0%)"
+      else ok "hyprsunset: %$p sıcaklık (${cur}K)"; fi
+    else
+      warn "hyprsunset çalışmıyor  ·  kayıtlı değer: %$p"
+    fi
+    echo "  Ayarlamak için: hyprsunset 0-100  (0 kapalı, 50 ≈ 4500K, 100 ≈ 2500K)"
+    return 0
+  fi
+  case "$1" in -h|--help|-*) command hyprsunset "$@"; return ;; esac
+  if ! [[ "$1" =~ ^[0-9]+$ ]] || [ $# -gt 1 ] || (( 10#$1 > 100 )); then
+    err "0 ile 100 arasında bir sayı yaz (ör. hyprsunset 50)"; return 1
+  fi
+  p=$((10#$1)) k=$((6500 - 40 * p))
+  mkdir -p "${state%/*}" && echo "$p" > "$state"
+  if hyprctl hyprsunset temperature >/dev/null 2>&1; then
+    # Running: change it live over hyprsunset's IPC socket.
+    if (( p == 0 )); then cur=$(hyprctl hyprsunset identity)
+    else cur=$(hyprctl hyprsunset temperature "$k"); fi
+    [ "$cur" = ok ] || { err "hyprsunset: $cur"; return 1; }
+  else
+    # Not running: let Hyprland start it detached with the saved value.
+    # (hyprctl sends anything containing "hyprsunset" to hyprsunset's own
+    # socket, so the dispatch must not mention it; bin/sunset is fine.)
+    hyprctl dispatch "hl.dsp.exec_cmd(\"$HOME/.config/hypr/bin/sunset\")" >/dev/null \
+      || { err "hyprsunset başlatılamadı"; return 1; }
+    local i=0
+    until hyprctl hyprsunset temperature >/dev/null 2>&1; do
+      (( ++i > 10 )) && { err "hyprsunset başlatılamadı (kurulu mu? nixup)"; return 1; }
+      sleep 0.2
+    done
+  fi
+  if (( p == 0 )); then ok "Ekran filtresi kapatıldı (0%)"
+  else ok "Ekran sıcaklığı: %$p (${k}K)"; fi
+}
+# Ayar uygulamaları
+alias audio='pavucontrol >/dev/null 2>&1 &'
+alias network='nm-connection-editor >/dev/null 2>&1 &'
+alias bluetooth='blueman-manager >/dev/null 2>&1 &'
+
 # ═══ Yardım ═════════════════════════════════════════════════════════════
 # zhelp her bölümü ayrı sayfada gösterir ve komut satırını hemen geri verir.
 # Satır boşken ← → sayfa değiştirir; yazmaya başlayınca oklar normal çalışır.
@@ -264,9 +328,9 @@ _zh_add " Nix paketler" "$c_blue" \
   "nixsearch <kel>" "paket ara" \
   "nixtry <paket>"  "kurmadan geçici olarak dene"
 _zh_add " Nix dosyalar" "$c_purple" \
-  "nixhome"         "home/can.nix — kullanıcı paketleri, GNOME ayarları" \
+  "nixhome"         "home/can.nix — kullanıcı paketleri, GTK görünümü" \
   "nixbase"         "modules/base.nix — sistem" \
-  "nixgnome"        "modules/gnome.nix — tema, eklentiler, fontlar" \
+  "nixdesktop"      "modules/desktop.nix — giriş ekranı, uygulamalar, fontlar" \
   "nixmouse"        "modules/mouse.nix — fare tuşu" \
   "nixhw"           "hardware.nix — donanım, diskler" \
   "nixhost"         "hosts/…/default.nix — açık modüller" \
@@ -281,6 +345,30 @@ _zh_add " Nix bakım" "$c_cyan" \
   "nixgit"          "~/nixos'ta neler değişti" \
   "nixsave \"msj\"" "değişiklikleri git'e kaydet (commit)" \
   "nixpush"         "kaydedilenleri GitHub'a gönder"
+_zh_add " Hyprland" "$c_cyan" \
+  "hyprconf"        "Hyprland ayarları (ekranlar, kısayollar, görünüm)" \
+  "hyprreload"      "ayarları yeniden yükle  ·  hyprcheck: hata var mı" \
+  "hyprbar"         "üst barı düzenle  ·  hyprtheme: renkler ve boyutlar" \
+  "hyprbarreload"   "barı yeniden başlat  ·  barlog: barın hataları" \
+  "hyprlockconf"    "kilit ekranı  ·  hypridleconf: boşta kilitleme süreleri" \
+  "hyprnotif"       "bildirimlerin görünümü (mako)" \
+  "hyprmon / hyprlog" "ekranlar / Hyprland günlüğü" \
+  "hyprsunset <0-100>" "ekran sıcaklığı (0 kapalı, 100 en sarı)  ·  boş: durum" \
+  "audio"           "ses ayarları (pavucontrol)" \
+  "network"         "ağ bağlantıları" \
+  "bluetooth"       "Bluetooth cihazları"
+_zh_add " Hyprland tuşlar" "$c_purple" \
+  "Super"           "uygulama çekmecesi (fare yan tuşu da)" \
+  "Super+Space"     "Vicinae (Spotlight)" \
+  "Super+Enter / E / B" "terminal / dosyalar / Firefox" \
+  "Super+Q"         "pencereyi kapat (Alt+F4 de olur)" \
+  "Super+F / V"     "tam ekran / yüzen pencere" \
+  "Super+Oklar"     "pencereler arası geç  ·  +Shift: pencereyi taşı" \
+  "Super+1…0"       "çalışma alanı (1-5 sol, 6-0 sağ ekran)  ·  +Shift: taşı" \
+  "Super+sürükle"   "sol tık: pencereyi taşı  ·  sağ tık: boyutlandır" \
+  "Super+L / Esc"   "kilitle / güç menüsü" \
+  "F8 / Print"      "alan seçip ekran görüntüsü  ·  Shift+Print: tüm ekran" \
+  "Super+Shift+V"   "pano geçmişi"
 _zh_add " Klavye" "$c_green" \
   "Super+Space"     "Spotlight (Vicinae): uygulama, dosya, hesap makinesi" \
   "Ctrl+R"          "geçmişte ara" \
