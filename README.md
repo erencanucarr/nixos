@@ -25,6 +25,7 @@ Flake-based NixOS configuration with Home Manager.
 ├── pkgs/whitesur.nix         # the WhiteSur build both GNOME and Home Manager use
 ├── home/can.nix              # GNOME settings (dconf) and GTK 4 theme files
 ├── home/vicinae.nix          # Spotlight-style launcher on Super+Space
+├── home/ghostty.nix          # Ghostty terminal, graphite and Caffeine colours
 ├── home/shell.nix            # links ~/.bashrc and the prompt to home/shell/
 └── home/shell/               # bashrc (aliases, zhelp) and starship.toml
 ```
