@@ -3,12 +3,12 @@
 {
   imports = [
     ./hardware.nix
-    ../../modules/base.nix
-    ../../modules/nvidia.nix
-    ../../modules/desktop.nix
-    ../../modules/discord.nix
-    ../../modules/mouse.nix
-    ../../modules/hyprland.nix
+    ../../modules/core/base.nix
+    ../../modules/core/nvidia.nix
+    ../../modules/desktop/desktop.nix
+    ../../modules/apps/discord.nix
+    ../../modules/desktop/mouse.nix
+    ../../modules/desktop/hyprland.nix
   ];
 
   networking.hostName = "b850e-desktop";

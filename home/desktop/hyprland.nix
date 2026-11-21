@@ -3,8 +3,8 @@
 { ... }:
 {
   repoLinks = {
-    ".config/hypr" = "hyprland";
-    ".config/quickshell" = "quickshell";
-    ".config/mako/config" = "hyprland/mako.conf";
+    ".config/hypr" = "desktop/hyprland";
+    ".config/quickshell" = "desktop/quickshell";
+    ".config/mako/config" = "desktop/hyprland/mako.conf";
   };
 }

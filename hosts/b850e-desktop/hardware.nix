@@ -5,7 +5,8 @@
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
   # The installer also lists xhci_pci_prom21, which the LTS kernel this host
-  # runs (modules/nvidia.nix) does not have, so the initrd fails to build with it.
+  # runs (modules/core/nvidia.nix) does not have, so the initrd fails to
+  # build with it.
   boot.initrd.availableKernelModules = [ "nvme" "ahci" "xhci_pci" "usb_storage" "usbhid" "sd_mod" ];
   boot.kernelModules = [ "kvm-amd" ];
 

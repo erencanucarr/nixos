@@ -1,4 +1,4 @@
-# What the desktop needs besides Hyprland (modules/hyprland.nix): the login
+# What the desktop needs besides Hyprland (hyprland.nix next to it): the login
 # screen, the pieces GNOME used to bring along, a few GNOME apps, and the look
 # GTK apps read (adw-gtk3, WhiteSur icons and cursors, Inter and JetBrains
 # Mono). The per-user settings are in home/can.nix.

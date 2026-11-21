@@ -132,10 +132,10 @@ alias glog='git log --oneline --graph --decorate -20'
 alias nixcd='cd "$NIXDIR"'
 alias nixhw='$EDITOR "$NIXDIR/hosts/$NIXHOST/hardware.nix"'
 alias nixhost='$EDITOR "$NIXDIR/hosts/$NIXHOST/default.nix"'
-alias nixbase='$EDITOR "$NIXDIR/modules/base.nix"'
-alias nixdesktop='$EDITOR "$NIXDIR/modules/desktop.nix"'
+alias nixbase='$EDITOR "$NIXDIR/modules/core/base.nix"'
+alias nixdesktop='$EDITOR "$NIXDIR/modules/desktop/desktop.nix"'
 alias nixhome='$EDITOR "$NIXDIR/home/can.nix"'
-alias nixmouse='$EDITOR "$NIXDIR/modules/mouse.nix"'
+alias nixmouse='$EDITOR "$NIXDIR/modules/desktop/mouse.nix"'
 alias nixflake='$EDITOR "$NIXDIR/flake.nix"'
 
 # ═══ NixOS: uygula / güncelle / temizle ═════════════════════════════════
@@ -202,7 +202,7 @@ _nixapply_prompt() {
 }
 
 # ═══ Hyprland ═══════════════════════════════════════════════════════════
-# Ayar dosyaları ~/nixos/home/hyprland ve ~/nixos/home/quickshell içinde.
+# Ayar dosyaları ~/nixos/home/desktop/hyprland ve ~/nixos/home/desktop/quickshell içinde.
 alias hyprconf='$EDITOR ~/.config/hypr/hyprland.lua'
 alias hyprlockconf='$EDITOR ~/.config/hypr/hyprlock.conf'
 alias hypridleconf='$EDITOR ~/.config/hypr/hypridle.conf'
@@ -329,9 +329,9 @@ _zh_add " Nix paketler" "$c_blue" \
   "nixtry <paket>"  "kurmadan geçici olarak dene"
 _zh_add " Nix dosyalar" "$c_purple" \
   "nixhome"         "home/can.nix — kullanıcı paketleri, GTK görünümü" \
-  "nixbase"         "modules/base.nix — sistem" \
-  "nixdesktop"      "modules/desktop.nix — giriş ekranı, uygulamalar, fontlar" \
-  "nixmouse"        "modules/mouse.nix — fare tuşu" \
+  "nixbase"         "modules/core/base.nix — sistem" \
+  "nixdesktop"      "modules/desktop/desktop.nix — giriş ekranı, uygulamalar, fontlar" \
+  "nixmouse"        "modules/desktop/mouse.nix — fare tuşu" \
   "nixhw"           "hardware.nix — donanım, diskler" \
   "nixhost"         "hosts/…/default.nix — açık modüller" \
   "nixflake"        "flake.nix" \

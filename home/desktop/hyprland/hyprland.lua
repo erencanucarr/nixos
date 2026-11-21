@@ -1,4 +1,4 @@
--- Hyprland, linked from ~/nixos/home/hyprland/hyprland.lua.
+-- Hyprland, linked from ~/nixos/home/desktop/hyprland/hyprland.lua.
 -- Düzenle: hyprconf    Uygula: hyprreload    Kısayollar: zhelp hypr
 --
 -- Based on xeome/dots (MIT): graphite edges, its animation curve and its

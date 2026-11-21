@@ -1,5 +1,5 @@
 # The shell setup: ~/.bashrc (aliases, zhelp) and the starship prompt, linked
-# from home/shell/ (see links.nix).
+# from this folder (see ../links.nix).
 { ... }:
 {
   repoLinks = {

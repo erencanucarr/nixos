@@ -19,9 +19,9 @@ import "Calc.mjs" as Calc
 // What is drawn over the frame is fixed black and white, not themed, because
 // it sits on a screenshot.
 //
-// The frozen frame is cut with vips. Until vips is installed (modules/
-// hyprland.nix) the cut falls back to grim on the live screen once the
-// overlay is gone.
+// The frozen frame is cut with vips. Until vips is installed
+// (modules/desktop/hyprland.nix) the cut falls back to grim on the live
+// screen once the overlay is gone.
 Scope {
     id: root
 

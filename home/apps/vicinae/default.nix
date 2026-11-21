@@ -6,7 +6,7 @@
   home.packages = [ pkgs.vicinae ];
 
   # Graphite, xeome's near-monochrome palette (see the file's header).
-  xdg.dataFile."vicinae/themes/graphite.toml".source = ./vicinae-graphite.toml;
+  xdg.dataFile."vicinae/themes/graphite.toml".source = ./graphite.toml;
 
   # The managed half of the config. settings.json is vicinae's own file, which
   # its settings window rewrites, so it only gets an import of this one.

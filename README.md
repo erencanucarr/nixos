@@ -16,23 +16,27 @@ Flake-based NixOS configuration with Home Manager.
 ├── hosts/<host>/
 │   ├── default.nix           # which modules the host uses, its hostname
 │   └── hardware.nix          # kernel modules and disk UUIDs
-├── modules/
-│   ├── base.nix              # boot, locale, user, network, nix
-│   ├── nvidia.nix            # NVIDIA driver, CUDA, LTS kernel
-│   ├── desktop.nix           # login screen, GNOME apps, theme, fonts
-│   ├── hyprland.nix          # Hyprland and its tools
-│   ├── discord.nix           # Discord through the ByeDPI proxy
-│   └── mouse.nix             # MX Master side button opens the app drawer
-└── home/
+├── modules/                  # the system (NixOS)
+│   ├── core/
+│   │   ├── base.nix          # boot, locale, user, network, nix
+│   │   └── nvidia.nix        # NVIDIA driver, CUDA, LTS kernel
+│   ├── desktop/
+│   │   ├── desktop.nix       # login screen, GNOME apps, theme, fonts
+│   │   ├── hyprland.nix      # Hyprland and its tools
+│   │   └── mouse.nix         # MX Master side button opens the app drawer
+│   └── apps/
+│       └── discord.nix       # Discord through the ByeDPI proxy
+└── home/                     # the user (Home Manager)
     ├── can.nix               # user apps and the GTK look
     ├── links.nix             # links the folders below into place, editable
-    ├── shell.nix             # ~/.bashrc and the prompt
-    ├── shell/                # bashrc (aliases, zhelp) and starship.toml
-    ├── hyprland.nix          # Hyprland and Quickshell configs
-    ├── hyprland/             # hyprland.lua, lock, idle, notifications
-    ├── quickshell/           # the bar, menus, app drawer, screenshots
-    ├── vicinae.nix           # launcher on Super+Space, vicinae-graphite.toml its theme
-    └── ghostty.nix           # terminal
+    ├── shell/                # ~/.bashrc (aliases, zhelp) and the prompt
+    ├── desktop/
+    │   ├── hyprland.nix      # links hyprland/ and quickshell/
+    │   ├── hyprland/         # hyprland.lua, lock, idle, notifications
+    │   └── quickshell/       # the bar, menus, app drawer, screenshots
+    └── apps/
+        ├── vicinae/          # launcher on Super+Space and its theme
+        └── ghostty.nix       # terminal
 ```
 
 ## Thanks

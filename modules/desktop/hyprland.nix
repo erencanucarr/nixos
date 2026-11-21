@@ -1,6 +1,7 @@
-# Hyprland, the desktop (modules/desktop.nix has the login screen and the rest).
-# Its config, the Quickshell bar, the lock screen and notifications live in
-# home/hyprland/ and home/quickshell/, linked into place by home/hyprland.nix.
+# Hyprland, the desktop (desktop.nix next to it has the login screen and the
+# rest). Its config, the Quickshell bar, the lock screen and notifications
+# live in home/desktop/hyprland/ and home/desktop/quickshell/, linked into
+# place by home/desktop/hyprland.nix.
 #
 # hypridle, mako and the polkit agent are started by Hyprland itself
 # (hyprland.lua), not as user services: those would also start on the login
@@ -35,7 +36,7 @@ in
     playerctl # media keys
     grim # screenshots
     slurp # pick the screenshot's area
-    vips # Shot cuts the frozen frame with it (home/quickshell/Shot.qml)
+    vips # Shot cuts the frozen frame with it (home/desktop/quickshell/Shot.qml)
     jq
     xdg-user-dirs
   ];

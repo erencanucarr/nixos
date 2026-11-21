@@ -15,11 +15,17 @@ let
   };
 in
 {
-  imports = [ ./links.nix ./shell.nix ./hyprland.nix ./vicinae.nix ./ghostty.nix ];
+  imports = [
+    ./links.nix
+    ./shell
+    ./desktop/hyprland.nix
+    ./apps/vicinae
+    ./apps/ghostty.nix
+  ];
 
   home.stateVersion = "26.05";
 
-  # Apps for this user only. System-wide tools are in modules/base.nix.
+  # Apps for this user only. System-wide tools are in modules/core/base.nix.
   # Terminal tools used by ~/.bashrc: eza (ls), bat (cat), fzf (fuzzy search),
   # zoxide (smart cd), fd (find), starship (prompt), wl-clipboard (copy/paste),
   # duf (disks), ncdu (folder sizes), trash-cli (safe delete), tealdeer (tldr).
@@ -49,7 +55,7 @@ in
       font-name = "Inter 11";
       document-font-name = "Inter 11";
       monospace-font-name = "JetBrainsMono Nerd Font Medium 10";
-      # The same rendering as fontconfig in modules/desktop.nix.
+      # The same rendering as fontconfig in modules/desktop/desktop.nix.
       font-antialiasing = "grayscale";
       font-hinting = "slight";
     };

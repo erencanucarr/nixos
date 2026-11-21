@@ -1,5 +1,5 @@
 //@ pragma UseQApplication
-//! The Hyprland shell, linked from ~/nixos/home/quickshell. Start: qs
+//! The Hyprland shell, linked from ~/nixos/home/desktop/quickshell. Start: qs
 //! Düzenle: hyprbar    Yeniden başlat: hyprbarreload
 //
 // A thin bar on every screen (with xeome's audio and power menus), an app
