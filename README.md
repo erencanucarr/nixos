@@ -19,7 +19,8 @@ Flake-based NixOS configuration with Home Manager.
 ├── modules/
 │   ├── base.nix              # boot, locale, user, network, nix
 │   ├── nvidia.nix            # NVIDIA driver, CUDA, LTS kernel
-│   └── gnome.nix             # GNOME, WhiteSur theme, extensions, fonts
+│   ├── gnome.nix             # GNOME, WhiteSur theme, extensions, fonts
+│   └── discord.nix           # Discord through the ByeDPI proxy
 ├── pkgs/whitesur.nix         # the WhiteSur build both GNOME and Home Manager use
 └── home/can.nix              # GNOME settings (dconf) and GTK 4 theme files
 ```
@@ -51,6 +52,20 @@ builds many packages from source.
 ```bash
 nvidia-smi
 nvcc --version
+```
+
+## Discord
+
+Discord is blocked in Turkey by DPI: DNS answers correctly, but the ISP resets
+any TLS connection whose SNI names Discord. `modules/discord.nix` runs ByeDPI
+as a SOCKS proxy on `127.0.0.1:1080` and starts Discord with
+`--proxy-server` pointing at it. Only Discord uses the proxy.
+
+If Discord stops connecting, check the proxy first:
+
+```bash
+systemctl status byedpi
+curl -sS -o /dev/null -w "%{http_code}\n" --socks5-hostname 127.0.0.1:1080 https://discord.com
 ```
 
 ## Apply
