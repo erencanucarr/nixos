@@ -35,6 +35,8 @@ let
   };
 in
 {
+  imports = [ ./vicinae.nix ];
+
   home.stateVersion = "26.05";
 
   # Apps for this user only. System-wide tools are in modules/base.nix.
