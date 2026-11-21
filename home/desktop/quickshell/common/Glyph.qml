@@ -32,6 +32,12 @@ Singleton {
     readonly property string sleepAllowed: String.fromCodePoint(0xF0FAA)
     readonly property string chevronLeft: String.fromCodePoint(0xF0141)
     readonly property string chevronRight: String.fromCodePoint(0xF0142)
+    // The network menu.
+    readonly property string pencil: String.fromCodePoint(0xF03EB)
+    readonly property string copy: String.fromCodePoint(0xF018F)
+    readonly property string down: String.fromCodePoint(0xF0045)
+    readonly property string up: String.fromCodePoint(0xF005D)
+    readonly property string padlock: String.fromCodePoint(0xF033E)
     readonly property string wired: String.fromCodePoint(0xF0317)
     readonly property string wiredOff: String.fromCodePoint(0xF0319)
     readonly property string wifiOff: String.fromCodePoint(0xF092E)

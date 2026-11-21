@@ -19,7 +19,8 @@ Flake-based NixOS configuration with Home Manager.
 ├── modules/                  # the system (NixOS)
 │   ├── core/
 │   │   ├── base.nix          # boot, locale, user, network, nix
-│   │   └── nvidia.nix        # NVIDIA driver, CUDA, LTS kernel
+│   │   ├── nvidia.nix        # NVIDIA driver, CUDA, LTS kernel
+│   │   └── audio.nix         # PipeWire, realtime audio, steady USB headsets
 │   ├── desktop/
 │   │   ├── desktop.nix       # login screen, GNOME apps, theme, fonts
 │   │   ├── hyprland.nix      # Hyprland and its tools
@@ -37,6 +38,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── common/       # theme, glyphs, shared cards and menus
     │       ├── bar/          # the bar and its audio and power menus
     │       ├── weather/      # Ankara's weather beside the clock
+    │       ├── net/          # network menu: traffic, addresses, DNS, Wi-Fi, IP settings
     │       ├── drawer/       # app drawer
     │       ├── osd/          # volume and mic pop-ups
     │       └── shot/         # screenshots and their editor

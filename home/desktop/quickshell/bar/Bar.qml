@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Services.UPower
 import qs.weather
 import qs.common
+import qs.net
 
 // A 30px top bar on every screen, its modules laid out like xeome's in small
 // graphite cards: apps and workspaces on the left, the clock and Ankara's
@@ -96,8 +97,9 @@ PanelWindow {
             Row {
                 id: strip
 
-                Net {
+                NetButton {
                     bordered: false
+                    screenName: root.modelData.name
                     topLeftRadius: Theme.radius
                     bottomLeftRadius: Theme.radius
                 }
