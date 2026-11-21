@@ -20,7 +20,8 @@ Flake-based NixOS configuration with Home Manager.
 │   ├── base.nix              # boot, locale, user, network, nix
 │   ├── nvidia.nix            # NVIDIA driver, CUDA, LTS kernel
 │   ├── gnome.nix             # GNOME, WhiteSur theme, extensions, fonts
-│   └── discord.nix           # Discord through the ByeDPI proxy
+│   ├── discord.nix           # Discord through the ByeDPI proxy
+│   └── mouse.nix             # MX Master side button opens the overview
 ├── pkgs/whitesur.nix         # the WhiteSur build both GNOME and Home Manager use
 └── home/can.nix              # GNOME settings (dconf) and GTK 4 theme files
 ```

@@ -7,6 +7,7 @@
     ../../modules/nvidia.nix
     ../../modules/gnome.nix
     ../../modules/discord.nix
+    ../../modules/mouse.nix
   ];
 
   networking.hostName = "b850e-desktop";
