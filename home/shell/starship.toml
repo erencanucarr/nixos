@@ -1,0 +1,57 @@
+# Terminal satırının görünümü (~/.config/starship.toml, ~/nixos/home/shell/ içinden bağlı). Düzenle: zprompt
+# Belgeler: https://starship.rs/config/
+
+add_newline = true
+format = """
+[](fg:#7aa2f7)$os$username[](bg:#bb9af7 fg:#7aa2f7)$directory[](fg:#bb9af7 bg:#2ac3de)$git_branch$git_status[](fg:#2ac3de bg:#414868)$nix_shell$cmd_duration[](fg:#414868)$fill$time
+$character"""
+
+[os]
+disabled = false
+style = "bg:#7aa2f7 fg:#1a1b26"
+format = "[$symbol]($style)"
+symbols.NixOS = " "
+
+[username]
+show_always = true
+style_user = "bg:#7aa2f7 fg:#1a1b26 bold"
+format = "[$user ]($style)"
+
+[directory]
+style = "bg:#bb9af7 fg:#1a1b26 bold"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+home_symbol = "  ~"
+
+[git_branch]
+symbol = ""
+style = "bg:#2ac3de fg:#1a1b26"
+format = "[ $symbol $branch ]($style)"
+
+[git_status]
+style = "bg:#2ac3de fg:#1a1b26 bold"
+format = "[$all_status$ahead_behind ]($style)"
+
+[nix_shell]
+symbol = ""
+style = "bg:#414868 fg:#7dcfff"
+format = "[ $symbol $name ]($style)"
+
+[cmd_duration]
+min_time = 2000
+style = "bg:#414868 fg:#e0af68"
+format = "[ 󱦟 $duration ]($style)"
+
+[fill]
+symbol = " "
+
+[time]
+disabled = false
+time_format = "%H:%M"
+style = "fg:#565f89"
+format = "[ $time]($style)"
+
+[character]
+success_symbol = "[❯](bold #9ece6a)"
+error_symbol = "[❯](bold #f7768e)"

@@ -35,7 +35,7 @@ let
   };
 in
 {
-  imports = [ ./vicinae.nix ];
+  imports = [ ./shell.nix ./vicinae.nix ];
 
   home.stateVersion = "26.05";
 

@@ -1,0 +1,362 @@
+# ~/.bashrc, linked from ~/nixos/home/shell/bashrc.   Düzenle: zedit   Komutları gör: zhelp
+
+[[ $- != *i* ]] && return   # sadece etkileşimli terminalde çalış
+
+NIXDIR="$HOME/nixos"
+NIXHOST="b850e-desktop"
+export EDITOR="${EDITOR:-nano}"
+has() { command -v "$1" >/dev/null 2>&1; }
+
+# Renkler (zhelp ve mesajlar için)
+c_r=$'\e[0m' c_b=$'\e[1m' c_dim=$'\e[2m'
+c_blue=$'\e[38;2;122;162;247m' c_purple=$'\e[38;2;187;154;247m'
+c_cyan=$'\e[38;2;42;195;222m'  c_green=$'\e[38;2;158;206;106m'
+c_yellow=$'\e[38;2;224;175;104m' c_red=$'\e[38;2;247;118;142m'
+ok()   { printf '%s✔%s %s\n' "$c_green" "$c_r" "$*"; }
+warn() { printf '%s•%s %s\n' "$c_yellow" "$c_r" "$*"; }
+err()  { printf '%s✘%s %s\n' "$c_red" "$c_r" "$*"; }
+
+# ═══ Geçmiş (history) ═══════════════════════════════════════════════════
+HISTSIZE=50000
+HISTFILESIZE=100000
+HISTCONTROL=ignoreboth:erasedups      # tekrarları ve boşlukla başlayanları kaydetme
+HISTTIMEFORMAT='%d.%m %H:%M  '
+shopt -s histappend checkwinsize autocd cdspell globstar
+PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+
+# ═══ .bashrc ════════════════════════════════════════════════════════════
+alias zreload='source ~/.bashrc && ok ".bashrc yeniden yüklendi"'
+alias zedit='$EDITOR ~/.bashrc && source ~/.bashrc && ok "kaydedildi ve yüklendi"'
+alias zprompt='$EDITOR ~/.config/starship.toml'
+# Not: gzip'in kendi zcat'i hâlâ "command zcat dosya.gz" ile çalışır.
+if has bat; then alias zcat='bat -l bash ~/.bashrc'; else alias zcat='cat ~/.bashrc'; fi
+
+# ═══ Gezinme ════════════════════════════════════════════════════════════
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias -- -='cd -'
+mkcd() { mkdir -p -- "$1" && cd -- "$1"; }
+
+if has eza; then
+  alias ls='eza --icons=auto --group-directories-first'
+  alias ll='eza -l --icons=auto --group-directories-first --git --time-style=+"%d.%m.%Y %H:%M"'
+  alias la='ll -a'
+  alias lt='eza --tree --level=2 --icons=auto --group-directories-first'
+else
+  alias ls='ls --color=auto --group-directories-first'
+  alias ll='ls -lh'
+  alias la='ls -lhA'
+fi
+
+# ═══ Dosyalar ═══════════════════════════════════════════════════════════
+has bat && alias cat='bat --paging=never --style=plain'
+alias cp='cp -iv'
+alias mv='mv -iv'
+alias mkdir='mkdir -pv'
+alias grep='grep --color=auto'
+
+# Güvenli silme: çöp kutusuna atar, geri alınabilir
+if has trash-put; then
+  alias del='trash-put'
+  alias trashls='trash-list'
+  alias restore='trash-restore'
+  alias trashempty='trash-empty'
+fi
+
+backup() {  # backup dosya → dosya.2026-11-21_1530.bak
+  [ -z "$1" ] && { echo "Kullanım: backup <dosya>"; return 1; }
+  cp -a -- "$1" "$1.$(date +%F_%H%M).bak" && ok "$1.$(date +%F_%H%M).bak"
+}
+
+extract() {  # her türlü arşivi aç
+  [ -f "$1" ] || { echo "Kullanım: extract <arşiv>"; return 1; }
+  case "$1" in
+    *.tar.gz|*.tgz)   tar xzf "$1" ;;
+    *.tar.xz|*.txz)   tar xJf "$1" ;;
+    *.tar.bz2|*.tbz2) tar xjf "$1" ;;
+    *.tar.zst)        tar --zstd -xf "$1" ;;
+    *.tar)            tar xf "$1" ;;
+    *.zip)            unzip "$1" ;;
+    *.gz)             gunzip "$1" ;;
+    *.xz)             unxz "$1" ;;
+    *.bz2)            bunzip2 "$1" ;;
+    *.7z)             nix run nixpkgs#p7zip -- x "$1" ;;
+    *.rar)            nix run nixpkgs#unrar -- x "$1" ;;
+    *) err "Bu arşiv türünü tanımıyorum: $1"; return 1 ;;
+  esac
+}
+
+# Arama
+has fd && alias findf='fd'
+alias search='rg --smart-case'
+ff() {  # dosya bul (önizlemeli) ve düzenleyicide aç
+  local f
+  f=$(fd --type f --hidden --exclude .git 2>/dev/null | fzf --preview 'bat --color=always --style=numbers {} 2>/dev/null' --height=80%) && $EDITOR "$f"
+}
+
+# ═══ Pano (kopyala / yapıştır) ══════════════════════════════════════════
+if has wl-copy; then
+  alias copy='wl-copy'            # echo merhaba | copy   ya da   copy < dosya
+  alias paste='wl-paste'
+  cpath() { realpath "${1:-.}" | tr -d '\n' | wl-copy && ok "yol kopyalandı"; }
+fi
+
+# ═══ Sistem ═════════════════════════════════════════════════════════════
+alias sysinfo='fastfetch'
+alias top='btop'
+has duf && alias disks='duf --only local'
+has ncdu && alias sizes='ncdu --color dark'
+alias ports='ss -tulpn'
+alias myip='curl -s https://ifconfig.me; echo'
+alias localip="ip -4 -br addr | awk '\$2==\"UP\"{print \$1, \$3}'"
+alias weather='curl -s "wttr.in/?0&lang=tr"'
+alias c='clear'
+alias h='history | tail -30'
+alias path='tr ":" "\n" <<< "$PATH"'
+fkill() {  # çalışan programı listeden seç ve kapat
+  local pid
+  pid=$(ps -u "$USER" -o pid=,comm=,%cpu=,%mem= --sort=-%cpu | fzf --height=60% --header='Kapatılacak programı seç' | awk '{print $1}') && kill "$pid" && ok "kapatıldı ($pid)"
+}
+
+# ═══ Git ════════════════════════════════════════════════════════════════
+alias gs='git status -sb'
+alias ga='git add'
+alias gc='git commit -m'
+alias gp='git push'
+alias gl='git pull'
+alias gd='git diff'
+alias glog='git log --oneline --graph --decorate -20'
+
+# ═══ NixOS: dosyaları düzenle ═══════════════════════════════════════════
+alias nixcd='cd "$NIXDIR"'
+alias nixhw='$EDITOR "$NIXDIR/hosts/$NIXHOST/hardware.nix"'
+alias nixhost='$EDITOR "$NIXDIR/hosts/$NIXHOST/default.nix"'
+alias nixbase='$EDITOR "$NIXDIR/modules/base.nix"'
+alias nixgnome='$EDITOR "$NIXDIR/modules/gnome.nix"'
+alias nixhome='$EDITOR "$NIXDIR/home/can.nix"'
+alias nixmouse='$EDITOR "$NIXDIR/modules/mouse.nix"'
+alias nixflake='$EDITOR "$NIXDIR/flake.nix"'
+
+# ═══ NixOS: uygula / güncelle / temizle ═════════════════════════════════
+alias nixup='sudo nixos-rebuild switch --flake "$NIXDIR#$NIXHOST"'
+alias nixtest='nix build --no-link "$NIXDIR#nixosConfigurations.$NIXHOST.config.system.build.toplevel" && ok "yapılandırma hatasız"'
+alias nixupdate='nix flake update --flake "$NIXDIR" && nixup'
+alias nixback='sudo nixos-rebuild switch --rollback'
+alias nixclean='sudo nix-collect-garbage --delete-older-than 14d && nix-collect-garbage --delete-older-than 14d'
+alias nixgit='git -C "$NIXDIR" status --short'
+nixtry() { [ -z "$1" ] && { echo "Kullanım: nixtry <paket>"; return 1; }; local a=(); for p in "$@"; do a+=("nixpkgs#$p"); done; warn "geçici kabuk, çıkmak için: exit"; nix shell "${a[@]}"; }
+
+# ═══ NixOS: paketler (home/can.nix içindeki home.packages listesi) ══════
+_nixpkgs_file="$NIXDIR/home/can.nix"
+
+nixls() {
+  awk '/home\.packages = with pkgs; \[/{f=1;next} f&&/^  \];/{exit} f{gsub(/^ +/,"");print}' "$_nixpkgs_file"
+}
+
+nixsearch() {
+  [ -z "$1" ] && { echo "Kullanım: nixsearch <kelime>"; return 1; }
+  nix search nixpkgs "$@"
+}
+
+nixadd() {
+  [ -z "$1" ] && { echo "Kullanım: nixadd <paket> [paket...]"; return 1; }
+  local p added=0
+  for p in "$@"; do
+    if nixls | grep -qx "$p"; then
+      warn "$p zaten ekli"; continue
+    fi
+    printf '%s…%s %s kontrol ediliyor\n' "$c_dim" "$c_r" "$p"
+    if ! nix eval --raw "$NIXDIR#nixosConfigurations.$NIXHOST.pkgs.$p.name" >/dev/null 2>&1; then
+      err "$p diye bir paket yok (aramak için: nixsearch $p)"; continue
+    fi
+    sed -i "/home\.packages = with pkgs; \[/,/^  \];/ s/^  \];/    $p\n  ];/" "$_nixpkgs_file"
+    ok "$p eklendi"; added=1
+  done
+  [ "$added" = 1 ] && _nixapply_prompt
+}
+
+nixrm() {
+  [ -z "$1" ] && { echo "Kullanım: nixrm <paket> [paket...]"; return 1; }
+  local p removed=0
+  for p in "$@"; do
+    if ! nixls | grep -qx "$p"; then
+      warn "$p listede yok (listeyi gör: nixls)"; continue
+    fi
+    sed -i "/home\.packages = with pkgs; \[/,/^  \];/ {/^    $p\$/d}" "$_nixpkgs_file"
+    ok "$p çıkarıldı"; removed=1
+  done
+  [ "$removed" = 1 ] && _nixapply_prompt
+}
+
+nixsave() {
+  local msg="${*:-Update configuration}"
+  git -C "$NIXDIR" add -A && git -C "$NIXDIR" commit -m "$msg"
+}
+
+_nixapply_prompt() {
+  local a
+  read -r -p "Şimdi uygulansın mı? [E/h] " a
+  case "$a" in [hHnN]*) echo "Sonra uygulamak için: nixup" ;; *) nixup ;; esac
+}
+
+# ═══ Yardım ═════════════════════════════════════════════════════════════
+# zhelp her bölümü ayrı sayfada gösterir ve komut satırını hemen geri verir.
+# Satır boşken ← → sayfa değiştirir; yazmaya başlayınca oklar normal çalışır.
+_ZH_T=() _ZH_C=() _ZH_B=()
+_zh_add() {  # _zh_add "başlık" "renk" komut açıklama komut açıklama ...
+  _ZH_T+=("$1"); _ZH_C+=("$2"); shift 2
+  local b=""; while [ $# -gt 0 ]; do b+="$1"$'\t'"$2"$'\n'; shift 2; done
+  _ZH_B+=("$b")
+}
+
+_zh_add " .bashrc" "$c_purple" \
+  "zhelp"           "bu yardım  ·  zhelp <kelime> ile tümünde ara" \
+  "zedit"           ".bashrc'yi düzenle (kaydedince otomatik yüklenir)" \
+  "zreload"         ".bashrc'yi yeniden yükle" \
+  "zcat"            ".bashrc'yi renkli göster" \
+  "zprompt"         "terminal satırının görünümünü düzenle"
+_zh_add " Gezinme" "$c_blue" \
+  "z <isim>"        "akıllı cd: z indir → ~/İndirilenler'e atlar" \
+  "zi"              "gidilen klasörlerden seçerek atla" \
+  ".. / ... / -"    "üst klasör / iki üst / önceki klasör" \
+  "mkcd <klasör>"   "klasör oluştur ve içine gir" \
+  "ls / ll / la"    "ikonlu liste / detaylı / gizliler dahil" \
+  "lt"              "klasör ağacı"
+_zh_add " Dosyalar" "$c_cyan" \
+  "ff"              "dosya ara (önizlemeli), seçince düzenleyicide aç" \
+  "findf <isim>"    "dosya adına göre bul" \
+  "search <metin>"  "dosyaların içinde metin ara" \
+  "cat <dosya>"     "renkli dosya gösterimi" \
+  "del <dosya>"     "çöpe at (geri alınabilir)" \
+  "restore"         "çöpten geri getir" \
+  "trashls"         "çöpü listele  ·  trashempty: çöpü boşalt" \
+  "backup <dosya>"  "tarihli yedek kopya al" \
+  "extract <arşiv>" "zip, tar.gz, 7z, rar… hepsini aç"
+_zh_add " Pano" "$c_green" \
+  "… | copy"        "çıktıyı panoya kopyala (ör. ls | copy)" \
+  "copy < dosya"    "dosyanın içeriğini kopyala" \
+  "paste"           "panodakini yazdır" \
+  "cpath [dosya]"   "dosyanın tam yolunu kopyala"
+_zh_add " Sistem" "$c_yellow" \
+  "sysinfo"         "sistem özeti" \
+  "top"             "kaynak kullanımı (btop)" \
+  "disks"           "disk doluluk" \
+  "sizes"           "hangi klasör ne kadar yer kaplıyor" \
+  "fkill"           "programı listeden seçip kapat" \
+  "myip / localip"  "dış IP / yerel IP" \
+  "ports"           "açık portlar" \
+  "weather"         "hava durumu" \
+  "tldr <komut>"    "komutun kısa kullanım örnekleri" \
+  "c / h"           "ekranı temizle / son komutlar"
+_zh_add " Git" "$c_red" \
+  "gs"              "durum" \
+  "gd"              "farklar" \
+  "glog"            "geçmiş (grafikli)" \
+  "ga <dosya>"      "commit'e ekle" \
+  "gc \"mesaj\""    "commit" \
+  "gp / gl"         "push / pull"
+_zh_add " Nix paketler" "$c_blue" \
+  "nixadd <paket>"  "paket ekle (kontrol eder, uygulamayı sorar)" \
+  "nixrm <paket>"   "paket çıkar" \
+  "nixls"           "ekli paketler" \
+  "nixsearch <kel>" "paket ara" \
+  "nixtry <paket>"  "kurmadan geçici olarak dene"
+_zh_add " Nix dosyalar" "$c_purple" \
+  "nixhome"         "home/can.nix — kullanıcı paketleri, GNOME ayarları" \
+  "nixbase"         "modules/base.nix — sistem" \
+  "nixgnome"        "modules/gnome.nix — tema, eklentiler, fontlar" \
+  "nixmouse"        "modules/mouse.nix — fare tuşu" \
+  "nixhw"           "hardware.nix — donanım, diskler" \
+  "nixhost"         "hosts/…/default.nix — açık modüller" \
+  "nixflake"        "flake.nix" \
+  "nixcd"           "~/nixos klasörüne git"
+_zh_add " Nix bakım" "$c_cyan" \
+  "nixtest"         "sadece derle, hata var mı bak" \
+  "nixup"           "değişiklikleri uygula" \
+  "nixupdate"       "her şeyi güncelle ve uygula" \
+  "nixback"         "önceki sisteme geri dön" \
+  "nixclean"        "14 günden eski sistemleri sil" \
+  "nixgit"          "~/nixos'ta neler değişti" \
+  "nixsave \"msj\"" "değişiklikleri git'e kaydet"
+_zh_add " Klavye" "$c_green" \
+  "Super+Space"     "Spotlight (Vicinae): uygulama, dosya, hesap makinesi" \
+  "Ctrl+R"          "geçmişte ara" \
+  "Ctrl+T"          "dosya seçip komuta ekle" \
+  "Alt+C"           "klasör seçip içine gir" \
+  "Ctrl+L"          "ekranı temizle" \
+  "Ctrl+A / Ctrl+E" "satır başı / satır sonu" \
+  "Ctrl+U"          "satırı sil"
+
+_ZH_I=0 _ZH_ON=0
+_zh_line() { printf '   %s%-18s%s %s%s%s\n' "$c_b" "$1" "$c_r" "$c_dim" "$2" "$c_r"; }
+
+_zh_page() {
+  local i=$1 n=${#_ZH_T[@]} k dots="" cmd desc rows=0 max=0 r
+  for ((k=0; k<n; k++)); do
+    r=$(grep -c . <<< "${_ZH_B[k]}"); ((r > max)) && max=$r
+    if ((k == i)); then dots+="${_ZH_C[k]}●$c_r "; else dots+="$c_dim·$c_r "; fi
+  done
+  printf '\e[H\e[2J\n'
+  printf '  %s◀%s  %s%s%-16s%s %s▶%s      %s%d / %d%s\n' \
+    "$c_dim" "$c_r" "${_ZH_C[i]}" "$c_b" "${_ZH_T[i]}" "$c_r" "$c_dim" "$c_r" "$c_dim" $((i+1)) "$n" "$c_r"
+  printf '  %s\n' "$dots"
+  printf '  %s%s%s\n' "${_ZH_C[i]}" "────────────────────────────────────────────────────────────" "$c_r"
+  while IFS=$'\t' read -r cmd desc; do
+    [ -n "$cmd" ] && { _zh_line "$cmd" "$desc"; ((rows++)); }
+  done <<< "${_ZH_B[i]}"
+  for ((; rows < max; rows++)); do echo; done
+  printf '  %s────────────────────────────────────────────────────────────%s\n' "$c_dim" "$c_r"
+  printf '  %s← → sayfa  ·  istediğin komutu yazabilirsin  ·  zhelp <kelime> ara%s\n\n' "$c_dim" "$c_r"
+}
+
+zhelp() {
+  if [ -n "$1" ]; then  # tüm bölümlerde ara
+    local k cmd desc found=0
+    echo
+    for ((k=0; k<${#_ZH_T[@]}; k++)); do
+      while IFS=$'\t' read -r cmd desc; do
+        [ -z "$cmd" ] && continue
+        if [[ "${cmd,,} ${desc,,}" == *"${1,,}"* ]]; then
+          ((found++)) || true
+          printf '   %s%-14s%s' "${_ZH_C[k]}" "${_ZH_T[k]}" "$c_r"; _zh_line "$cmd" "$desc" | sed 's/^   //'
+        fi
+      done <<< "${_ZH_B[k]}"
+    done
+    ((found)) || err "\"$1\" ile eşleşen komut yok"
+    echo; return
+  fi
+  _ZH_I=${_ZH_I:-0}
+  _zh_page "$_ZH_I"
+  _ZH_ON=2   # bir sonraki komut satırında oklar sayfa çevirir
+}
+
+# Oklar: önce normal imleç hareketi, sonra (satır boşsa ve yardım açıksa) sayfa çevir
+_zh_next() { [[ $_ZH_ON == 1 && -z $READLINE_LINE ]] || return; _ZH_I=$(( (_ZH_I + 1) % ${#_ZH_T[@]} )); _zh_page "$_ZH_I"; }
+_zh_prev() { [[ $_ZH_ON == 1 && -z $READLINE_LINE ]] || return; _ZH_I=$(( (_ZH_I - 1 + ${#_ZH_T[@]}) % ${#_ZH_T[@]} )); _zh_page "$_ZH_I"; }
+_zh_tick() { ((_ZH_ON > 0)) && ((_ZH_ON--)); return 0; }
+PROMPT_COMMAND="_zh_tick; $PROMPT_COMMAND"
+bind '"\C-x1": forward-char'
+bind '"\C-x2": backward-char'
+bind -x '"\C-x3": _zh_next'
+bind -x '"\C-x4": _zh_prev'
+bind '"\e[C": "\C-x1\C-x3"'
+bind '"\e[D": "\C-x2\C-x4"'
+bind '"\eOC": "\C-x1\C-x3"'
+bind '"\eOD": "\C-x2\C-x4"'
+
+# ═══ Araçları başlat ════════════════════════════════════════════════════
+has zoxide   && eval "$(zoxide init bash)"
+has fzf      && eval "$(fzf --bash)"
+has starship && eval "$(starship init bash)"
+export FZF_DEFAULT_OPTS="--layout=reverse --border=rounded --info=inline \
+  --color=bg+:#283457,border:#7aa2f7,hl:#bb9af7,hl+:#bb9af7,pointer:#2ac3de,prompt:#2ac3de,marker:#9ece6a"
+export BAT_THEME="TwoDark"
+has bat && export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
+# ═══ Karşılama ══════════════════════════════════════════════════════════
+if [ -z "$ZGREETED" ]; then
+  export ZGREETED=1
+  printf '\n  %s%s Merhaba %s%s  %s%s · yardım için %szhelp%s\n\n' \
+    "$c_blue" "$c_b" "$USER" "$c_r" "$c_dim" "$(LC_TIME=tr_TR.UTF-8 date '+%A, %-d %B %H:%M')" "$c_b" "$c_r"
+fi
