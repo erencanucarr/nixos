@@ -33,4 +33,23 @@
     inter
     nerd-fonts.jetbrains-mono
   ];
+
+  # The fonts and rendering xeome/dots uses (home/.config/fontconfig/fonts.conf).
+  # GNOME's own UI takes its fonts from dconf (home/can.nix); everything else
+  # (Firefox, Discord, Electron and Qt apps) asks fontconfig for "sans-serif"
+  # and "monospace", which would otherwise be DejaVu.
+  fonts.fontconfig = {
+    defaultFonts = {
+      sansSerif = [ "Inter" ];
+      monospace = [ "JetBrainsMono Nerd Font" ];
+    };
+    antialias = true;
+    # Grayscale, not subpixel: GTK 4 already renders grayscale.
+    subpixel.rgba = "none";
+    hinting = {
+      enable = true;
+      style = "slight";
+      autohint = true;
+    };
+  };
 }

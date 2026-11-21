@@ -50,7 +50,10 @@ in
       color-scheme = "prefer-dark";
       font-name = "Inter 11";
       document-font-name = "Inter 11";
-      monospace-font-name = "JetBrainsMono Nerd Font 11";
+      monospace-font-name = "JetBrainsMono Nerd Font Medium 10";
+      # The same rendering as fontconfig in modules/gnome.nix.
+      font-antialiasing = "grayscale";
+      font-hinting = "slight";
       clock-show-weekday = true;
       enable-hot-corners = false;
     };
