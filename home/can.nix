@@ -20,6 +20,19 @@ let
     done
     test -s "$out/gtk.css" && test -d "$out/assets"
   '';
+
+  # Obsidian with libstdc++ on its library path, so plugins that ship native
+  # modules load (ecu-terminal's node-pty needs it; NixOS has no global copy).
+  # This binding shadows pkgs.obsidian in home.packages below.
+  obsidian = pkgs.symlinkJoin {
+    name = "obsidian-${pkgs.obsidian.version}";
+    paths = [ pkgs.obsidian ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/obsidian \
+        --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}
+    '';
+  };
 in
 {
   home.stateVersion = "26.05";
