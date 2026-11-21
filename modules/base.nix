@@ -41,6 +41,14 @@
 
   programs.firefox.enable = true;
 
+  # 1Password's app and CLI. The polkit owner lets the CLI and the browser
+  # extension unlock through the app (system authentication) for this user.
+  programs._1password.enable = true;
+  programs._1password-gui = {
+    enable = true;
+    polkitPolicyOwners = [ "can" ];
+  };
+
   nixpkgs.config.allowUnfree = true;
   nix = {
     settings = {
