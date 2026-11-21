@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Services.UPower
 
 // A 30px top bar on every screen, its modules laid out like xeome's in small
 // graphite cards: apps and workspaces on the left, the clock in the middle,
@@ -119,6 +120,15 @@ PanelWindow {
 
             selected: power.visible
             onClicked: Panels.togglePopup("power", root.modelData.name)
+
+            // The power profile, only when it is not the default.
+            BarText {
+                visible: PowerProfiles.profile !== PowerProfile.Balanced
+                anchors.verticalCenter: parent.verticalCenter
+                text: PowerProfiles.profile === PowerProfile.Performance ? Glyph.perf : Glyph.saver
+                color: PowerProfiles.profile === PowerProfile.Performance ? Theme.warm : Theme.text
+                font.pixelSize: Theme.size + 1
+            }
 
             BarText {
                 visible: Panels.awake

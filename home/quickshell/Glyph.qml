@@ -24,6 +24,11 @@ Singleton {
     readonly property string battery: String.fromCodePoint(0xF0949)
     // Idle inhibitor on and off, as in xeome's Idle.qml.
     readonly property string awake: String.fromCodePoint(0xF0176)
+    // Power profiles, as xeome picks them: fast, medium and slow gauges.
+    readonly property string perf: String.fromCodePoint(0xF04C5)
+    readonly property string balanced: String.fromCodePoint(0xF0F85)
+    readonly property string saver: String.fromCodePoint(0xF0F86)
+    readonly property string warn: String.fromCodePoint(0xF0026)
     readonly property string sleepAllowed: String.fromCodePoint(0xF0FAA)
     readonly property string chevronLeft: String.fromCodePoint(0xF0141)
     readonly property string chevronRight: String.fromCodePoint(0xF0142)

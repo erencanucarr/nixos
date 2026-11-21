@@ -1,15 +1,22 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.UPower
 
 // The power button's menu, in the shape of xeome's Power.qml: bordered rows
-// of glyph, name and a dim detail, then a section under a rule. xeome's rows
-// pick a power profile (this desktop runs no profile daemon); here they are
-// the session actions, and the section below is xeome's idle inhibitor
-// (Idle.qml, IdleMenu.qml) folded in: keep the screen awake for a while.
-// Not a Menu: its width follows its rows.
+// of glyph, name and a dim detail. First the power profile, as xeome picks
+// it (power-profiles-daemon serves the same D-Bus API as his tlp-pd; on this
+// Ryzen it sets amd-pstate's energy preference), then the session actions,
+// then xeome's idle inhibitor (Idle.qml, IdleMenu.qml) folded in: keep the
+// screen awake for a while. Not a Menu: its width follows its rows.
 Popup {
     id: root
+
+    readonly property var profiles: [
+        { profile: PowerProfile.Performance, glyph: Glyph.perf, name: "Performans", detail: "en hızlı tepki, daha çok güç" },
+        { profile: PowerProfile.Balanced, glyph: Glyph.balanced, name: "Dengeli", detail: "varsayılan" },
+        { profile: PowerProfile.PowerSaver, glyph: Glyph.saver, name: "Güç tasarrufu", detail: "daha az güç, daha serin" }
+    ]
 
     readonly property var actions: [
         { glyph: Glyph.lock, name: "Kilitle", detail: "Super+L", cmd: ["loginctl", "lock-session"] },
@@ -36,77 +43,137 @@ Popup {
     contentWidth: body.implicitWidth + 2 * Theme.pad
     contentHeight: body.implicitHeight + 2 * Theme.pad
 
+    // One bordered row: glyph, name and a dim detail; `current` fills it.
+    component Row: Rectangle {
+        id: row
+
+        required property string glyph
+        required property string name
+        required property string detail
+        property bool current: false
+        signal clicked
+
+        Layout.fillWidth: true
+        implicitWidth: 230
+        implicitHeight: 38
+        radius: Theme.radius
+        color: row.current ? Theme.sel : rowMa.containsMouse ? Theme.hoverRaised : "transparent"
+        border.width: 1
+        border.color: Theme.edge
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.anim
+                easing.type: Theme.ease
+            }
+        }
+
+        RowLayout {
+            anchors {
+                fill: parent
+                leftMargin: 10
+                rightMargin: 10
+            }
+            spacing: 8
+
+            BarText {
+                Layout.preferredWidth: 20
+                horizontalAlignment: Text.AlignHCenter
+                text: row.glyph
+                font.pixelSize: Theme.size + 4
+                color: row.current || rowMa.containsMouse ? Theme.bright : Theme.text
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+
+                BarText {
+                    Layout.fillWidth: true
+                    text: row.name
+                    font.weight: Font.Medium
+                    color: row.current || rowMa.containsMouse ? Theme.bright : Theme.text
+                }
+
+                BarText {
+                    Layout.fillWidth: true
+                    text: row.detail
+                    font.pixelSize: Theme.small - 1
+                    color: Theme.dim
+                }
+            }
+        }
+
+        MouseArea {
+            id: rowMa
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: row.clicked()
+        }
+    }
+
     ColumnLayout {
         id: body
         anchors.centerIn: parent
         spacing: 4
 
         Repeater {
-            model: root.actions
+            // Performance only where the daemon offers it.
+            model: root.profiles.filter(p => p.profile !== PowerProfile.Performance || PowerProfiles.hasPerformanceProfile)
 
-            delegate: Rectangle {
-                id: row
+            delegate: Row {
+                required property var modelData
 
+                glyph: modelData.glyph
+                name: modelData.name
+                detail: modelData.detail
+                current: PowerProfiles.profile === modelData.profile
+                // A property write; polkit lets the logged-in user do it.
+                onClicked: PowerProfiles.profile = modelData.profile
+            }
+        }
+
+        // The firmware can cap the CPU whatever the profile; apps can hold one.
+        BarText {
+            Layout.fillWidth: true
+            Layout.leftMargin: 2
+            visible: PowerProfiles.degradationReason !== PerformanceDegradationReason.None
+            text: `${Glyph.warn}  ${PowerProfiles.degradationReason === PerformanceDegradationReason.HighTemperature ? "yüksek sıcaklık: işlemci kısıldı" : "işlemci kısıldı"}`
+            font.pixelSize: Theme.small
+            color: Theme.warm
+        }
+
+        Repeater {
+            model: PowerProfiles.holds
+
+            delegate: BarText {
                 required property var modelData
 
                 Layout.fillWidth: true
-                implicitWidth: 230
-                implicitHeight: 38
-                radius: Theme.radius
-                color: rowMa.containsMouse ? Theme.hoverRaised : "transparent"
-                border.width: 1
-                border.color: Theme.edge
+                Layout.leftMargin: 2
+                text: `${modelData.applicationId}: ${modelData.reason || "profili tutuyor"}`
+                elide: Text.ElideRight
+                font.pixelSize: Theme.small
+                color: Theme.dim
+            }
+        }
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.anim
-                        easing.type: Theme.ease
-                    }
-                }
+        Rule {
+            Layout.topMargin: 4
+            Layout.bottomMargin: 2
+        }
 
-                RowLayout {
-                    anchors {
-                        fill: parent
-                        leftMargin: 10
-                        rightMargin: 10
-                    }
-                    spacing: 8
+        Repeater {
+            model: root.actions
 
-                    BarText {
-                        Layout.preferredWidth: 20
-                        horizontalAlignment: Text.AlignHCenter
-                        text: row.modelData.glyph
-                        font.pixelSize: Theme.size + 4
-                        color: rowMa.containsMouse ? Theme.bright : Theme.text
-                    }
+            delegate: Row {
+                required property var modelData
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        BarText {
-                            Layout.fillWidth: true
-                            text: row.modelData.name
-                            font.weight: Font.Medium
-                            color: rowMa.containsMouse ? Theme.bright : Theme.text
-                        }
-
-                        BarText {
-                            Layout.fillWidth: true
-                            text: row.modelData.detail
-                            font.pixelSize: Theme.small - 1
-                            color: Theme.dim
-                        }
-                    }
-                }
-
-                MouseArea {
-                    id: rowMa
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.run(row.modelData)
-                }
+                glyph: modelData.glyph
+                name: modelData.name
+                detail: modelData.detail
+                onClicked: root.run(modelData)
             }
         }
 

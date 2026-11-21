@@ -15,6 +15,9 @@
   # Trash, network places and phones in Nautilus; USB drives mounting.
   services.gvfs.enable = true;
   services.udisks2.enable = true;
+  # Power profiles for the bar's power menu (performance, balanced, power
+  # saver); on amd-pstate-epp it sets the CPU's energy preference.
+  services.power-profiles-daemon.enable = true;
   # File pickers and the light/dark setting for apps, next to Hyprland's own
   # portal (screen sharing).
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
