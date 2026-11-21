@@ -1,24 +1,29 @@
 # Terminal satırının görünümü (~/.config/starship.toml, ~/nixos/home/shell/ içinden bağlı). Düzenle: zprompt
 # Belgeler: https://starship.rs/config/
+#
+# Renkler: xeome'un Graphite paleti (Vicinae temasıyla aynı). Bloklar açıktan
+# koyuya giden griler; renk yalnızca anlam taşır: sarı = süre, kızıl = hata.
+#   ground #0a0a0c  raised #151618  line #1d1d1f  rule #232427
+#   dim #8a8f98  text #e6e7ea  bright #f7f8f8  warm #e5ae52  hot #e2715a
 
 add_newline = true
 format = """
-[](fg:#7aa2f7)$os$username[](bg:#bb9af7 fg:#7aa2f7)$directory[](fg:#bb9af7 bg:#2ac3de)$git_branch$git_status[](fg:#2ac3de bg:#414868)$nix_shell$cmd_duration[](fg:#414868)$fill$time
+[](fg:#e6e7ea)$os$username[](bg:#232427 fg:#e6e7ea)$directory[](fg:#232427 bg:#151618)$git_branch$git_status[](fg:#151618 bg:#1d1d1f)$nix_shell$cmd_duration[](fg:#1d1d1f)$fill$time
 $character"""
 
 [os]
 disabled = false
-style = "bg:#7aa2f7 fg:#1a1b26"
+style = "bg:#e6e7ea fg:#0a0a0c"
 format = "[$symbol]($style)"
 symbols.NixOS = " "
 
 [username]
 show_always = true
-style_user = "bg:#7aa2f7 fg:#1a1b26 bold"
+style_user = "bg:#e6e7ea fg:#0a0a0c bold"
 format = "[$user ]($style)"
 
 [directory]
-style = "bg:#bb9af7 fg:#1a1b26 bold"
+style = "bg:#232427 fg:#f7f8f8 bold"
 format = "[ $path ]($style)"
 truncation_length = 3
 truncation_symbol = "…/"
@@ -26,21 +31,21 @@ home_symbol = "  ~"
 
 [git_branch]
 symbol = ""
-style = "bg:#2ac3de fg:#1a1b26"
+style = "bg:#151618 fg:#8a8f98"
 format = "[ $symbol $branch ]($style)"
 
 [git_status]
-style = "bg:#2ac3de fg:#1a1b26 bold"
+style = "bg:#151618 fg:#e6e7ea bold"
 format = "[$all_status$ahead_behind ]($style)"
 
 [nix_shell]
 symbol = ""
-style = "bg:#414868 fg:#7dcfff"
+style = "bg:#1d1d1f fg:#8a8f98"
 format = "[ $symbol $name ]($style)"
 
 [cmd_duration]
 min_time = 2000
-style = "bg:#414868 fg:#e0af68"
+style = "bg:#1d1d1f fg:#e5ae52"
 format = "[ 󱦟 $duration ]($style)"
 
 [fill]
@@ -49,9 +54,9 @@ symbol = " "
 [time]
 disabled = false
 time_format = "%H:%M"
-style = "fg:#565f89"
+style = "fg:#8a8f98"
 format = "[ $time]($style)"
 
 [character]
-success_symbol = "[❯](bold #9ece6a)"
-error_symbol = "[❯](bold #f7768e)"
+success_symbol = "[❯](bold #f7f8f8)"
+error_symbol = "[❯](bold #e2715a)"
