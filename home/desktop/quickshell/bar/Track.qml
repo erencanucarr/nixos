@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 // A slider (after xeome's Track.qml): a 6px bar in a 16px hit area. Drag,
 // click and scroll report a fraction in 0..1 through moved(); the owner

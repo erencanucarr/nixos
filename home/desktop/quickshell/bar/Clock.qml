@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs.common
 
 // "22:14  Cmt 21 Kas" in a card; the time bright and the bar's one
 // heavier label, the date dim.

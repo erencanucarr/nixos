@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
+import qs.common
 
 // Volume's menu, ported from xeome's AudioMenu.qml: the default output and
 // input, each with a mute toggle, a volume bar and a collapsed device picker,

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import qs.common
 
 // This screen's workspaces in one card of hairline-divided buttons (after
 // xeome's Workspaces.qml): the shown one filled with `sel` and bright, an

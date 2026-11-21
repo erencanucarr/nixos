@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.UPower
+import qs.common
 
 // The power button's menu, in the shape of xeome's Power.qml: bordered rows
 // of glyph, name and a dim detail. First the power profile, as xeome picks

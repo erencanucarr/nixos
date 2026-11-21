@@ -6,6 +6,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
+import qs.common
 
 // The on-screen display (after xeome's Osd.qml): a card low on the focused
 // screen for a moment when the volume, its mute, the mic's mute (F9 on the

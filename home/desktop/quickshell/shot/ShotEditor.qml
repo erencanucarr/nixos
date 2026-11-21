@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
+import qs.common
 
 // After xeome's ShotEditor.qml (MIT). Opened from Shot's thumbnail card:
 // pen, arrow, rectangle, pixelate and text marks over the shot, kept in the

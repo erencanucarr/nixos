@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Networking
+import qs.common
 
 // The connection as one glyph (after xeome's Net.qml): the wifi signal ramp
 // over wifi, a cable over ethernet, dim and crossed out with neither. Click

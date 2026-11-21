@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 // A hairline between groups in a toolbar row.
 Rectangle {

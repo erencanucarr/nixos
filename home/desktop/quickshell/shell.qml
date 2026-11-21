@@ -6,6 +6,10 @@
 // drawer and screenshots (Shot), in xeome's graphite palette. QApplication
 // rather than QGuiApplication: tray menus (QsMenuAnchor) need QtWidgets.
 import Quickshell
+import qs.bar
+import qs.drawer
+import qs.osd
+import qs.shot
 
 ShellRoot {
     Variants {

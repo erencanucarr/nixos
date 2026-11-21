@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import qs
+import qs.common
 
 // The weather card's menu, laid out like MyWeather's popup in the bar's
 // graphite: the condition and temperature large, four readings under it, the

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 // A menu row you press to choose something (after xeome's Pick.qml); the
 // current choice and the alternatives are the same control, so a stack of

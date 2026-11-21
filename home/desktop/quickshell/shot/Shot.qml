@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import "Calc.mjs" as Calc
+import qs.common
 
 // Screenshots, after xeome's Shot.qml (MIT). Print and Super+Shift+S call
 // `qs ipc call shot open`: it freezes the focused monitor (grim to a file

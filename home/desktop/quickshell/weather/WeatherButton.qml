@@ -1,5 +1,5 @@
 import QtQuick
-import qs
+import qs.common
 
 // The weather card in the bar: the condition glyph and the temperature,
 // dimmed while the last fetch failed. Click for WeatherMenu, middle click to

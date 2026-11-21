@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
+import qs.common
 
 // The app drawer: a search box over a grid of every installed app, on the
 // focused screen. Super (or the mouse's side button) or the bar's apps

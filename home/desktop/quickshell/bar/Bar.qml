@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.UPower
 import qs.weather
+import qs.common
 
 // A 30px top bar on every screen, its modules laid out like xeome's in small
 // graphite cards: apps and workspaces on the left, the clock and Ankara's

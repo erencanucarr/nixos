@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
+import qs.common
 
 // A chevron card that reveals the tray icons on hover (after xeome's
 // Tray.qml). Left click activates, right click opens the icon's menu;

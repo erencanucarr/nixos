@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
+import qs.common
 
 // Output volume, plus the mic's state (after xeome's Audio.qml): a hot
 // crossed-out mic while it is muted (F9 on the MX Keys Mini), a warm mic
