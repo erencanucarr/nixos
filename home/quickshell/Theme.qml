@@ -47,4 +47,9 @@ Singleton {
     readonly property string family: "Inter"
     readonly property int size: 12
     readonly property int anim: 160
+
+    // Bar menus (Popup.qml, Menu.qml): secondary labels and picker rows a
+    // step under `size`, and the width most menus share.
+    readonly property int small: 11
+    readonly property int menuWidth: 280
 }

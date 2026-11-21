@@ -3,7 +3,7 @@ pragma Singleton
 import Quickshell
 
 // Nerd Font glyphs by code point, so the source stays plain ASCII. The bar's
-// picks follow xeome's (Audio.qml, Net.qml, NetMenu.qml, Tray.qml).
+// picks follow xeome's (Audio.qml, AudioMenu.qml, Idle.qml, Net.qml, Tray.qml).
 Singleton {
     readonly property string apps: String.fromCodePoint(0xF003B)
     readonly property string power: String.fromCodePoint(0xF0425)
@@ -18,6 +18,13 @@ Singleton {
     readonly property string volOff: String.fromCodePoint(0xF0581)
     readonly property string headset: String.fromCodePoint(0xF00B0)
     readonly property string mic: String.fromCodePoint(0xF036C)
+    readonly property string micOff: String.fromCodePoint(0xF036D)
+    readonly property string chevronUp: String.fromCodePoint(0xF0143)
+    readonly property string chevronDown: String.fromCodePoint(0xF0140)
+    readonly property string battery: String.fromCodePoint(0xF0949)
+    // Idle inhibitor on and off, as in xeome's Idle.qml.
+    readonly property string awake: String.fromCodePoint(0xF0176)
+    readonly property string sleepAllowed: String.fromCodePoint(0xF0FAA)
     readonly property string chevronLeft: String.fromCodePoint(0xF0141)
     readonly property string chevronRight: String.fromCodePoint(0xF0142)
     readonly property string wired: String.fromCodePoint(0xF0317)

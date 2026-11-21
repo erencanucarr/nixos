@@ -4,7 +4,8 @@ import Quickshell.Wayland
 
 // A 30px top bar on every screen, its modules laid out like xeome's in small
 // graphite cards: apps and workspaces on the left, the clock in the middle,
-// the tray drawer, a network and volume strip and power on the right. The bar
+// the tray drawer, a network and volume strip and power on the right; volume
+// and power open xeome-style menus under them (AudioMenu, Power). The bar
 // itself stays flat and square, with one hairline under it.
 PanelWindow {
     id: root
@@ -12,7 +13,12 @@ PanelWindow {
     required property var modelData
     screen: modelData
 
+    // One of this bar's popups (Power, AudioMenu) is open. They cannot take
+    // the keyboard themselves (Popup.qml), so the bar holds it for Esc.
+    readonly property bool popupOpen: Panels.popup.endsWith(`@${modelData.name}`)
+
     WlrLayershell.namespace: "can-bar"
+    WlrLayershell.keyboardFocus: popupOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     anchors {
         top: true
         left: true
@@ -20,6 +26,16 @@ PanelWindow {
     }
     implicitHeight: Theme.barHeight
     color: Theme.ground
+
+    // Focused once the compositor hands the bar the keyboard; Popup waits for
+    // that before it grabs.
+    readonly property bool holdsKeyboard: keys.activeFocus
+
+    Item {
+        id: keys
+        focus: true
+        Keys.onEscapePressed: Panels.popup = ""
+    }
 
     Rectangle {
         anchors {
@@ -94,6 +110,7 @@ PanelWindow {
 
                 Volume {
                     bordered: false
+                    screenName: root.modelData.name
                     topRightRadius: Theme.radius
                     bottomRightRadius: Theme.radius
                 }
@@ -110,16 +127,43 @@ PanelWindow {
             }
         }
 
+        // Power (lock, log out, sleep, restart, shut down, keep awake). The
+        // coffee glyph joins it while the idle inhibitor is on.
         BarModule {
-            selected: Panels.powerOpen
-            onClicked: Panels.togglePower()
+            id: powerButton
+
+            selected: power.visible
+            onClicked: Panels.togglePopup("power", root.modelData.name)
+
+            BarText {
+                visible: Panels.awake
+                anchors.verticalCenter: parent.verticalCenter
+                text: Glyph.awake
+                color: Theme.text
+                font.pixelSize: Theme.size + 1
+            }
 
             BarText {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Glyph.power
-                color: Panels.powerOpen ? Theme.bright : Theme.dim
+                color: power.visible ? Theme.bright : Theme.dim
                 font.pixelSize: Theme.size + 1
             }
+
+            Power {
+                id: power
+                key: "power"
+                anchorItem: powerButton
+                screenName: root.modelData.name
+            }
         }
+    }
+
+    // Power's "keep awake": hypridle honours the inhibitor, so neither the
+    // lock nor the screens-off timeout fires. Every bar holds one; the bar
+    // is always mapped, which the protocol requires.
+    IdleInhibitor {
+        window: root
+        enabled: Panels.awake
     }
 }

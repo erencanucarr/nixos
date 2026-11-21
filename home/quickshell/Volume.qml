@@ -2,9 +2,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 
-// Output volume, plus a warm mic glyph while something records. Scroll to
-// change it, click for the mixer (pavucontrol), middle or right click to
-// mute. Glyphs as in xeome's Audio.qml.
+// Output volume, plus a warm mic glyph while something records (after
+// xeome's Audio.qml). Click for AudioMenu, right click for the mixer
+// (pavucontrol), middle click to mute, scroll to change the volume.
 BarModule {
     id: root
 
@@ -17,13 +17,18 @@ BarModule {
     // permanently; that is not someone recording.
     readonly property var recorders: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioInStream && !n.name.startsWith("capture."))
 
+    required property string screenName
+
     // Room for "100%", so the strip does not shift as the volume changes.
     minWidth: 56
+    selected: menu.visible
 
     onClicked: button => {
-        if (button === Qt.LeftButton)
+        if (button === Qt.LeftButton) {
+            Panels.togglePopup("audio", root.screenName);
+        } else if (button === Qt.RightButton) {
             Quickshell.execDetached(["pavucontrol"]);
-        else if (root.sink?.audio)
+        } else if (root.sink?.audio)
             root.sink.audio.muted = !root.sink.audio.muted;
     }
 
@@ -54,5 +59,14 @@ BarModule {
         font.pixelSize: Theme.size + 1
         // Every space in this label separates a glyph from a value.
         font.wordSpacing: Theme.glyphGap
+    }
+
+    AudioMenu {
+        id: menu
+        key: "audio"
+        anchorItem: root
+        screenName: root.screenName
+        alignRight: true
+        recorders: root.recorders
     }
 }
