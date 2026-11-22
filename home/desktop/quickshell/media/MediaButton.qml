@@ -26,10 +26,13 @@ BarModule {
             Panels.togglePopup("media", root.screenName);
     }
     onScrolled: delta => {
-        if (delta > 0 && root.player?.canGoPrevious)
-            root.player.previous();
-        else if (delta < 0 && root.player?.canGoNext)
-            root.player.next();
+        const p = root.player;
+        if (!p)
+            return;
+        if (delta > 0)
+            p.canGoPrevious ? p.previous() : p.canSeek && p.seek(-5);
+        else
+            p.canGoNext ? p.next() : p.canSeek && p.seek(5);
     }
 
     onVisibleChanged: if (!visible && root.open)
