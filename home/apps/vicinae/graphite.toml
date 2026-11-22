@@ -1,8 +1,3 @@
-# Graphite, a near-monochrome dark theme for vicinae.
-# From xeome/dots (MIT, Copyright (c) 2022 xeome), commit d3515cc:
-# home/.local/share/vicinae/themes/graphite.toml.j2, filled in with the dark
-# palette from infra/data.py.
-
 [meta]
 version = 1
 name = "Graphite"
@@ -10,22 +5,14 @@ description = "Graphite"
 variant = "dark"
 inherits = "vicinae-dark"
 
-# Every colour is opaque, because vicinae draws the 8-digit and { opacity }
-# forms as solid. So graphite's translucent tokens (line, sel, hover) are
-# flattened over the ground: palette.toml's [palette.dark.flat].
-
 [colors.core]
 background = "#0a0a0c"
 foreground = "#e6e7ea"
 secondary_background = "#151618"
 border = "#1d1d1f"
-# No brand accent: vicinae's leftover accent uses take the text tone, the way
-# graphite's selected day or chip inverts text and ground.
 accent = "#e6e7ea"
 accent_foreground = "#0a0a0c"
 
-# Graphite's warm and hot fill the slots they match; the rest keep the
-# terminal ANSI hues, which are the only other hues on this desktop.
 [colors.accents]
 blue = "#8fb0d9"
 green = "#b5c98f"
@@ -51,7 +38,6 @@ danger = "#e2715a"
 success = "#b5c98f"
 selection = { background = "#e6e7ea", foreground = "#0a0a0c" }
 
-# Focus is graphite's one non-status colour.
 [colors.input]
 border = "colors.core.border"
 border_focus = "#e5ae52"

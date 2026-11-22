@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# Ekran sıcaklığını (hyprsunset) son kaydedilen değerle başlatır.
-# Hyprland açılırken çalışır; terminalden ayarlamak için: hyprsunset 0-100
-# The value is a warmth percent: 0 = off, 100 = 2500K (6500K - 40K per %).
 state="${XDG_STATE_HOME:-$HOME/.local/state}/hyprsunset"
 p=$(cat "$state" 2>/dev/null)
-[[ "$p" =~ ^[0-9]+$ ]] && (( p <= 100 )) || p=95 # GNOME Night Light's 2700K
-# Replace a running one; it must let go of the screens first.
+[[ "$p" =~ ^[0-9]+$ ]] && (( p <= 100 )) || p=95
 if pkill -x hyprsunset; then
   for _ in {1..20}; do pgrep -x hyprsunset >/dev/null || break; sleep 0.1; done
 fi

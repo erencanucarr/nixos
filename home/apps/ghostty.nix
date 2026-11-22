@@ -1,13 +1,7 @@
-# Ghostty, set up like xeome/dots (home/.config/ghostty, MIT): JetBrainsMono
-# at 10pt, 15px padding, and the Caffeine colours on graphite grounds, picked
-# by the desktop's light or dark scheme, and no titlebar: Hyprland tiles, so
-# its window buttons do nothing. New tab and the menu are on the right-click
-# menu and Ctrl+Shift+T.
 { ... }:
 {
   programs.ghostty = {
     enable = true;
-    # Ghostty injects its own bash integration; ~/.bashrc stays ours.
     enableBashIntegration = false;
 
     settings = {
@@ -31,8 +25,6 @@
       ];
     };
 
-    # Slot 0 of the dark palette is graphite's `rule`, not black, because the
-    # background is already near-black. Selected text is inverted.
     themes.caffeine = {
       palette = [
         "0=#232427" "1=#e06c75" "2=#b5c98f" "3=#ffd9a0"

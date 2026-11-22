@@ -1,6 +1,3 @@
-# Files kept in this repo and linked into place rather than copied into the
-# store, so they stay editable (zedit, hyprconf, ...) and a change works
-# without a rebuild. Other modules add entries to `repoLinks`.
 { config, lib, ... }:
 let
   home = config.home.homeDirectory;
@@ -13,7 +10,6 @@ in
     description = "Path under $HOME -> path under ~/nixos/home to link it to.";
   };
 
-  # Anything already in the way (not a link) is kept as <name>.bak.
   config.home.activation.repoLinks = lib.hm.dag.entryAfter [ "writeBoundary" ] (
     lib.concatStrings (lib.mapAttrsToList (target: source: ''
       t="${home}/${target}"

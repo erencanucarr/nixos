@@ -1,3 +1,2 @@
 #!/usr/bin/env bash
-# Ekranları aç/kapat: dpms on | off
 exec hyprctl dispatch "hl.dsp.dpms({ action = \"${1:-toggle}\" })"

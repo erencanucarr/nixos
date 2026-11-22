@@ -1,11 +1,3 @@
-# Terminal satırının görünümü (~/.config/starship.toml, ~/nixos/home/shell/ içinden bağlı). Düzenle: zprompt
-# Belgeler: https://starship.rs/config/
-#
-# Renkler: xeome'un Graphite paleti (Vicinae temasıyla aynı). Bloklar açıktan
-# koyuya giden griler; renk yalnızca anlam taşır: sarı = süre, kızıl = hata.
-#   ground #0a0a0c  raised #151618  line #1d1d1f  rule #232427
-#   dim #8a8f98  text #e6e7ea  bright #f7f8f8  warm #e5ae52  hot #e2715a
-
 add_newline = true
 format = """
 [](fg:#e6e7ea)$os$username[](bg:#232427 fg:#e6e7ea)$directory[](fg:#232427 bg:#151618)$git_branch$git_status[](fg:#151618 bg:#1d1d1f)$nix_shell$cmd_duration[](fg:#1d1d1f)$fill$time

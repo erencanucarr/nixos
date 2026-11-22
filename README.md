@@ -21,9 +21,10 @@ Flake-based NixOS configuration with Home Manager.
 │   ├── core/
 │   │   ├── base.nix          # boot, locale, user, network, nix
 │   │   ├── nvidia.nix        # NVIDIA driver, CUDA, LTS kernel
-│   │   └── audio.nix         # PipeWire, realtime audio, steady USB headsets
+│   │   ├── audio.nix         # PipeWire, realtime audio, steady USB headsets
+│   │   └── dns.nix           # encrypted DNS (DNS-over-TLS) through resolved
 │   ├── desktop/
-│   │   ├── desktop.nix       # login screen, GNOME apps, theme, fonts
+│   │   ├── desktop.nix       # ly login screen, Thunar and viewers, theme, fonts
 │   │   └── hyprland.nix      # Hyprland and its tools
 │   └── apps/
 │       ├── discord.nix       # Discord through the ByeDPI proxy
@@ -34,14 +35,18 @@ Flake-based NixOS configuration with Home Manager.
     ├── shell/                # ~/.bashrc (aliases, zhelp) and the prompt
     ├── desktop/
     │   ├── hyprland.nix      # links hyprland/ and quickshell/
-    │   ├── hyprland/         # hyprland.lua, lock, idle, notifications
+    │   ├── hyprland/         # hyprland.lua, lock screen, idle
+    │   ├── gtk/              # graphite colours for GTK 3 and 4 apps (Thunar…)
     │   ├── wallpapers/       # wallpaper images, picked with Super+Shift+W
     │   └── quickshell/       # the shell: shell.qml starts it
     │       ├── common/       # theme, glyphs, shared cards and menus
     │       ├── bar/          # the bar; its calendar (with notes), audio and power menus
     │       ├── weather/      # Ankara's weather beside the clock
+    │       ├── media/        # what is playing, and its controls
+    │       ├── notif/        # notifications, their history and Do Not Disturb
     │       ├── net/          # network menu: traffic, addresses, DNS, Wi-Fi, IP settings
     │       ├── drawer/       # app drawer
+    │       ├── keys/         # every shortcut, read from Hyprland (Super+K)
     │       ├── overview/     # window overview (mouse thumb button, Super+Tab)
     │       ├── session/      # full-screen power menu (Super+P)
     │       ├── wallpaper/    # the wallpaper on every screen and its picker
@@ -49,7 +54,8 @@ Flake-based NixOS configuration with Home Manager.
     │       └── shot/         # screenshots and their editor
     └── apps/
         ├── vicinae/          # launcher on Super+Space and its theme
-        └── ghostty.nix       # terminal
+        ├── ghostty.nix       # terminal
+        └── viewers.nix       # zathura (PDF) and imv (pictures) in graphite
 ```
 
 ## Thanks

@@ -3,14 +3,12 @@ name: Update flake.lock
 on:
   workflow_dispatch:
   schedule:
-    # Mondays at 04:00 UTC, so the update is waiting at the start of the week.
     - cron: "0 4 * * 1"
 
 permissions:
   contents: write
   pull-requests: write
 
-# Never run two updates at once; they would fight over the same branch.
 concurrency:
   group: update-flake-lock
   cancel-in-progress: false
@@ -28,7 +26,6 @@ jobs:
       - name: Update flake.lock
         id: update
         run: |
-          # nix prints which inputs moved; keep it for the pull request body.
           nix flake update 2> update.log
           cat update.log
           {
@@ -38,8 +35,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           rm update.log
 
-      # Evaluating the system catches renamed or removed options without
-      # building it; NVIDIA and CUDA are far too big for a free runner.
       - name: Evaluate the system
         run: nix eval --raw .#nixosConfigurations.b850e-desktop.config.system.build.toplevel.drvPath
 

@@ -1,13 +1,10 @@
-# ~/.bashrc, linked from ~/nixos/home/shell/bashrc.   Düzenle: zedit   Komutları gör: zhelp
-
-[[ $- != *i* ]] && return   # sadece etkileşimli terminalde çalış
+[[ $- != *i* ]] && return
 
 NIXDIR="$HOME/nixos"
 NIXHOST="b850e-desktop"
 export EDITOR="${EDITOR:-nano}"
 has() { command -v "$1" >/dev/null 2>&1; }
 
-# Renkler (zhelp ve mesajlar için)
 c_r=$'\e[0m' c_b=$'\e[1m' c_dim=$'\e[2m'
 c_blue=$'\e[38;2;122;162;247m' c_purple=$'\e[38;2;187;154;247m'
 c_cyan=$'\e[38;2;42;195;222m'  c_green=$'\e[38;2;158;206;106m'
@@ -19,7 +16,7 @@ err()  { printf '%s✘%s %s\n' "$c_red" "$c_r" "$*"; }
 # ═══ Geçmiş (history) ═══════════════════════════════════════════════════
 HISTSIZE=50000
 HISTFILESIZE=100000
-HISTCONTROL=ignoreboth:erasedups      # tekrarları ve boşlukla başlayanları kaydetme
+HISTCONTROL=ignoreboth:erasedups
 HISTTIMEFORMAT='%d.%m %H:%M  '
 shopt -s histappend checkwinsize autocd cdspell globstar
 PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
@@ -28,7 +25,6 @@ PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 alias zreload='source ~/.bashrc && ok ".bashrc yeniden yüklendi"'
 alias zedit='$EDITOR ~/.bashrc && source ~/.bashrc && ok "kaydedildi ve yüklendi"'
 alias zprompt='$EDITOR ~/.config/starship.toml'
-# Not: gzip'in kendi zcat'i hâlâ "command zcat dosya.gz" ile çalışır.
 if has bat; then alias zcat='bat -l bash ~/.bashrc'; else alias zcat='cat ~/.bashrc'; fi
 
 # ═══ Gezinme ════════════════════════════════════════════════════════════
@@ -56,7 +52,6 @@ alias mv='mv -iv'
 alias mkdir='mkdir -pv'
 alias grep='grep --color=auto'
 
-# Güvenli silme: çöp kutusuna atar, geri alınabilir
 if has trash-put; then
   alias del='trash-put'
   alias trashls='trash-list'
@@ -64,12 +59,12 @@ if has trash-put; then
   alias trashempty='trash-empty'
 fi
 
-backup() {  # backup dosya → dosya.2026-11-21_1530.bak
+backup() {
   [ -z "$1" ] && { echo "Kullanım: backup <dosya>"; return 1; }
   cp -a -- "$1" "$1.$(date +%F_%H%M).bak" && ok "$1.$(date +%F_%H%M).bak"
 }
 
-extract() {  # her türlü arşivi aç
+extract() {
   [ -f "$1" ] || { echo "Kullanım: extract <arşiv>"; return 1; }
   case "$1" in
     *.tar.gz|*.tgz)   tar xzf "$1" ;;
@@ -87,17 +82,16 @@ extract() {  # her türlü arşivi aç
   esac
 }
 
-# Arama
 has fd && alias findf='fd'
 alias search='rg --smart-case'
-ff() {  # dosya bul (önizlemeli) ve düzenleyicide aç
+ff() {
   local f
   f=$(fd --type f --hidden --exclude .git 2>/dev/null | fzf --preview 'bat --color=always --style=numbers {} 2>/dev/null' --height=80%) && $EDITOR "$f"
 }
 
 # ═══ Pano (kopyala / yapıştır) ══════════════════════════════════════════
 if has wl-copy; then
-  alias copy='wl-copy'            # echo merhaba | copy   ya da   copy < dosya
+  alias copy='wl-copy'
   alias paste='wl-paste'
   cpath() { realpath "${1:-.}" | tr -d '\n' | wl-copy && ok "yol kopyalandı"; }
 fi
@@ -114,7 +108,7 @@ alias weather='curl -s "wttr.in/?0&lang=tr"'
 alias c='clear'
 alias h='history | tail -30'
 alias path='tr ":" "\n" <<< "$PATH"'
-fkill() {  # çalışan programı listeden seç ve kapat
+fkill() {
   local pid
   pid=$(ps -u "$USER" -o pid=,comm=,%cpu=,%mem= --sort=-%cpu | fzf --height=60% --header='Kapatılacak programı seç' | awk '{print $1}') && kill "$pid" && ok "kapatıldı ($pid)"
 }
@@ -138,7 +132,7 @@ alias nixhome='$EDITOR "$NIXDIR/home/can.nix"'
 alias nixflake='$EDITOR "$NIXDIR/flake.nix"'
 
 # ═══ NixOS: uygula / güncelle / temizle ═════════════════════════════════
-alias nixup='sudo nixos-rebuild switch --flake "$NIXDIR#$NIXHOST"'
+alias nixup='sudo nixos-rebuild switch --flake "$NIXDIR#$NIXHOST" && systemctl --user restart vicinae'
 alias nixtest='nix build --no-link "$NIXDIR#nixosConfigurations.$NIXHOST.config.system.build.toplevel" && ok "yapılandırma hatasız"'
 alias nixupdate='nix flake update --flake "$NIXDIR" && nixup'
 alias nixback='sudo nixos-rebuild switch --rollback'
@@ -201,11 +195,9 @@ _nixapply_prompt() {
 }
 
 # ═══ Hyprland ═══════════════════════════════════════════════════════════
-# Ayar dosyaları ~/nixos/home/desktop/hyprland ve ~/nixos/home/desktop/quickshell içinde.
 alias hyprconf='$EDITOR ~/.config/hypr/hyprland.lua'
 alias hyprlockconf='$EDITOR ~/.config/hypr/hyprlock.conf'
 alias hypridleconf='$EDITOR ~/.config/hypr/hypridle.conf'
-alias hyprnotif='$EDITOR ~/.config/hypr/mako.conf'
 alias hyprbar='$EDITOR ~/.config/quickshell/bar/Bar.qml'
 alias hyprtheme='$EDITOR ~/.config/quickshell/common/Theme.qml'
 alias hyprcd='cd ~/.config/hypr'
@@ -213,14 +205,12 @@ alias hyprcheck='Hyprland --verify-config -c ~/.config/hypr/hyprland.lua 2>&1 | 
 alias hyprreload='hyprctl reload >/dev/null && ok "Hyprland ayarları yeniden yüklendi"'
 alias hyprmon='hyprctl monitors'
 alias hyprlog='less +G "$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log"'
-hyprbarreload() {  # barı (Quickshell) yeniden başlat
+hyprbarreload() {
   qs kill >/dev/null 2>&1
   hyprctl dispatch 'hl.dsp.exec_cmd("qs")' >/dev/null && ok "bar yeniden başlatıldı"
 }
 alias barlog='qs log 2>/dev/null | tail -40'
-hyprsunset() {  # ekran sıcaklığı: hyprsunset 0-100 (0 kapalı, 100 en sarı) · boş: durum
-  # Warmth percent -> Kelvin: 0 = 6500K (identity), 100 = 2500K, linear.
-  # The value is saved and restored at login by ~/.config/hypr/bin/sunset.
+hyprsunset() {
   local state="${XDG_STATE_HOME:-$HOME/.local/state}/hyprsunset" p k cur
   if [ $# -eq 0 ]; then
     p=$(cat "$state" 2>/dev/null) || p=95
@@ -240,14 +230,10 @@ hyprsunset() {  # ekran sıcaklığı: hyprsunset 0-100 (0 kapalı, 100 en sarı
   p=$((10#$1)) k=$((6500 - 40 * p))
   mkdir -p "${state%/*}" && echo "$p" > "$state"
   if hyprctl hyprsunset temperature >/dev/null 2>&1; then
-    # Running: change it live over hyprsunset's IPC socket.
     if (( p == 0 )); then cur=$(hyprctl hyprsunset identity)
     else cur=$(hyprctl hyprsunset temperature "$k"); fi
     [ "$cur" = ok ] || { err "hyprsunset: $cur"; return 1; }
   else
-    # Not running: let Hyprland start it detached with the saved value.
-    # (hyprctl sends anything containing "hyprsunset" to hyprsunset's own
-    # socket, so the dispatch must not mention it; bin/sunset is fine.)
     hyprctl dispatch "hl.dsp.exec_cmd(\"$HOME/.config/hypr/bin/sunset\")" >/dev/null \
       || { err "hyprsunset başlatılamadı"; return 1; }
     local i=0
@@ -259,16 +245,13 @@ hyprsunset() {  # ekran sıcaklığı: hyprsunset 0-100 (0 kapalı, 100 en sarı
   if (( p == 0 )); then ok "Ekran filtresi kapatıldı (0%)"
   else ok "Ekran sıcaklığı: %$p (${k}K)"; fi
 }
-# Ayar uygulamaları
 alias audio='pavucontrol >/dev/null 2>&1 &'
 alias network='nm-connection-editor >/dev/null 2>&1 &'
 alias bluetooth='blueman-manager >/dev/null 2>&1 &'
 
 # ═══ Yardım ═════════════════════════════════════════════════════════════
-# zhelp her bölümü ayrı sayfada gösterir ve komut satırını hemen geri verir.
-# Satır boşken ← → sayfa değiştirir; yazmaya başlayınca oklar normal çalışır.
 _ZH_T=() _ZH_C=() _ZH_B=()
-_zh_add() {  # _zh_add "başlık" "renk" komut açıklama komut açıklama ...
+_zh_add() {
   _ZH_T+=("$1"); _ZH_C+=("$2"); shift 2
   local b=""; while [ $# -gt 0 ]; do b+="$1"$'\t'"$2"$'\n'; shift 2; done
   _ZH_B+=("$b")
@@ -349,7 +332,6 @@ _zh_add " Hyprland" "$c_cyan" \
   "hyprbar"         "üst barı düzenle  ·  hyprtheme: renkler ve boyutlar" \
   "hyprbarreload"   "barı yeniden başlat  ·  barlog: barın hataları" \
   "hyprlockconf"    "kilit ekranı  ·  hypridleconf: boşta kilitleme süreleri" \
-  "hyprnotif"       "bildirimlerin görünümü (mako)" \
   "hyprmon / hyprlog" "ekranlar / Hyprland günlüğü" \
   "hyprsunset <0-100>" "ekran sıcaklığı (0 kapalı, 100 en sarı)  ·  boş: durum" \
   "audio"           "ses ayarları (pavucontrol)" \
@@ -368,6 +350,7 @@ _zh_add " Hyprland tuşlar" "$c_purple" \
   "Super+L / Esc"   "kilitle / güç menüsü (barda)" \
   "Super+P"         "tam ekran güç menüsü: kilitle, çıkış, uyku, yeniden başlat, kapat" \
   "Super+Shift+W"   "duvar kağıdı seç (siyah da var): ←→ gez, Enter uygula" \
+  "Super+K"         "tüm kısayollar, aranabilir" \
   "F8 / Print"      "ekran görüntüsü: alan / pencere (Boşluk) / ekran (Tab), T gecikme; karta tıkla: düzenle  ·  Shift+Print: tüm ekran" \
   "F9"              "mikrofonu sustur / aç (barda kırmızı mikrofon)" \
   "Super+V"         "pano geçmişi (Ctrl+Alt+V de olur)"
@@ -403,7 +386,7 @@ _zh_page() {
 }
 
 zhelp() {
-  if [ -n "$1" ]; then  # tüm bölümlerde ara
+  if [ -n "$1" ]; then
     local k cmd desc found=0
     echo
     for ((k=0; k<${#_ZH_T[@]}; k++)); do
@@ -420,10 +403,9 @@ zhelp() {
   fi
   _ZH_I=${_ZH_I:-0}
   _zh_page "$_ZH_I"
-  _ZH_ON=2   # bir sonraki komut satırında oklar sayfa çevirir
+  _ZH_ON=2
 }
 
-# Oklar: önce normal imleç hareketi, sonra (satır boşsa ve yardım açıksa) sayfa çevir
 _zh_next() { [[ $_ZH_ON == 1 && -z $READLINE_LINE ]] || return; _ZH_I=$(( (_ZH_I + 1) % ${#_ZH_T[@]} )); _zh_page "$_ZH_I"; }
 _zh_prev() { [[ $_ZH_ON == 1 && -z $READLINE_LINE ]] || return; _ZH_I=$(( (_ZH_I - 1 + ${#_ZH_T[@]}) % ${#_ZH_T[@]} )); _zh_page "$_ZH_I"; }
 _zh_tick() { ((_ZH_ON > 0)) && ((_ZH_ON--)); return 0; }

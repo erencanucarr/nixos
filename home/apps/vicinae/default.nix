@@ -1,15 +1,9 @@
-# Vicinae: a Spotlight/Raycast-style launcher (apps, files, calculator, emoji,
-# clipboard history). Super+Space opens it; the bind is in hyprland.lua.
-# The server runs in the background so the window opens instantly.
 { config, lib, pkgs, ... }:
 {
   home.packages = [ pkgs.vicinae ];
 
-  # Graphite, xeome's near-monochrome palette (see the file's header).
   xdg.dataFile."vicinae/themes/graphite.toml".source = ./graphite.toml;
 
-  # The managed half of the config. settings.json is vicinae's own file, which
-  # its settings window rewrites, so it only gets an import of this one.
   xdg.configFile."vicinae/nix.json".text = builtins.toJSON {
     theme.dark.name = "graphite";
   };
