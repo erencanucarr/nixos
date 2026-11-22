@@ -4,6 +4,9 @@
     enable = true;
     openFirewall = true;
     useRoutingFeatures = "client";
-    extraSetFlags = [ "--operator=can" ];
+    extraSetFlags = [
+      "--operator=can"
+      "--exit-node="
+    ];
   };
 }
