@@ -1,5 +1,7 @@
 { lib, theme, ... }:
 {
+  imports = [ ./ssh.nix ];
+
   repoLinks.".bashrc" = "shell/bashrc";
 
   programs.starship = {
