@@ -24,25 +24,15 @@
     isNormalUser = true;
     description = "Can";
     extraGroups = [ "networkmanager" "wheel" "video" ];
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEsarS+DLcG9flUUe2RIgAp8uKQlKxsmgtGFMW0pE6Iq claude-mac-to-b850e"
-    ];
   };
 
   networking.networkmanager.enable = true;
   networking.firewall.enable = true;
-  services.openssh.enable = true;
 
   hardware.bluetooth.enable = true;
   services.fwupd.enable = true;
 
   programs.firefox.enable = true;
-
-  programs._1password.enable = true;
-  programs._1password-gui = {
-    enable = true;
-    polkitPolicyOwners = [ "can" ];
-  };
 
   nixpkgs.config.allowUnfree = true;
   nix = {

@@ -25,6 +25,7 @@ in
 
   home.packages = with pkgs; [
     obsidian
+    bitwarden-desktop
     eza
     bat
     fzf
