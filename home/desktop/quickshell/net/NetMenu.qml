@@ -11,6 +11,7 @@ Popup {
     property string page: "main"
     property bool renaming: false
     property string askingFor: ""
+    property bool showMac: false
 
     property string formUuid: ""
     property bool formManual: false
@@ -51,6 +52,7 @@ Popup {
             root.page = "main";
             root.renaming = false;
             root.askingFor = "";
+            root.showMac = false;
         }
     }
     Component.onCompleted: NetData.watching = visible
@@ -269,10 +271,35 @@ Popup {
                 value: root.link.dns ?? ""
                 copyable: true
             }
-            Info {
-                label: "MAC"
-                value: root.link.mac ?? ""
-                copyable: true
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                BarText {
+                    text: "MAC"
+                    font.pixelSize: Theme.small
+                    color: Theme.dim
+                }
+                BarText {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignRight
+                    text: root.showMac ? (root.link.mac || "—") : ""
+                    font.pixelSize: Theme.small
+                    color: macMa.containsMouse ? Theme.bright : Theme.text
+
+                    MouseArea {
+                        id: macMa
+                        anchors.fill: parent
+                        enabled: root.showMac && !!root.link.mac
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: NetData.copy(root.link.mac)
+                    }
+                }
+                Link {
+                    text: root.showMac ? "gizle" : "göster"
+                    onClicked: root.showMac = !root.showMac
+                }
             }
             Info {
                 label: "Adres alma · MTU"
