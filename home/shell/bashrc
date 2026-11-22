@@ -253,6 +253,12 @@ hyprsunset() {
 alias audio='pavucontrol >/dev/null 2>&1 &'
 alias network='nm-connection-editor >/dev/null 2>&1 &'
 alias bluetooth='blueman-manager >/dev/null 2>&1 &'
+unalias files 2>/dev/null
+function files {
+  local p="${1:-.}"
+  [[ -e "$p" ]] || { err "Böyle bir yer yok: $p"; return 1; }
+  setsid -f thunar "$(realpath "$p")" >/dev/null 2>&1
+}
 
 # ═══ Yardım ═════════════════════════════════════════════════════════════
 _ZH_T=() _ZH_C=() _ZH_B=()
@@ -339,6 +345,7 @@ _zh_add " Hyprland" "$c_cyan" \
   "hyprlockconf"    "kilit ekranı  ·  hypridleconf: boşta kilitleme süreleri" \
   "hyprmon / hyprlog" "ekranlar / Hyprland günlüğü" \
   "hyprsunset <0-100>" "ekran sıcaklığı (0 kapalı, 100 en sarı)  ·  boş: durum" \
+  "files"           "klasörü thunar'da aç  ·  files <yol>" \
   "audio"           "ses ayarları (pavucontrol)" \
   "network"         "ağ bağlantıları" \
   "bluetooth"       "Bluetooth cihazları"
