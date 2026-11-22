@@ -21,7 +21,9 @@ PanelWindow {
 
     // The workspace whose windows are spread out below; set on open.
     property int shownId: 1
-    // Only the focused screen takes the keyboard, decided on open.
+    // Only the focused screen takes the keyboard, decided on open; OnDemand
+    // rather than Exclusive, which would keep the pointer off the other
+    // screen's overview.
     property bool keyboard: false
     property int selected: -1
     // The workspace a dragged window is over, or -1.
@@ -128,7 +130,7 @@ PanelWindow {
 
     WlrLayershell.namespace: "can-overview"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: root.keyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: root.keyboard ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
     anchors {
         top: true

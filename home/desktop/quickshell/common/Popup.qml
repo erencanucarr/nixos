@@ -50,7 +50,11 @@ PanelWindow {
 
     WlrLayershell.namespace: "can-menu"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    // OnDemand, not Exclusive: Hyprland still hands it the keyboard as it
+    // maps (Esc and the text boxes work), but an exclusive layer also keeps
+    // the pointer from every other surface, so clicks on the other screen
+    // went nowhere. Catcher (shell.qml) closes it on such a click instead.
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore
     anchors {
         top: true

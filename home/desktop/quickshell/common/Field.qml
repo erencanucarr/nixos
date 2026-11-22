@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.common
 
 // A one-line text box on `raised`, bordered like Pick; brighter edged while
 // typing. Enter fires `accepted`.
@@ -11,6 +10,7 @@ Rectangle {
     property string placeholder: ""
     property bool secret: false
     property alias input: input
+    property int textSize: Theme.small
 
     signal accepted
 
@@ -34,7 +34,7 @@ Rectangle {
         selectionColor: Theme.text
         selectedTextColor: Theme.ground
         font.family: Theme.family
-        font.pixelSize: Theme.small
+        font.pixelSize: root.textSize
         echoMode: root.secret ? TextInput.Password : TextInput.Normal
         clip: true
         onAccepted: root.accepted()
@@ -48,7 +48,7 @@ Rectangle {
         }
         visible: input.text === "" && !input.activeFocus
         text: root.placeholder
-        font.pixelSize: Theme.small
+        font.pixelSize: root.textSize
         color: Theme.dim
     }
 }

@@ -9,12 +9,14 @@ import Quickshell.Io
 //   qs ipc call drawer toggle    qs ipc call power toggle
 //   qs ipc call audio toggle     qs ipc call weather toggle
 //   qs ipc call net toggle       qs ipc call overview toggle
-//   qs ipc call session toggle
+//   qs ipc call session toggle   qs ipc call calendar toggle
 // The bar popups (Power, AudioMenu) open on the focused monitor's bar.
 Singleton {
     id: root
 
     property bool drawerOpen: false
+    // The screen the drawer opened on, for Catcher.
+    property string drawerScreen: ""
     property bool overviewOpen: false
     property bool sessionOpen: false
     // The open bar popup as "<key>@<screen>" (Popup.qml), or "".
@@ -34,6 +36,7 @@ Singleton {
     function toggleDrawer(): void {
         root.popup = "";
         root.overviewOpen = false;
+        root.drawerScreen = root.focusedScreen();
         root.sessionOpen = false;
         root.drawerOpen = !root.drawerOpen;
     }
@@ -144,6 +147,17 @@ Singleton {
 
         function toggle(): void {
             root.togglePopup("net", root.focusedScreen());
+        }
+        function close(): void {
+            root.popup = "";
+        }
+    }
+
+    IpcHandler {
+        target: "calendar"
+
+        function toggle(): void {
+            root.togglePopup("calendar", root.focusedScreen());
         }
         function close(): void {
             root.popup = "";

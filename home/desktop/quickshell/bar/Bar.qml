@@ -66,6 +66,7 @@ PanelWindow {
     Clock {
         id: clock
         anchors.centerIn: parent
+        screenName: root.modelData.name
     }
 
     WeatherButton {

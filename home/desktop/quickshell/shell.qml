@@ -21,6 +21,12 @@ ShellRoot {
         delegate: Bar {}
     }
 
+    // Closes a menu or the drawer on a click on another screen.
+    Variants {
+        model: Quickshell.screens
+        delegate: Catcher {}
+    }
+
     // Built while open, freed when closed: they take no memory meanwhile.
     LazyLoader {
         active: Panels.drawerOpen
@@ -38,6 +44,13 @@ ShellRoot {
         active: Panels.sessionOpen
 
         Session {}
+    }
+
+    // Calendar notes that are due (Notes.qml).
+    LazyLoader {
+        active: Notes.due.length > 0
+
+        Reminder {}
     }
 
     Osd {}

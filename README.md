@@ -35,7 +35,7 @@ Flake-based NixOS configuration with Home Manager.
     │   ├── hyprland/         # hyprland.lua, lock, idle, notifications
     │   └── quickshell/       # the shell: shell.qml starts it
     │       ├── common/       # theme, glyphs, shared cards and menus
-    │       ├── bar/          # the bar and its audio and power menus
+    │       ├── bar/          # the bar; its calendar (with notes), audio and power menus
     │       ├── weather/      # Ankara's weather beside the clock
     │       ├── net/          # network menu: traffic, addresses, DNS, Wi-Fi, IP settings
     │       ├── drawer/       # app drawer
