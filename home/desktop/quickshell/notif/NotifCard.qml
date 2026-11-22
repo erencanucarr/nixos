@@ -11,6 +11,7 @@ Rectangle {
     required property var notif
     property bool showAge: false
     property int lifetime: 0
+    property bool showApp: true
 
     signal dismissed
     signal expired
@@ -208,75 +209,23 @@ Rectangle {
 
         Item {
             width: parent.width
-            height: head.implicitHeight
+            height: root.showApp ? head.implicitHeight : 0
 
             BarText {
                 id: head
                 anchors.left: parent.left
-                anchors.right: ageText.left
-                anchors.rightMargin: 8
-                text: root.app
+                anchors.right: parent.right
+                anchors.rightMargin: 44
+                text: root.showApp ? root.app : ""
                 elide: Text.ElideRight
                 font.pixelSize: root.fs - 2
                 weight: 600
                 color: root.tint
             }
-
-            BarText {
-                id: ageText
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.age
-                font.pixelSize: root.fs - 2
-                weight: root.wt
-                color: Theme.dim
-                opacity: root.hovered ? 0 : 1
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.anim
-                    }
-                }
-            }
-
-            Rectangle {
-                id: close
-
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.rightMargin: -4
-                width: 22
-                height: 22
-                radius: Theme.radius
-                color: closeMa.containsMouse ? Theme.sel : "transparent"
-                opacity: root.hovered ? 1 : 0
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.anim
-                    }
-                }
-
-                BarText {
-                    anchors.centerIn: parent
-                    text: String.fromCodePoint(0xF0156)
-                    font.pixelSize: root.fs + 1
-                    color: closeMa.containsMouse ? Theme.bright : Theme.dim
-                }
-
-                MouseArea {
-                    id: closeMa
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: root.hovered
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.notif.dismiss()
-                }
-            }
         }
 
         BarText {
-            width: parent.width
+            width: parent.width - (root.showApp ? 0 : 44)
             visible: text !== ""
             text: root.notif?.summary ?? ""
             wrapMode: Text.Wrap
@@ -355,6 +304,61 @@ Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    BarText {
+        id: ageText
+        anchors.right: parent.right
+        anchors.rightMargin: 12
+        anchors.top: parent.top
+        anchors.topMargin: root.showApp ? 10 : 15
+        text: root.age
+        font.pixelSize: root.fs - 2
+        weight: root.wt
+        color: Theme.dim
+        opacity: root.hovered ? 0 : 1
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.anim
+            }
+        }
+    }
+
+    Rectangle {
+        id: close
+
+        anchors.right: parent.right
+        anchors.rightMargin: 8
+        anchors.top: parent.top
+        anchors.topMargin: root.showApp ? 6 : 11
+        width: 22
+        height: 22
+        radius: Theme.radius
+        color: closeMa.containsMouse ? Theme.sel : "transparent"
+        opacity: root.hovered ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.anim
+            }
+        }
+
+        BarText {
+            anchors.centerIn: parent
+            text: String.fromCodePoint(0xF0156)
+            font.pixelSize: root.fs + 1
+            color: closeMa.containsMouse ? Theme.bright : Theme.dim
+        }
+
+        MouseArea {
+            id: closeMa
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: root.hovered
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.notif.dismiss()
         }
     }
 
