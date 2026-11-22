@@ -3,9 +3,6 @@ import Quickshell
 import Quickshell.Networking
 import qs.common
 
-// The connection as one glyph (after xeome's Net.qml): the wifi signal ramp
-// over wifi, a cable over ethernet, dim and crossed out with neither. Click
-// for NetMenu, right click for NetworkManager's own connection editor.
 BarModule {
     id: root
 
@@ -33,7 +30,6 @@ BarModule {
         font.pixelSize: Theme.size + 1
     }
 
-    // Built while open only, and freed on close (see Popup.qml).
     LazyLoader {
         active: root.open
 

@@ -2,9 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.common
 
-// The weather card's menu, laid out like MyWeather's popup in the bar's
-// graphite: the condition and temperature large, four readings under it, the
-// next five days in columns, and the sun times and last update at the foot.
 Popup {
     id: root
 
@@ -48,7 +45,6 @@ Popup {
         }
         spacing: 10
 
-        // Glyph, temperature, and the place with the condition beside them.
         RowLayout {
             Layout.fillWidth: true
             spacing: 12
@@ -157,7 +153,6 @@ Popup {
                         }
                     }
 
-                    // Rain chance, warm once rain is likely.
                     BarText {
                         Layout.alignment: Qt.AlignHCenter
                         text: `${String.fromCodePoint(0xF058C)} %${day.modelData.rain ?? 0}`
@@ -185,7 +180,6 @@ Popup {
                 Layout.fillWidth: true
             }
 
-            // The last update; a click fetches again.
             BarText {
                 text: WeatherData.failed ? "bağlanamadı · yenile" : `${Qt.formatDateTime(WeatherData.updated, "HH:mm")} · yenile`
                 font.pixelSize: Theme.small

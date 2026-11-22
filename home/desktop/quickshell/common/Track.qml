@@ -1,15 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.common
 
-// A slider (after xeome's Track.qml): a 6px bar in a 16px hit area. Drag,
-// click and scroll report a fraction in 0..1 through moved(); the owner
-// decides whether `value` follows.
 Item {
     id: root
 
     property real value: 0
-    // The bar's thickness; the hit area is 10px taller.
     property int thickness: 6
     signal moved(real fraction)
 

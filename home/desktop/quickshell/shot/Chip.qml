@@ -1,9 +1,6 @@
 import QtQuick
 import qs.common
 
-// A mode or tool in a toolbar pill (Shot, ShotEditor), after xeome's Chip.qml.
-// Selected is `sel`, never a colour. It sits on a Surface, so hover is the
-// `raised` variant.
 Rectangle {
     id: chip
 

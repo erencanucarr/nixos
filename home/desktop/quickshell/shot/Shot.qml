@@ -8,21 +8,6 @@ import Quickshell.Widgets
 import "Calc.mjs" as Calc
 import qs.common
 
-// Screenshots, after xeome's Shot.qml (MIT). Print and Super+Shift+S call
-// `qs ipc call shot open`: it freezes the focused monitor (grim to a file
-// shown under the overlay), takes a region, a window or the whole screen into
-// "$(xdg-user-dir PICTURES)/Ekran Görüntüleri" and the clipboard, then slides
-// in a card that opens ShotEditor. Shift+Print calls `shot screen`, which
-// takes the focused monitor at once, with no overlay.
-//
-// Everything here is in the screen's logical pixels. The frozen frame is in
-// device pixels, `k` per logical one, and only Calc.crop crosses between them.
-// What is drawn over the frame is fixed black and white, not themed, because
-// it sits on a screenshot.
-//
-// The frozen frame is cut with vips. Until vips is installed
-// (modules/desktop/hyprland.nix) the cut falls back to grim on the live
-// screen once the overlay is gone.
 Scope {
     id: root
 
@@ -30,9 +15,6 @@ Scope {
     readonly property var delays: [0, 3, 10]
     readonly property string run: Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"
 
-    // $1 delay in s, $2 crop box in frame pixels "x y w h", $3 the same box
-    // for grim in global logical pixels, $4 the frozen frame (deleted after),
-    // $5 an output name: when set, that whole output is taken instead.
     readonly property string script: `d="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Ekran Görüntüleri"
         mkdir -p "$d"; f="$d/$(date +%Y-%m-%d_%H-%M-%S).png"
         if [ -n "$5" ]; then grim -o "$5" "$f"
@@ -45,16 +27,14 @@ Scope {
     property int delay: 0
     property string frozen: ""
     property var scr: null
-    // A binding, so the positions refreshToplevels() fetches land whenever they arrive.
     readonly property var wins: aim.visible ? root.windows(root.scr) : []
-    property rect drag: Qt.rect(0, 0, 0, 0)   // width 0: nothing dragged yet
+    property rect drag: Qt.rect(0, 0, 0, 0)
     property real mx: 0
     property real my: 0
     readonly property var hover: wins.find(w => mx >= w.x && mx < w.x + w.width && my >= w.y && my < w.y + w.height) ?? null
     readonly property rect sel: mode === 2 ? Qt.rect(0, 0, aim.width, aim.height) : mode === 1 ? (hover ?? Qt.rect(0, 0, 0, 0)) : drag
     readonly property real k: frozenImg.sourceSize.width / Math.max(1, aim.width)
 
-    // The last capture, for the flash and the card.
     property string shot: ""
     property string shotWhat: ""
     property string shotDims: ""
@@ -64,12 +44,6 @@ Scope {
         return Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0];
     }
 
-    // The windows on the screen's active workspace, in the screen's logical
-    // pixels, topmost first: fullscreen, then floating, then tiled, and within
-    // those the most recently focused. lastIpcObject (where a window's
-    // position lives) is only as fresh as the last refreshToplevels(), which
-    // open() calls before grim. A special workspace shown over this one is
-    // not included.
     function windows(screen: var): var {
         const ws = Hyprland.monitorFor(screen)?.activeWorkspace;
         return [...Hyprland.toplevels.values]
@@ -84,13 +58,10 @@ Scope {
             return;
         root.scr = root.focusedScreen();
         Hyprland.refreshToplevels();
-        // ppm, not png: grim writes it in a fraction of the time, and the
-        // overlay cannot show before it is done.
         freeze.next = `${root.run}/qs-shot-${Date.now()}.ppm`;
         freeze.exec(["sh", "-c", 'rm -f "$3"/qs-shot-*.ppm; grim -t ppm -o "$1" "$2" && echo ok', "sh", root.scr.name, freeze.next, root.run]);
     }
 
-    // The focused monitor, whole, straight away.
     function screenNow(): void {
         if (aim.visible)
             return;
@@ -102,8 +73,6 @@ Scope {
         take.exec(["sh", "-c", root.script, "sh", "0", "", "", "", root.scr.name]);
     }
 
-    // Frees the decoded frame, which the picker's Canvas holds until told.
-    // The capture script deletes the file itself once vips is done.
     function close(): void {
         aim.visible = false;
         picker.unloadImage(frozenImg.source);
@@ -119,7 +88,6 @@ Scope {
     }
 
     function fire(): void {
-        // A miss in window mode is a miss, not the whole screen.
         if (root.mode === 1 && !root.hover)
             return;
         const r = root.sel.width > 2 && root.sel.height > 2 ? root.sel : Qt.rect(0, 0, aim.width, aim.height);
@@ -130,17 +98,11 @@ Scope {
         root.shotWhat = `${root.modes[root.mode]} · ${Qt.formatTime(new Date(), "HH:mm")}`;
         root.shotDims = `${c.w} × ${c.h}`;
         const frame = root.frozen;
-        // No timer: cut the frozen frame, so the shot is what you saw. With a
-        // timer: shoot the live screen, in global logical coordinates.
         const g = `${Math.round(root.scr.x + c.x / root.k)},${Math.round(root.scr.y + c.y / root.k)} ${Math.round(c.w / root.k)}x${Math.round(c.h / root.k)}`;
         take.exec(["sh", "-c", root.script, "sh", String(root.delays[root.delay]), `${c.x} ${c.y} ${c.w} ${c.h}`, g, frame, ""]);
         root.close();
     }
 
-    //   qs ipc call shot open      the overlay (Print, Super+Shift+S)
-    //   qs ipc call shot screen    the focused monitor, no overlay (Shift+Print)
-    //   qs ipc call shot cancel    closes the overlay or the editor, as Esc does
-    //   qs ipc call shot edit      the editor on the last shot
     IpcHandler {
         target: "shot"
 
@@ -156,8 +118,6 @@ Scope {
             root.cancel();
         }
 
-        // For scripts and testing: the overlay's mode (0 alan, 1 pencere,
-        // 2 ekran) and the shutter, as Tab and Enter.
         function mode(m: int): void {
             root.mode = Math.max(0, Math.min(2, m));
         }
@@ -167,7 +127,6 @@ Scope {
                 root.fire();
         }
 
-        // The editor on the last shot, as clicking its card does.
         function edit(): void {
             if (!root.shot || aim.visible)
                 return;
@@ -186,7 +145,7 @@ Scope {
             onStreamFinished: {
                 if (!text.trim())
                     return;
-                root.frozen = freeze.next;   // only now: the file is complete
+                root.frozen = freeze.next;
                 root.mode = 0;
                 root.drag = Qt.rect(0, 0, 0, 0);
                 aim.visible = true;
@@ -208,7 +167,6 @@ Scope {
         }
     }
 
-    // The editor is built when a shot is opened in it and freed when it closes.
     LazyLoader {
         id: editor
 
@@ -241,8 +199,6 @@ Scope {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        // hyprland.lua turns layer animations off for this namespace: a frozen
-        // frame that fades in looks like the screen flickering.
         WlrLayershell.namespace: "quickshell-shot"
 
         Item {
@@ -272,12 +228,9 @@ Scope {
                 id: frozenImg
 
                 anchors.fill: parent
-                // Shared with the loupe and the picker through the image cache,
-                // so the frame is decoded once.
                 source: root.frozen ? "file://" + root.frozen : ""
             }
 
-            // Everything outside the selection darkens; a little before there is one.
             Item {
                 anchors.fill: parent
 
@@ -323,8 +276,6 @@ Scope {
                 color: "#40FFFFFF"
             }
 
-            // The selection: a 1px white edge with square handles, and its size
-            // in frame pixels above it (inside it at the top of the screen).
             Item {
                 id: vf
 
@@ -371,25 +322,19 @@ Scope {
                 }
             }
 
-            // Loupe: the pixels under the cursor at 12x, with a ring on the
-            // centre pixel and its position and colour below.
             Item {
                 id: loupe
 
-                // The cursor reaches the screen's far edge, x == width, which
-                // is one pixel past the frame's last.
                 readonly property int px: Math.max(0, Math.min(frozenImg.sourceSize.width - 1, Math.floor(root.mx * root.k)))
                 readonly property int py: Math.max(0, Math.min(frozenImg.sourceSize.height - 1, Math.floor(root.my * root.k)))
                 readonly property int zoom: 12
-                readonly property int cells: 13   // odd, so one pixel sits in the middle
+                readonly property int cells: 13
 
                 x: root.mx + 24 + width > stage.width ? root.mx - 24 - width : root.mx + 24
                 y: root.my + 24 + height > stage.height ? root.my - 24 - height : root.my + 24
                 width: cells * zoom + 2
                 height: width + readout.height + 6
 
-                // The colour under the cursor, read from a 1x1 canvas hidden
-                // behind the loupe.
                 Canvas {
                     id: picker
 
@@ -493,7 +438,6 @@ Scope {
 
                 property point from
 
-                // A held button keeps reporting past the screen edge.
                 function clampX(x: real): real {
                     return Math.max(0, Math.min(width, x));
                 }
@@ -508,8 +452,6 @@ Scope {
                         root.drag = Qt.rect(Math.min(from.x, root.mx), Math.min(from.y, root.my), Math.abs(root.mx - from.x), Math.abs(root.my - from.y));
                 }
                 onPressed: e => {
-                    // The position only updates on move, so a click without
-                    // moving would otherwise use the last capture's.
                     root.mx = clampX(e.x);
                     root.my = clampY(e.y);
                     if (root.mode !== 0)
@@ -534,7 +476,6 @@ Scope {
                     implicitWidth: chips.implicitWidth + 12
                     implicitHeight: chips.implicitHeight + 12
 
-                    // Keeps clicks on the pill from reaching the frame below.
                     MouseArea {
                         anchors.fill: parent
                     }
@@ -600,7 +541,6 @@ Scope {
         }
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
-        // Clicks go through everywhere except the card.
         mask: Region {
             item: card
         }
@@ -653,7 +593,6 @@ Scope {
                         source: root.shot ? "file://" + root.shot : ""
                         sourceSize: Qt.size(592, 336)
                         fillMode: Image.PreserveAspectCrop
-                        // The editor saves over the same path.
                         cache: false
                     }
                 }

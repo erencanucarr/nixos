@@ -5,21 +5,11 @@ import Quickshell
 import Quickshell.Wayland
 import qs.common
 
-// The wallpaper picker, after xeome's Walls.qml: Super+Shift+W (qs ipc call
-// walls toggle). Plain black and every image in ~/nixos/home/desktop/
-// wallpapers as slanted slices, the focused one wide. Arrows or the wheel
-// browse, Enter or a click on the wide one applies (WallState), Esc or a
-// click above or below closes. xeome's "dots" bakes are left out, and the
-// applying is ours (Wallpaper.qml) rather than waypaper and swaybg.
-// Built while open only (shell.qml).
 PanelWindow {
     id: root
 
-    // "siyah" first, then the files by name.
     property var choices: [WallState.black]
 
-    // The slice geometry, from the screen: tall slices, the focused one
-    // wide, each leaning right by `lean` across its height.
     readonly property real sliceH: Math.round(height * 0.55)
     readonly property real wideW: Math.round(width * 0.42)
     readonly property real narrowW: Math.round(width * 0.05)
@@ -71,7 +61,6 @@ PanelWindow {
     }
 
     MouseArea {
-        // One slice per notch (120): a touchpad sends many small deltas.
         property real travel: 0
 
         anchors.fill: parent
@@ -97,19 +86,14 @@ PanelWindow {
         height: root.sliceH
         orientation: ListView.Horizontal
         model: root.choices
-        // Room at both ends, so the first and last can sit in the middle
-        // too (with few wallpapers the strip would otherwise hug an edge).
         leftMargin: (width - root.wideW) / 2
         rightMargin: (width - root.wideW) / 2
-        // Neighbours' slanted edges are parallel, so the gap is even.
         spacing: 10
         interactive: false
         focus: true
         keyNavigationEnabled: true
         onCurrentIndexChanged: Qt.callLater(list.recenter)
 
-        // The focused slice in the middle, redone as widths animate, since
-        // the one shrinking beside it moves it too.
         function recenter(): void {
             forceLayout();
             positionViewAtIndex(currentIndex, ListView.Center);
@@ -147,8 +131,6 @@ PanelWindow {
 
             onWidthChanged: Qt.callLater(list.recenter)
 
-            // An upright Item sheared into a parallelogram and clipped there;
-            // its picture is sheared back so it stays upright.
             Item {
                 id: shape
 
@@ -187,7 +169,6 @@ PanelWindow {
                     border.color: slice.current ? Theme.bright : Theme.rule
                 }
 
-                // Inside the shear, so clicks follow the slanted edges.
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor

@@ -6,16 +6,6 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.common
 
-// The app drawer, on the focused screen: Super or the bar's apps button.
-// Vicinae (Super+Space) is the fast search; this is for browsing:
-//   - categories down the left (from each app's own .desktop categories);
-//   - "Sık kullanılanlar" on top: pinned apps, then the most opened lately
-//     (DrawerState, kept on this machine);
-//   - a dot under apps that are running; clicking one goes to its window;
-//   - right click: pin, open a new window, the app's own actions.
-// Type to search (Turkish letters fold, so "gorsel" finds "Görsel"; names
-// count before descriptions). Arrows move, Enter opens, Tab changes the
-// category, Alt+1…6 opens a favourite, Esc or a click outside closes.
 PanelWindow {
     id: root
 
@@ -24,12 +14,9 @@ PanelWindow {
 
     property string query: ""
     property string category: "all"
-    // The right-click menu's app and place, or null.
     property var menuApp: null
     property point menuAt
 
-    // [key, label, glyph, .desktop categories]; an app goes under the first
-    // that matches.
     readonly property var kinds: [
         ["web", "İnternet", 0xF059F, ["Network", "WebBrowser", "Email", "Chat"]],
         ["dev", "Geliştirme", 0xF0169, ["Development", "IDE", "TerminalEmulator"]],
@@ -48,7 +35,6 @@ PanelWindow {
         return root.kinds.find(k => k[3].some(c => cats.includes(c)))?.[0] ?? "other";
     }
 
-    // Categories that hold something, with their counts.
     readonly property var shelf: {
         const counts = {};
         for (const a of root.all)
@@ -62,13 +48,10 @@ PanelWindow {
         return out;
     }
 
-    // Lower case with Turkish letters folded to ASCII.
     function fold(s: string): string {
         return (s ?? "").toLocaleLowerCase("tr").replace(/ı/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c").replace(/[̀-ͯ]/g, "");
     }
 
-    // How well an app answers the query: by name first, then its generic
-    // name, description and keywords, then the name's letters in order.
     function rank(app: var, q: string): real {
         const name = root.fold(app.name);
         if (name.startsWith(q))
@@ -93,11 +76,9 @@ PanelWindow {
         const q = root.fold(root.query.trim());
         if (q === "")
             return root.category === "all" ? root.all : root.all.filter(a => root.kindOf(a) === root.category);
-        // A search looks through every category.
         return root.all.map(a => [a, q.split(/\s+/).reduce((s, w) => Math.min(s, root.rank(a, w)), 100)]).filter(x => x[1] > 0).sort((x, y) => y[1] - x[1] || DrawerState.score(y[0].id) - DrawerState.score(x[0].id)).map(x => x[0]);
     }
 
-    // Pinned first, then the most opened: one row.
     readonly property var favourites: {
         const byId = id => root.all.find(a => a.id === id);
         const pinned = DrawerState.pinned.map(byId).filter(a => !!a);
@@ -107,7 +88,6 @@ PanelWindow {
 
     readonly property bool showFavourites: root.query === "" && root.category === "all" && root.favourites.length > 0
 
-    // An app's open window, matched by its window class.
     function windowOf(app: var): var {
         const keys = [app.id, app.startupClass, app.name].filter(k => !!k).map(k => k.toLowerCase().replace(/\.desktop$/, ""));
         return Hyprland.toplevels.values.find(t => keys.includes((t.lastIpcObject?.class ?? "").toLowerCase())) ?? null;
@@ -145,10 +125,6 @@ PanelWindow {
 
     WlrLayershell.namespace: "can-drawer"
     WlrLayershell.layer: WlrLayer.Overlay
-    // OnDemand, not Exclusive: Hyprland still hands it the keyboard as it
-    // maps (Esc and the text boxes work), but an exclusive layer also keeps
-    // the pointer from every other surface, so clicks on the other screen
-    // went nowhere. Catcher (shell.qml) closes it on such a click instead.
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore
     anchors {
@@ -161,15 +137,12 @@ PanelWindow {
 
     property bool shown: false
 
-    // Built fresh on each open (shell.qml's LazyLoader): the window list for
-    // the running dots, the keyboard in the search box, then in it comes.
     Component.onCompleted: {
         Hyprland.refreshToplevels();
         search.forceActiveFocus();
         root.shown = true;
     }
 
-    // A click outside the panel closes the drawer.
     MouseArea {
         anchors.fill: parent
         onClicked: Panels.drawerOpen = false
@@ -197,14 +170,12 @@ PanelWindow {
             }
         }
 
-        // Clicks on the panel stay here, and close the right-click menu.
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
             onClicked: root.menuApp = null
         }
 
-        // ── search ──────────────────────────────────────────────────────
         Rectangle {
             id: searchBox
 
@@ -311,7 +282,6 @@ PanelWindow {
             }
         }
 
-        // ── categories ──────────────────────────────────────────────────
         ColumnLayout {
             id: side
 
@@ -406,7 +376,6 @@ PanelWindow {
             color: Theme.edge
         }
 
-        // ── favourites, then the grid ───────────────────────────────────
         Item {
             id: content
 
@@ -506,7 +475,6 @@ PanelWindow {
             }
         }
 
-        // ── the right-click menu ────────────────────────────────────────
         Surface {
             id: menu
 
@@ -579,15 +547,12 @@ PanelWindow {
         }
     }
 
-    // A row of the right-click menu.
     component MenuRow: Pick {
         implicitHeight: 30
         textSize: root.fs - 2
         weight: root.wt
     }
 
-    // One app: icon, name, a dot when it runs; click opens (or goes to its
-    // window), right click for the menu.
     component AppCell: Item {
         id: cell
 
@@ -635,7 +600,6 @@ PanelWindow {
                 source: cell.icon
             }
 
-            // An icon the theme lacks would draw Qt's checkerboard.
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: 2
@@ -654,7 +618,6 @@ PanelWindow {
             }
         }
 
-        // Running.
         Rectangle {
             visible: cell.running
             anchors {
@@ -685,7 +648,6 @@ PanelWindow {
             color: cell.current ? Theme.bright : Theme.text
         }
 
-        // Pinned, top right.
         BarText {
             visible: DrawerState.isPinned(cell.app?.id ?? "")
             anchors {

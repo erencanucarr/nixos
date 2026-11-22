@@ -5,20 +5,13 @@ import Quickshell.Io
 import Quickshell.Networking
 import qs.common
 
-// The network button's menu. Two pages on one card:
-//   main: the primary link (rename in place), its traffic, addresses (click
-//         to copy), ping and public IP on demand, DNS presets, Wi-Fi;
-//   ip:   a saved connection's IPv4 mode (DHCP or a fixed address).
-// Data and edits live in NetData; NetworkManager does the work.
 Popup {
     id: root
 
     property string page: "main"
     property bool renaming: false
-    // The Wi-Fi network asking for a password, by name.
     property string askingFor: ""
 
-    // The IP page's form.
     property string formUuid: ""
     property bool formManual: false
 
@@ -60,7 +53,6 @@ Popup {
             root.askingFor = "";
         }
     }
-    // Built when opened and freed when closed (NetButton's LazyLoader).
     Component.onCompleted: NetData.watching = visible
     Component.onDestruction: NetData.watching = false
 
@@ -78,7 +70,6 @@ Popup {
         }
     }
 
-    // A label and a value on one line; copyable values copy on click.
     component Info: RowLayout {
         id: info
 
@@ -114,7 +105,6 @@ Popup {
         }
     }
 
-    // Dim text that brightens under the pointer and does something.
     component Link: BarText {
         id: link
 
@@ -171,7 +161,6 @@ Popup {
         }
     }
 
-    // ── main ────────────────────────────────────────────────────────────
     ColumnLayout {
         id: main
 
@@ -186,7 +175,6 @@ Popup {
         }
         spacing: 9
 
-        // The link: glyph, name (a field while renaming) and what it is.
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
@@ -294,7 +282,6 @@ Popup {
 
         Rule {}
 
-        // On demand only: each is one request to the outside.
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
@@ -377,7 +364,6 @@ Popup {
             visible: !!root.wifiDevice
         }
 
-        // Wi-Fi: the switch, then nearby networks while it is on.
         RowLayout {
             visible: !!root.wifiDevice
             Layout.fillWidth: true
@@ -480,7 +466,6 @@ Popup {
         }
     }
 
-    // ── ip ──────────────────────────────────────────────────────────────
     ColumnLayout {
         id: ipPage
 

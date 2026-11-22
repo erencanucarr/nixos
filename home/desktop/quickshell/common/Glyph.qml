@@ -2,8 +2,6 @@ pragma Singleton
 
 import Quickshell
 
-// Nerd Font glyphs by code point, so the source stays plain ASCII. The bar's
-// picks follow xeome's (Audio.qml, AudioMenu.qml, Idle.qml, Net.qml, Tray.qml).
 Singleton {
     readonly property string apps: String.fromCodePoint(0xF003B)
     readonly property string power: String.fromCodePoint(0xF0425)
@@ -22,9 +20,7 @@ Singleton {
     readonly property string chevronUp: String.fromCodePoint(0xF0143)
     readonly property string chevronDown: String.fromCodePoint(0xF0140)
     readonly property string battery: String.fromCodePoint(0xF0949)
-    // Idle inhibitor on and off, as in xeome's Idle.qml.
     readonly property string awake: String.fromCodePoint(0xF0176)
-    // Power profiles, as xeome picks them: fast, medium and slow gauges.
     readonly property string perf: String.fromCodePoint(0xF04C5)
     readonly property string balanced: String.fromCodePoint(0xF0F85)
     readonly property string saver: String.fromCodePoint(0xF0F86)
@@ -32,7 +28,6 @@ Singleton {
     readonly property string sleepAllowed: String.fromCodePoint(0xF0FAA)
     readonly property string chevronLeft: String.fromCodePoint(0xF0141)
     readonly property string chevronRight: String.fromCodePoint(0xF0142)
-    // The network menu.
     readonly property string pencil: String.fromCodePoint(0xF03EB)
     readonly property string copy: String.fromCodePoint(0xF018F)
     readonly property string down: String.fromCodePoint(0xF0045)
@@ -41,6 +36,5 @@ Singleton {
     readonly property string wired: String.fromCodePoint(0xF0317)
     readonly property string wiredOff: String.fromCodePoint(0xF0319)
     readonly property string wifiOff: String.fromCodePoint(0xF092E)
-    // The wifi signal ramp, weakest first.
     readonly property var wifi: [0xF092F, 0xF091F, 0xF0922, 0xF0925, 0xF0928].map(c => String.fromCodePoint(c))
 }

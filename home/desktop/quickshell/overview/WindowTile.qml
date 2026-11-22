@@ -4,16 +4,12 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.common
 
-// One window in the overview: its live picture on a card, its icon and title
-// under it, a close button on hover. Positioned and sized by OverviewScreen.
-// Dragging it reports where it was dropped; the screen decides what that means.
 Item {
     id: root
 
     required property var toplevel
     property bool selected: false
 
-    // Room under the picture for the title row.
     readonly property int titleHeight: 28
     readonly property var ipc: toplevel?.lastIpcObject ?? {}
     readonly property string appClass: ipc.class ?? ""
@@ -23,8 +19,6 @@ Item {
     }
     readonly property bool hovered: ma.containsMouse
 
-    // While dragged: the offset from the tile's place, and the pointer in
-    // the screen's coordinates.
     property real dx: 0
     property real dy: 0
     readonly property bool dragging: ma.dragging
@@ -105,7 +99,6 @@ Item {
                 constraintSize: Qt.size(card.width, card.height)
             }
 
-            // Until the first frame (or for a window that cannot be captured).
             IconImage {
                 visible: !view.hasContent && root.icon !== ""
                 anchors.centerIn: parent
@@ -114,7 +107,6 @@ Item {
             }
         }
 
-        // The edge, on top of the picture: bright when hovered or picked.
         Rectangle {
             anchors.fill: card
             radius: card.radius
@@ -154,7 +146,6 @@ Item {
             }
         }
 
-        // Close, top right, on hover.
         Rectangle {
             visible: root.hovered && !root.dragging
             anchors {

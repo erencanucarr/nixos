@@ -4,22 +4,14 @@ import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.common
 
-// A chevron card that reveals the tray icons on hover (after xeome's
-// Tray.qml). Left click activates, right click opens the icon's menu;
-// nm-applet only has a menu.
 Rectangle {
     id: root
 
-    // An open menu grabs the pointer and `hover` goes false; without menuOpen
-    // the drawer would collapse and destroy the delegate holding the menu.
     readonly property bool expanded: hover.containsMouse || menuOpen
     property bool menuOpen: false
 
-    // Bound eagerly: the tray service only starts syncing once referenced, so
-    // a first read inside the Repeater leaves the drawer empty for seconds.
     readonly property var items: SystemTray.items.values
 
-    // Ayatana indicators report onlyMenu=false yet have no Activate method.
     readonly property var menuOnlyIds: ["nm-applet"]
 
     implicitWidth: Math.max(implicitHeight, row.implicitWidth + 2 * (Theme.pad - 2))
@@ -38,9 +30,6 @@ Rectangle {
         }
     }
 
-    // Covers the whole drawer so it stays open over the icons. Declared first
-    // so the per-icon click areas sit on top; those keep hoverEnabled off, or
-    // they steal hover and the drawer flickers.
     MouseArea {
         id: hover
         anchors.fill: parent

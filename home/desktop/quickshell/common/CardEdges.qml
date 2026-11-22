@@ -1,8 +1,5 @@
 import QtQuick
 
-// The rest of a bar card's edge (after xeome's CardEdges.qml), for a
-// Rectangle that already draws its fill and a 1px Theme.line border: a dark
-// ring one pixel outside it and a highlight inside its top edge.
 Item {
     id: root
 
@@ -19,8 +16,6 @@ Item {
         border.color: Theme.ring
     }
 
-    // A rounded ring cut to its top part, so it bends with the corners and
-    // stops before the sides.
     Item {
         anchors {
             left: parent.left

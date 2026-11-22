@@ -2,17 +2,12 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-// A clear layer over every other screen while a bar menu, the app drawer or
-// the wallpaper picker is open on one: a click there closes it, as a click beside it on its own
-// screen does (otherwise it would stay open on the other screen).
-// The bar stays uncovered, so another bar button opens its menu at once.
 PanelWindow {
     id: root
 
     required property var modelData
 
-    // The screen the open menu or drawer is on, or "".
-    readonly property string busy: Panels.popup !== "" ? Panels.popup.split("@")[1] : Panels.drawerOpen ? Panels.drawerScreen : Panels.wallsOpen ? Panels.wallsScreen : ""
+    readonly property string busy: Panels.popup !== "" ? Panels.popup.split("@")[1] : Panels.drawerOpen ? Panels.drawerScreen : Panels.wallsOpen ? Panels.wallsScreen : Panels.keysOpen ? Panels.keysScreen : ""
 
     screen: modelData
     visible: busy !== "" && busy !== modelData.name
@@ -37,6 +32,7 @@ PanelWindow {
             Panels.popup = "";
             Panels.drawerOpen = false;
             Panels.wallsOpen = false;
+            Panels.keysOpen = false;
         }
     }
 }

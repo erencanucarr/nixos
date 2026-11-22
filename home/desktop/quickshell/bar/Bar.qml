@@ -4,14 +4,10 @@ import Quickshell.Wayland
 import Quickshell.Services.UPower
 import qs.weather
 import qs.common
+import qs.media
+import qs.notif
 import qs.net
 
-// A 30px top bar on every screen, its modules laid out like xeome's in small
-// graphite cards: apps and workspaces on the left, the clock and Ankara's
-// weather (weather/) in the middle, the tray drawer, a network and volume
-// strip and power on the right; volume and power open xeome-style menus
-// under them (AudioMenu, Power). The bar
-// itself stays flat and square, with one hairline under it.
 PanelWindow {
     id: root
 
@@ -60,9 +56,12 @@ PanelWindow {
         Workspaces {
             screen: root.modelData
         }
+
+        MediaButton {
+            screenName: root.modelData.name
+        }
     }
 
-    // The clock stays centred; the weather hangs on its right.
     Clock {
         id: clock
         anchors.centerIn: parent
@@ -88,9 +87,10 @@ PanelWindow {
 
         Tray {}
 
-        // One connected strip, bordered once over the group because
-        // per-module borders seam at every junction. The end modules round
-        // their own outer corners; a hairline divides them.
+        Bell {
+            screenName: root.modelData.name
+        }
+
         Item {
             implicitWidth: strip.implicitWidth
             implicitHeight: strip.implicitHeight
@@ -130,8 +130,6 @@ PanelWindow {
             }
         }
 
-        // Power (lock, log out, sleep, restart, shut down, keep awake). The
-        // coffee glyph joins it while the idle inhibitor is on.
         BarModule {
             id: powerButton
 
@@ -140,7 +138,6 @@ PanelWindow {
             selected: open
             onClicked: Panels.togglePopup("power", root.modelData.name)
 
-            // The power profile, only when it is not the default.
             BarText {
                 visible: PowerProfiles.profile !== PowerProfile.Balanced
                 anchors.verticalCenter: parent.verticalCenter
@@ -176,9 +173,6 @@ PanelWindow {
         }
     }
 
-    // Power's "keep awake": hypridle honours the inhibitor, so neither the
-    // lock nor the screens-off timeout fires. Every bar holds one; the bar
-    // is always mapped, which the protocol requires.
     IdleInhibitor {
         window: root
         enabled: Panels.awake

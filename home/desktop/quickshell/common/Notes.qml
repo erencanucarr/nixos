@@ -4,21 +4,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Day notes and their reminders. The calendar adds them (right click a day),
-// Reminder shows them when due, and the clock marks a day that has some.
-//
-// Kept in ~/.local/state/can-notes.json as
-//   { "2026-11-25": [{ id, text, time: "14:30" | "", reminded, snoozeUntil }] }
-// and watched, so an edit by hand shows up too.
-//
-// A note with a time is due at that time on its day; one without, at 09:00
-// (or as soon as the shell runs that day). Due notes collect in `due` until
-// dismissed or snoozed.
 Singleton {
     id: root
 
     property var notes: ({})
-    // [{ date, id, text, time }], oldest first.
     property var due: []
 
     readonly property string untimed: "09:00"
@@ -31,7 +20,6 @@ Singleton {
         return root.notes[root.key(d)] ?? [];
     }
 
-    // Copy, change, assign: a property var only notifies on assignment.
     function edit(dateKey: string, change: var): void {
         const all = Object.assign({}, root.notes);
         const day = (all[dateKey] ?? []).map(n => Object.assign({}, n));
@@ -82,7 +70,6 @@ Singleton {
         root.dismiss(id);
     }
 
-    // Today's notes whose moment has come and that have not been shown.
     function check(): void {
         const now = new Date();
         const today = root.key(now);
@@ -123,8 +110,6 @@ Singleton {
         }
     }
 
-    // qs ipc call notes add "Süt al" "18:30"   (today; the time may be "")
-    // qs ipc call notes dismiss                (every reminder on screen)
     IpcHandler {
         target: "notes"
 

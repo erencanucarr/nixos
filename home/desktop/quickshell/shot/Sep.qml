@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.common
 
-// A hairline between groups in a toolbar row.
 Rectangle {
     Layout.leftMargin: 4
     Layout.rightMargin: 4

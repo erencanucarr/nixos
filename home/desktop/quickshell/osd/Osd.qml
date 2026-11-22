@@ -8,25 +8,18 @@ import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 import qs.common
 
-// The on-screen display (after xeome's Osd.qml): a card low on the focused
-// screen for a moment when the volume, its mute, the mic's mute (F9 on the
-// MX Keys Mini) or Caps Lock changes. Each source is watched, so no keybind
-// has to tell it. xeome's backlight part is left out: no laptop screen here.
 PanelWindow {
     id: root
 
     property string icon: ""
     property real value: 0
-    property string label: "" // shown instead of the level bar when set
-    property bool alert: false // the icon in `hot`, for a muted mic
+    property string label: ""
+    property bool alert: false
 
-    // Each source flashes on a change, never on its first value, so startup
-    // stays quiet.
     property real lastVolume: -1
     property bool lastMuted: false
     property int lastCaps: -1
 
-    // The card rests this far above its lowest point and drifts up into it.
     readonly property int drift: 6
 
     function flash(icon: string, value: real, label: string, alert: bool): void {
@@ -48,7 +41,6 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
     visible: false
-    // Never in the way of a click.
     mask: Region {}
 
     onVisibleChanged: if (visible)
@@ -94,18 +86,12 @@ PanelWindow {
         root.flash(a.muted ? Glyph.volOff : pct > 66 ? Glyph.volHigh : pct > 33 ? Glyph.volMid : Glyph.volLow, a.muted ? 0 : a.volume, "", false);
     }
 
-    // The mic shows mute only; AudioMenu has its level.
-    //
-    // A mic that starts unmuted never emits a first value to seed from, so the
-    // first real toggle would be swallowed: changes count once the node has
-    // had 500ms to bind instead.
     property bool micReady: false
 
     onSourceChanged: root.micReady = false
 
     Timer {
         interval: 500
-        // Re-arms when the default source changes.
         running: root.source !== null && !root.micReady
         onTriggered: root.micReady = true
     }
@@ -133,7 +119,6 @@ PanelWindow {
         showDotAndDotDot: false
     }
 
-    // Trusts inotify to see the LED change.
     FileView {
         path: root.capsDir ? root.capsDir + "/brightness" : ""
         watchChanges: true

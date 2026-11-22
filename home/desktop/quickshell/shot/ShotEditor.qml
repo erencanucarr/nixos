@@ -5,32 +5,22 @@ import Quickshell
 import Quickshell.Wayland
 import qs.common
 
-// After xeome's ShotEditor.qml (MIT). Opened from Shot's thumbnail card:
-// pen, arrow, rectangle, pixelate and text marks over the shot, kept in the
-// image's own pixels. Ctrl+S or Enter writes them over the file at full size
-// and copies it; Esc discards.
-//
-// The inks are graphite's hot and warm plus white and black, as literals
-// rather than Theme tokens: they are burnt into the PNG.
 Scope {
     id: root
 
-    // The keys stay p a r b t (pen, arrow, rect, blur, text); `kinds` are the
-    // marks they draw.
     readonly property var tools: ["kalem", "ok", "kutu", "bulanık", "yazı"]
     readonly property var kinds: ["pen", "arrow", "rect", "blur", "text"]
     readonly property var hotkeys: [Qt.Key_P, Qt.Key_A, Qt.Key_R, Qt.Key_B, Qt.Key_T]
     readonly property var inks: ["#E2715A", "#E5AE52", "#FFFFFF", "#000000"]
-    readonly property var sizes: [3, 6, 12]   // logical px; × dpr in the image
+    readonly property var sizes: [3, 6, 12]
 
     property string shot: ""
     property var scr: null
     property int tool: 0
     property int ink: 0
     property int size: 1
-    // { k: "pen", c, w, pts } · { k: "arrow" | "rect" | "blur", c, w, x1, y1, x2, y2 } · { k: "text", c, s, x, y, t }
     property var marks: []
-    property var live: null   // the mark being dragged right now
+    property var live: null
     readonly property real dpr: scr?.devicePixelRatio ?? 1
     readonly property real w: sizes[size] * dpr
 
@@ -44,7 +34,6 @@ Scope {
         st.forceActiveFocus();
     }
 
-    // Shot holds the editor in a LazyLoader and drops it on `closed`.
     signal closed
 
     function close(): void {
@@ -84,7 +73,7 @@ Scope {
             top: true
             bottom: true
         }
-        color: "#F20A0A0C"   // ground, nearly opaque
+        color: "#F20A0A0C"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -116,8 +105,6 @@ Scope {
                 e.accepted = true;
             }
 
-            // The shot, fitted between the top label and the bottom pills,
-            // never larger than 1:1.
             Item {
                 id: frame
 
@@ -140,13 +127,11 @@ Scope {
                         id: img
 
                         source: root.shot ? "file://" + root.shot : ""
-                        cache: false   // saved over the same path
+                        cache: false
                         smooth: true
                         mipmap: true
                     }
 
-                    // The live mark last: its delegate is rebuilt on every
-                    // mouse move, the committed ones only when one is added.
                     Repeater {
                         model: root.marks
 
@@ -178,8 +163,6 @@ Scope {
                         font.weight: 650
                         color: root.inks[root.ink]
                         selectionColor: Theme.sel
-                        // Handled here, not via onAccepted: TextInput passes an
-                        // accepted Return on to st, which would save and close.
                         Keys.onReturnPressed: root.commitWord()
                         Keys.onEnterPressed: root.commitWord()
                         Keys.onEscapePressed: {
@@ -210,7 +193,6 @@ Scope {
                             const l = root.live;
                             if (!l)
                                 return;
-                            // ponytail: the stroke is copied on every move, O(n²); fine into the thousands of points.
                             if (l.k === "pen")
                                 root.live = Object.assign({}, l, { pts: l.pts.concat([Qt.point(e.x, e.y)]) });
                             else
@@ -374,12 +356,11 @@ Scope {
         }
     }
 
-    // One mark, in the image's pixels.
     component Mark: Item {
         id: mk
 
         property var m
-        property Item src   // the shot, for blur: ids don't reach into inline components
+        property Item src
         readonly property real x0: Math.min(m.x1, m.x2)
         readonly property real y0: Math.min(m.y1, m.y2)
         readonly property real w0: Math.abs(m.x2 - m.x1)
@@ -420,10 +401,8 @@ Scope {
             Shape {
                 id: ar
 
-                // The head is a triangle four strokes long; the shaft stops at its base.
                 readonly property real a: Math.atan2(mk.m.y2 - mk.m.y1, mk.m.x2 - mk.m.x1)
                 readonly property real hl: mk.m.w * 4
-                // Never behind the tail, or a short arrow's shaft pokes out of the head.
                 readonly property real back: Math.min(hl * 0.8, Math.hypot(mk.m.x2 - mk.m.x1, mk.m.y2 - mk.m.y1))
                 readonly property point base: Qt.point(mk.m.x2 - Math.cos(a) * back, mk.m.y2 - Math.sin(a) * back)
 
@@ -463,7 +442,6 @@ Scope {
             }
         }
 
-        // Pixelate, not a true blur: the area resampled into blocks.
         Component {
             id: blur
 

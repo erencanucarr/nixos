@@ -1,13 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
 
-// The popup most bar buttons share (after xeome's Menu.qml): one width and
-// padding. Children go straight into the column.
 Popup {
     id: root
 
     default property alias rows: body.data
-    // Room between rows; the audio menu uses xeome's 8.
     property alias rowSpacing: body.spacing
 
     contentWidth: Theme.menuWidth

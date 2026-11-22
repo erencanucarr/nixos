@@ -4,36 +4,24 @@ import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
 import qs.common
 
-// Volume's menu, ported from xeome's AudioMenu.qml: the default output and
-// input, each with a mute toggle, a volume bar and a collapsed device picker,
-// then Bluetooth headsets and the apps holding the mic. Per-app volume is on
-// AppsMenu, behind the top-right "Uygulamalar"; pavucontrol, on the
-// module's right click, has the rest. Sized as xeome's panel (see `fs`).
 Menu {
     id: root
 
-    // xeome's panel sizes (his Theme: 14px labels at 550, 30px rows, an 8px
-    // track, a 324px card), larger than the bar's own 12px.
     readonly property int fs: 14
     readonly property int wt: 550
 
     contentWidth: 324
     rowSpacing: 8
 
-    // Recording streams, filtered by Volume.
     required property var recorders
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
 
-    // Real devices, not streams: the type is a flag set, so AudioDuplex nodes
-    // (a loopback, a virtual cable) match both lists rather than neither.
     readonly property var sinks: Pipewire.nodes.values.filter(n => !n.isStream && (n.type & PwNodeType.AudioSink) === PwNodeType.AudioSink)
     readonly property var sources: Pipewire.nodes.values.filter(n => !n.isStream && (n.type & PwNodeType.AudioSource) === PwNodeType.AudioSource)
 
     readonly property var adapter: Bluetooth.defaultAdapter
-    // Paired audio devices, connected first. Bluez classifies by icon
-    // ("audio-headset", "audio-card"); pairing new ones is blueman's job.
     readonly property var headsets: root.adapter ? Bluetooth.devices.values.filter(d => d.paired && d.icon.startsWith("audio")).sort((a, b) => b.connected - a.connected) : []
 
     function btLabel(d: var): string {
@@ -48,19 +36,15 @@ Menu {
         return d.connected ? "bağlı" : "";
     }
 
-    // application.name is what pavucontrol shows; not every stream sets it.
     function appName(n: var): string {
         return n.properties["application.name"] || n.description || n.name;
     }
 
-    // Reopening shouldn't reopen a picker left open.
     onVisibleChanged: if (!visible) {
         out.expanded = false;
         mic.expanded = false;
     }
 
-    // Volume, mute and `properties` (the recorders' app names) stay empty until
-    // a node is bound. The picker rows need only `description`, which is free.
     PwObjectTracker {
         objects: [root.sink, root.source].concat(root.recorders)
     }
@@ -88,7 +72,6 @@ Menu {
             Layout.fillWidth: true
             spacing: 10
 
-            // Click the glyph to mute.
             BarText {
                 Layout.preferredWidth: 24
                 horizontalAlignment: Text.AlignHCenter
@@ -124,7 +107,6 @@ Menu {
         Track {
             thickness: 8
             value: dev.muted ? 0 : dev.volume
-            // Touching the bar un-mutes, so a drag is always heard.
             onMoved: fraction => {
                 if (!dev.audio)
                     return;
@@ -159,7 +141,6 @@ Menu {
                     textSize: root.fs - 2
                     weight: root.wt
                     label: modelData.description || modelData.name
-                    // By id: the default node need not be the same wrapper object.
                     current: dev.node?.id === modelData.id
                     onClicked: {
                         dev.picked(modelData);
@@ -170,7 +151,6 @@ Menu {
         }
     }
 
-    // Top right: the apps playing sound, on a card of their own (AppsMenu).
     RowLayout {
         Layout.fillWidth: true
         Layout.bottomMargin: -2
@@ -205,8 +185,6 @@ Menu {
         label: "Çıkış"
         devices: root.sinks
         glyph: out.muted ? Glyph.volOff : out.volume > 0.66 ? Glyph.volHigh : out.volume > 0.33 ? Glyph.volMid : Glyph.volLow
-        // Preferred, not default: pipewire remembers it and falls back
-        // from it when the device disappears.
         onPicked: node => Pipewire.preferredDefaultAudioSink = node
     }
 
@@ -226,7 +204,6 @@ Menu {
         visible: bt.visible
     }
 
-    // Shows even with nothing paired, to switch the adapter on.
     ColumnLayout {
         id: bt
 
@@ -256,7 +233,6 @@ Menu {
                 label: root.btLabel(modelData)
                 suffix: root.btDetail(modelData)
                 current: modelData.connected
-                // A connected headset shows up in the Çıkış picker.
                 onClicked: if (modelData.connected)
                     modelData.disconnect();
                 else

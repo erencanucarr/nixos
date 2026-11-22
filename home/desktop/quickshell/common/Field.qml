@@ -1,8 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 
-// A one-line text box on `raised`, bordered like Pick; brighter edged while
-// typing. Enter fires `accepted`.
 Rectangle {
     id: root
 

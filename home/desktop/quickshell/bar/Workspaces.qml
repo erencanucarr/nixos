@@ -3,9 +3,6 @@ import Quickshell
 import Quickshell.Hyprland
 import qs.common
 
-// This screen's workspaces in one card of hairline-divided buttons (after
-// xeome's Workspaces.qml): the shown one filled with `sel` and bright, an
-// urgent one hot.
 Rectangle {
     id: root
 
@@ -43,8 +40,6 @@ Rectangle {
                 height: row.height
                 color: shown ? Theme.sel : area.containsMouse ? Theme.hover : "transparent"
 
-                // The ends round themselves, one less than the card's radius
-                // inside its 1px border.
                 topLeftRadius: index === 0 ? Theme.radius - 1 : 0
                 bottomLeftRadius: index === 0 ? Theme.radius - 1 : 0
                 topRightRadius: last ? Theme.radius - 1 : 0
@@ -59,7 +54,6 @@ Rectangle {
                 BarText {
                     id: label
                     anchors.centerIn: parent
-                    // Other numbers stay `text`, not `dim`: you navigate by them.
                     text: btn.modelData.name
                     color: btn.modelData.urgent ? Theme.hot : btn.shown ? Theme.bright : Theme.text
                     font.weight: btn.shown ? Font.DemiBold : Font.Normal

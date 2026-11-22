@@ -4,14 +4,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// What the app drawer remembers, in ~/.local/state/can-drawer.json (this
-// machine only): pinned apps in their order, and how often and how lately
-// each app was opened from it, for the "Sık kullanılanlar" row.
 Singleton {
     id: root
 
     property var pinned: []
-    // { "<desktop id>": { n: launches, t: last launch, epoch ms } }
     property var usage: ({})
 
     function save(): void {
@@ -40,7 +36,6 @@ Singleton {
         root.save();
     }
 
-    // Launches, worth less the longer ago the last one was (halved weekly).
     function score(id: string): real {
         const u = root.usage[id];
         if (!u)
@@ -52,7 +47,6 @@ Singleton {
         id: file
 
         path: `${Quickshell.env("HOME")}/.local/state/can-drawer.json`
-        // Read before the drawer's first frame, so the favourites are there.
         blockLoading: true
         printErrors: false
         onLoaded: {

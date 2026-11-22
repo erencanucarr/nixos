@@ -4,12 +4,6 @@ import Quickshell
 import Quickshell.Services.UPower
 import qs.common
 
-// The power button's menu, in the shape of xeome's Power.qml: bordered rows
-// of glyph, name and a dim detail. First the power profile, as xeome picks
-// it (power-profiles-daemon serves the same D-Bus API as his tlp-pd; on this
-// Ryzen it sets amd-pstate's energy preference), then the session actions,
-// then xeome's idle inhibitor (Idle.qml, IdleMenu.qml) folded in: keep the
-// screen awake for a while. Not a Menu: its width follows its rows.
 Popup {
     id: root
 
@@ -27,7 +21,6 @@ Popup {
         { glyph: Glyph.power, name: "Kapat", detail: "sistemi kapat", cmd: ["systemctl", "poweroff"] }
     ]
 
-    // -1 is never picked; 0 is "until I turn it off".
     readonly property var spans: [
         { label: "30 dk", minutes: 30 },
         { label: "1 sa", minutes: 60 },
@@ -44,7 +37,6 @@ Popup {
     contentWidth: body.implicitWidth + 2 * Theme.pad
     contentHeight: body.implicitHeight + 2 * Theme.pad
 
-    // One bordered row: glyph, name and a dim detail; `current` fills it.
     component Row: Rectangle {
         id: row
 
@@ -120,7 +112,6 @@ Popup {
         spacing: 4
 
         Repeater {
-            // Performance only where the daemon offers it.
             model: root.profiles.filter(p => p.profile !== PowerProfile.Performance || PowerProfiles.hasPerformanceProfile)
 
             delegate: Row {
@@ -130,12 +121,10 @@ Popup {
                 name: modelData.name
                 detail: modelData.detail
                 current: PowerProfiles.profile === modelData.profile
-                // A property write; polkit lets the logged-in user do it.
                 onClicked: PowerProfiles.profile = modelData.profile
             }
         }
 
-        // The firmware can cap the CPU whatever the profile; apps can hold one.
         BarText {
             Layout.fillWidth: true
             Layout.leftMargin: 2

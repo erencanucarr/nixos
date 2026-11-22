@@ -5,15 +5,9 @@ import Quickshell.Services.Pipewire
 import Quickshell.Widgets
 import qs.common
 
-// The audio menu's second card, opened from its top-right "Uygulamalar":
-// each app playing sound with its icon (click to mute it), its name and
-// what it plays, and its own volume, on top of the output's. "‹ Ses" goes
-// back. A browser may hold several streams, one row each.
 Menu {
     id: root
 
-    // The audio menu's sizes (xeome's panel): 14px labels at 550, an 8px
-    // track, a 324px card.
     readonly property int fs: 14
     readonly property int wt: 550
 
@@ -22,13 +16,10 @@ Menu {
 
     readonly property var players: Pipewire.nodes.values.filter(n => n.isStream && n.type === PwNodeType.AudioOutStream && !!n.audio)
 
-    // application.name is what pavucontrol shows; not every stream sets it.
     function appName(n: var): string {
         return n.properties["application.name"] || n.description || n.name;
     }
 
-    // Its own icon name, else its binary (".Discord-wrapped" is discord),
-    // else nothing and the row shows a speaker.
     function appIcon(n: var): string {
         const p = n.properties;
         const bin = (p["application.process.binary"] ?? "").replace(/^\./, "").replace(/-wrapped$/, "").toLowerCase();
@@ -40,7 +31,6 @@ Menu {
         return "";
     }
 
-    // Volume, mute and properties stay empty until a stream is bound.
     PwObjectTracker {
         objects: root.players
     }
@@ -126,7 +116,6 @@ Menu {
                         color: app.muted ? Theme.dim : Theme.text
                     }
 
-                    // The mute line over an icon, so a muted app reads as one.
                     BarText {
                         visible: app.icon !== "" && app.muted
                         anchors {

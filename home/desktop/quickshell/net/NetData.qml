@@ -5,26 +5,14 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Networking
 
-// What NetMenu shows and does, through NetworkManager (nmcli) and /sys:
-// the connection carrying the default route with its addresses, its
-// traffic, an on-demand ping and public IP, and the edits (DNS, the IPv4
-// mode, the name). Polls only while the menu is open (`watching`).
-//
-// Nothing here talks to the network unprompted: the ping and the public IP
-// lookup run only when their button is pressed.
 Singleton {
     id: root
 
-    // Set by NetMenu while it is open.
     property bool watching: false
 
-    // The primary link: device, type ("ethernet", "wifi"), state, the
-    // connection's name and uuid, addresses, and its saved IPv4 settings.
     property var link: ({})
-    // Saved Ethernet and Wi-Fi connections, for the IP settings page.
     property var connections: []
 
-    // Bytes per second and in total since the link came up.
     property real rxRate: 0
     property real txRate: 0
     property real rxTotal: 0
@@ -33,11 +21,9 @@ Singleton {
 
     property string publicIp: ""
     property bool publicIpBusy: false
-    // "12 ms · %0 kayıp", or "" before the first measure.
     property string ping: ""
     property bool pingBusy: false
 
-    // The last edit's outcome, shown under the menu for a few seconds.
     property string status: ""
     property bool statusError: false
     property bool busy: false
@@ -49,8 +35,6 @@ Singleton {
         { name: "Quad9", servers: "9.9.9.9 149.112.112.112" }
     ]
 
-    // The preset matching the connection's saved DNS, or "" for none
-    // ("Otomatik" only when it also takes the router's).
     readonly property string dnsPreset: {
         const saved = (link.savedDns ?? "").split(/[ ,]+/).filter(s => s).join(" ");
         if (saved === "")
@@ -88,8 +72,6 @@ Singleton {
         statusTimer.restart();
     }
 
-    // One nmcli edit: `args` lists commands run in order; the first failure
-    // stops and is reported.
     function run(commands: var, done: string): void {
         if (root.busy)
             return;
@@ -113,8 +95,6 @@ Singleton {
         root.run([["nmcli", "connection", "modify", l.uuid, "connection.id", name.trim()]], "Ad değişti");
     }
 
-    // Manual needs an address with its prefix ("192.168.0.50/24"); the
-    // connection is brought up again so the change takes effect.
     function saveIp(uuid: string, manual: bool, address: string, gateway: string, dns: string): void {
         const dnsList = dns.split(/[ ,]+/).filter(s => s).join(" ");
         if (manual) {
@@ -142,8 +122,6 @@ Singleton {
         publicLookup.running = true;
     }
 
-    // The link with the default route (or the first Ethernet or Wi-Fi device
-    // without one), as JSON. nmcli's -g prints one line per field asked.
     Process {
         id: details
 
@@ -188,7 +166,6 @@ EOF
         }
     }
 
-    // Traffic: the byte counters of the link's device, sampled each second.
     Process {
         id: counters
 
@@ -283,6 +260,5 @@ EOF
         onTriggered: root.status = ""
     }
 
-    // Read once at start so the menu opens filled.
     Component.onCompleted: refresh()
 }

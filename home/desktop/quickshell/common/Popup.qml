@@ -2,31 +2,12 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-// A bar menu hung under its button on a Surface (after xeome's Popup.qml).
-// Derived menus set contentWidth and contentHeight; their children go onto
-// the Surface, which drifts down into place on the way in.
-//
-// Built only while open: each bar button holds its menu in a LazyLoader
-// keyed on Panels.popup, so a closed menu takes no memory.
-//
-// Which menu is open lives in Panels.popup as "<key>@<screen>", so the bar
-// buttons and IPC (Super+Esc) open the same one.
-//
-// Not a PopupWindow: closing it on a click outside needs either an xdg_popup
-// grab (which wants a fresh input serial, so a keybind could not open it) or
-// HyprlandFocusGrab, and under that grab Hyprland never delivered the mouse
-// to the menu, so its sliders and pickers did nothing. Instead, like the app
-// drawer, an overlay layer covers the screen below the bar: clicks outside
-// the card close it, Esc closes it, and the bar stays clickable above it.
 PanelWindow {
     id: root
 
     required property Item anchorItem
-    // The Panels slot this menu follows ("power", "audio") on this screen.
     required property string key
     required property string screenName
-    // Line the card's right edge up with the button's instead of centring it,
-    // for buttons at the screen's right end.
     property bool alignRight: false
 
     property real contentWidth
@@ -41,8 +22,6 @@ PanelWindow {
         Panels.popup = "";
     }
 
-    // The button's left edge in screen pixels: the bar spans the screen from
-    // x = 0, so its scene coordinates are the screen's. Re-read on each open.
     property real buttonX: 0
 
     screen: Quickshell.screens.find(s => s.name === root.screenName) ?? null
@@ -50,10 +29,6 @@ PanelWindow {
 
     WlrLayershell.namespace: "can-menu"
     WlrLayershell.layer: WlrLayer.Overlay
-    // OnDemand, not Exclusive: Hyprland still hands it the keyboard as it
-    // maps (Esc and the text boxes work), but an exclusive layer also keeps
-    // the pointer from every other surface, so clicks on the other screen
-    // went nowhere. Catcher (shell.qml) closes it on such a click instead.
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore
     anchors {
@@ -71,14 +46,11 @@ PanelWindow {
         enter.restart();
     }
 
-    // The bar builds each menu in a LazyLoader while it is open, so it is
-    // usually created already visible and onVisibleChanged never fires.
     onVisibleChanged: if (visible)
         opened()
     Component.onCompleted: if (visible)
         Qt.callLater(opened)
 
-    // A click anywhere outside the card.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
@@ -99,8 +71,6 @@ PanelWindow {
         width: root.contentWidth
         height: root.contentHeight
 
-        // Clicks on the card's empty parts stay on the card. First child, so
-        // the menu's own controls sit above it.
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons

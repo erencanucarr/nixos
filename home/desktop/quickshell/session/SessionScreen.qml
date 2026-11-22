@@ -4,13 +4,6 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.common
 
-// The full-screen power menu on one screen, in the lock screen's look:
-// the screen blurred and darkened (Hyprland's rule for can-power), the time
-// large, the date under it, and a row of actions. Only the focused screen
-// holds the clock and buttons and takes the keyboard; the others just dim.
-//
-// Restart and shut down ask twice: the first press arms them (hot), the
-// second runs them; anything else disarms.
 PanelWindow {
     id: root
 
@@ -24,11 +17,9 @@ PanelWindow {
         { glyph: Glyph.power, name: "Kapat", key: "P", cmd: ["systemctl", "poweroff"], confirm: true }
     ]
 
-    // Decided on open: whether this screen shows the menu.
     property bool main: false
     property bool shown: false
     property int selected: 0
-    // The action waiting for its second press, or -1.
     property int armed: -1
 
     function press(i: int): void {
@@ -58,7 +49,6 @@ PanelWindow {
     }
     color: "#b30a0a0c"
 
-    // Built on open, freed on close (shell.qml's LazyLoader).
     Component.onCompleted: {
         root.main = Hyprland.focusedMonitor?.name === root.modelData.name;
         if (root.main)
@@ -77,7 +67,6 @@ PanelWindow {
         precision: SystemClock.Minutes
     }
 
-    // A click on the backdrop closes it.
     MouseArea {
         anchors.fill: parent
         onClicked: Panels.sessionOpen = false
@@ -186,7 +175,6 @@ PanelWindow {
                             }
                         }
 
-                        // The picked one's edge, over the Surface's own.
                         Rectangle {
                             anchors.fill: parent
                             radius: card.radius

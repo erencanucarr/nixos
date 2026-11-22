@@ -2,9 +2,6 @@ import QtQuick
 import Quickshell
 import qs.common
 
-// The weather card in the bar: the condition glyph and the temperature,
-// dimmed while the last fetch failed. Click for WeatherMenu, middle click to
-// refresh. Hidden until the first reading arrives.
 BarModule {
     id: root
 
@@ -30,7 +27,6 @@ BarModule {
         font.wordSpacing: Theme.glyphGap
     }
 
-    // Built while open only, and freed on close (see Popup.qml).
     LazyLoader {
         active: root.open
 

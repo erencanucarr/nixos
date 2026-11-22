@@ -2,9 +2,6 @@ import QtQuick
 import Quickshell
 import qs.common
 
-// "22:14  Cmt 21 Kas" in a card; the time bright and the bar's one
-// heavier label, the date dim, a warm dot when today has notes. Click for
-// the calendar and its notes (CalendarMenu).
 BarModule {
     id: root
 
@@ -33,7 +30,6 @@ BarModule {
         color: Theme.dim
     }
 
-    // Today has notes (CalendarMenu, right click a day).
     Rectangle {
         visible: Notes.list(clock.date).length > 0
         anchors.verticalCenter: parent.verticalCenter
@@ -43,7 +39,6 @@ BarModule {
         color: Theme.warm
     }
 
-    // Built while open only, and freed on close (see Popup.qml).
     LazyLoader {
         active: root.open
 

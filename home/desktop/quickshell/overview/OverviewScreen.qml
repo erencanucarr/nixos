@@ -4,37 +4,23 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.common
 
-// The overview on one screen (see Overview.qml): a blurred, darkened
-// backdrop (Hyprland's layer rule for can-overview blurs it), the screen's
-// workspaces along the top and the shown workspace's windows below, laid
-// out to fill the space as large as they fit.
 PanelWindow {
     id: root
 
     required property var modelData
 
     readonly property var monitor: Hyprland.monitors.values.find(m => m.name === root.modelData.name) ?? null
-    // Five workspaces per screen (hyprland.lua: 1-5 left, 6-10 right): the
-    // block holding the screen's active one.
     readonly property int base: Math.floor(((monitor?.activeWorkspace?.id ?? 1) - 1) / 5) * 5 + 1
     readonly property var workspaceIds: [0, 1, 2, 3, 4].map(i => root.base + i)
 
-    // The workspace whose windows are spread out below; set on open.
     property int shownId: 1
-    // Only the focused screen takes the keyboard, decided on open; OnDemand
-    // rather than Exclusive, which would keep the pointer off the other
-    // screen's overview.
     property bool keyboard: false
     property int selected: -1
-    // The workspace a dragged window is over, or -1.
     property int dropId: -1
 
     readonly property var windows: Hyprland.toplevels.values.filter(t => t.workspace?.id === root.shownId && t.lastIpcObject?.size).sort((a, b) => (a.lastIpcObject.at[1] - b.lastIpcObject.at[1]) || (a.lastIpcObject.at[0] - b.lastIpcObject.at[0]))
     readonly property var rects: arrange(windows, stage.width, stage.height)
 
-    // The largest uniform layout: try every column count, scale each window
-    // into its cell (never above 85% of its real size), keep the one that
-    // covers the most area, then centre each row and the whole block.
     function arrange(wins: var, W: real, H: real): var {
         const n = wins.length;
         if (n === 0 || W <= 0 || H <= 0)
@@ -140,8 +126,6 @@ PanelWindow {
     }
     color: "#a60a0a0c"
 
-    // Built on open and freed on close (shell.qml's LazyLoader), so this
-    // runs once per open.
     property bool shown: false
 
     Component.onCompleted: {
@@ -154,14 +138,12 @@ PanelWindow {
         root.shown = true;
     }
 
-    // Positions arrive with the next IPC reply, a moment after a change.
     Timer {
         id: refresh
         interval: 120
         onTriggered: Hyprland.refreshToplevels()
     }
 
-    // The backdrop: a click on it closes the overview.
     MouseArea {
         anchors.fill: parent
         onClicked: Panels.overviewOpen = false
@@ -192,7 +174,6 @@ PanelWindow {
         }
     }
 
-    // Fades and settles in on open.
     Item {
         id: content
 
@@ -243,7 +224,6 @@ PanelWindow {
             }
         }
 
-        // The shown workspace's windows.
         Item {
             id: stage
 

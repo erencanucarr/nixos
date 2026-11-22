@@ -5,10 +5,6 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.common
 
-// Due notes (Notes.due), one card each, hung under the bar in the middle
-// of the focused screen. They stay until "Tamam" or a snooze: a reminder
-// that fades on its own is easy to miss. Built only while something is due
-// (shell.qml).
 PanelWindow {
     id: root
 
@@ -70,7 +66,7 @@ PanelWindow {
                         spacing: 10
 
                         BarText {
-                            text: String.fromCodePoint(0xF009A) // bell
+                            text: String.fromCodePoint(0xF009A)
                             font.pixelSize: root.fs + 5
                             color: Theme.warm
                         }

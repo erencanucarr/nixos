@@ -5,15 +5,10 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.common
 
-// One workspace in the overview's top row: the screen in miniature, with
-// each of its windows drawn where it sits, and the workspace's number.
-// Bright edged while it is the one shown below; lit while a window is
-// dragged over it.
 Item {
     id: root
 
     required property int workspaceId
-    // The monitor this row belongs to, for scaling window positions.
     required property var monitor
     property bool shown: false
     property bool current: false
@@ -52,7 +47,6 @@ Item {
                 ScreencopyView {
                     anchors.fill: parent
                     captureSource: mini.modelData.wayland ?? null
-                    // One frame is enough at this size.
                     live: false
                     constraintSize: Qt.size(mini.width, mini.height)
                 }
@@ -87,7 +81,6 @@ Item {
         }
     }
 
-    // Hyprland's active workspace on this screen, when another is shown.
     Rectangle {
         visible: root.current && !root.shown
         anchors {

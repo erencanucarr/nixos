@@ -3,10 +3,6 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Ankara's weather from Open-Meteo (no key, no account), after jotenakis2's
-// MyWeather plugin for Omarchy: the current reading and the next five days.
-// One fetch serves every screen's bar; it repeats every 15 minutes, and a
-// minute after a failure. Middle click on the bar module refreshes it.
 Singleton {
     id: root
 
@@ -14,11 +10,9 @@ Singleton {
     readonly property real latitude: 39.9334
     readonly property real longitude: 32.8597
 
-    // Empty until the first answer: the bar module hides while `ready` is false.
     property bool ready: false
     property bool failed: false
     property var current: ({})
-    // [{ date, code, max, min, rain }], tomorrow first.
     property var days: []
     property string sunrise: ""
     property string sunset: ""
@@ -27,8 +21,6 @@ Singleton {
     readonly property string glyph: ready ? glyphFor(current.code, current.night) : ""
     readonly property string condition: ready ? nameFor(current.code) : ""
 
-    // Nerd Font (Material Design) weather glyphs by WMO code, night-aware for
-    // the clear and partly cloudy ones.
     function glyphFor(code: int, night: bool): string {
         const g = c => String.fromCodePoint(c);
         if (code === 0)
@@ -118,7 +110,6 @@ Singleton {
             code: c.weather_code,
             night: c.is_day === 0
         };
-        // Index 0 is today: its sun times, then the five days after it.
         root.days = d.time.slice(1).map((t, i) => ({
                     date: new Date(`${t}T12:00:00`),
                     code: d.weather_code[i + 1],
