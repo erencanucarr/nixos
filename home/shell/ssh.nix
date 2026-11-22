@@ -1,17 +1,17 @@
-{ ... }:
+{ lib, ... }:
 {
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    matchBlocks = {
+    settings = {
       srv = {
-        hostname = "100.100.1.4";
-        user = "root";
+        HostName = "100.100.1.4";
+        User = "root";
       };
-      "*" = {
-        addKeysToAgent = "no";
-        serverAliveInterval = 30;
-        serverAliveCountMax = 3;
+      "*" = lib.hm.dag.entryAfter [ "srv" ] {
+        AddKeysToAgent = "no";
+        ServerAliveInterval = 30;
+        ServerAliveCountMax = 3;
       };
     };
   };

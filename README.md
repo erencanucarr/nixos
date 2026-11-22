@@ -29,7 +29,7 @@ Flake-based NixOS configuration with Home Manager.
 │   │   ├── desktop.nix       # ly login screen, Thunar and viewers, theme, fonts
 │   │   └── hyprland.nix      # Hyprland and its tools
 │   └── apps/
-│       ├── discord.nix       # Discord through the ByeDPI proxy
+│       ├── discord.nix       # Equibop through the ByeDPI proxy
 │       └── firefox.nix       # Firefox: theme, uBlock, Bitwarden, privacy settings
 └── home/                     # the user (Home Manager)
     ├── can.nix               # user apps and the GTK look

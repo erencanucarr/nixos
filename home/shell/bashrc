@@ -136,7 +136,12 @@ alias nixup='sudo nixos-rebuild switch --flake "$NIXDIR#$NIXHOST" && systemctl -
 alias nixtest='nix build --no-link "$NIXDIR#nixosConfigurations.$NIXHOST.config.system.build.toplevel" && ok "yapılandırma hatasız"'
 alias nixupdate='nix flake update --flake "$NIXDIR" && nixup'
 alias nixback='sudo nixos-rebuild switch --rollback'
-alias nixclean='sudo nix-collect-garbage --delete-older-than 14d && nix-collect-garbage --delete-older-than 14d'
+unalias nixclean 2>/dev/null
+function nixclean {
+  sudo nix-collect-garbage -d || return 1
+  nix-collect-garbage -d
+  sudo /run/current-system/bin/switch-to-configuration boot >/dev/null && ok "Eski sistemler silindi, açılış menüsü güncellendi"
+}
 alias nixgit='git -C "$NIXDIR" status --short'
 alias nixpush='git -C "$NIXDIR" push'
 nixtry() { [ -z "$1" ] && { echo "Kullanım: nixtry <paket>"; return 1; }; local a=(); for p in "$@"; do a+=("nixpkgs#$p"); done; warn "geçici kabuk, çıkmak için: exit"; nix shell "${a[@]}"; }
@@ -322,7 +327,7 @@ _zh_add " Nix bakım" "$c_cyan" \
   "nixup"           "değişiklikleri uygula" \
   "nixupdate"       "her şeyi güncelle ve uygula" \
   "nixback"         "önceki sisteme geri dön" \
-  "nixclean"        "14 günden eski sistemleri sil" \
+  "nixclean"        "eski sistemleri sil, sadece şu anki kalsın" \
   "nixgit"          "~/nixos'ta neler değişti" \
   "nixsave \"msj\"" "değişiklikleri git'e kaydet (commit)" \
   "nixpush"         "kaydedilenleri GitHub'a gönder"

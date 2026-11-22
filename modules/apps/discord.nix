@@ -43,7 +43,14 @@ in
   };
 
   environment.systemPackages = [
-    (pkgs.discord.override { commandLineArgs = "--proxy-server=${proxy}"; })
+    (pkgs.symlinkJoin {
+      name = "equibop";
+      paths = [ pkgs.equibop ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/equibop --add-flags "--proxy-server=${proxy}"
+      '';
+    })
   ];
 
   programs.firefox.policies.Proxy = {
