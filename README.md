@@ -23,7 +23,8 @@ Flake-based NixOS configuration with Home Manager.
 │   │   ├── base.nix          # boot, locale, user, network, nix
 │   │   ├── nvidia.nix        # NVIDIA driver, CUDA, LTS kernel
 │   │   ├── audio.nix         # PipeWire, realtime audio, steady USB headsets
-│   │   └── dns.nix           # encrypted DNS (DNS-over-TLS) through resolved
+│   │   ├── dns.nix           # encrypted DNS (DNS-over-TLS) through resolved
+│   │   └── tailscale.nix     # Tailscale; "can" can control it without sudo
 │   ├── desktop/
 │   │   ├── desktop.nix       # ly login screen, Thunar and viewers, theme, fonts
 │   │   └── hyprland.nix      # Hyprland and its tools
@@ -47,6 +48,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── media/        # what is playing, and its controls
     │       ├── notif/        # notifications, their history and Do Not Disturb
     │       ├── net/          # network menu: traffic, addresses, DNS, Wi-Fi, IP settings
+    │       ├── tailscale/    # Tailscale: connection, devices, exit node, services
     │       ├── drawer/       # app drawer
     │       ├── keys/         # every shortcut, read from Hyprland (Super+K)
     │       ├── overview/     # window overview (mouse thumb button, Super+Tab)

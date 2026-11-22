@@ -8,6 +8,7 @@ import qs.media
 import qs.notif
 import qs.net
 import qs.shot
+import qs.tailscale
 
 PanelWindow {
     id: root
@@ -89,6 +90,10 @@ PanelWindow {
         RecButton {}
 
         Tray {}
+
+        TailscaleButton {
+            screenName: root.modelData.name
+        }
 
         Bell {
             screenName: root.modelData.name
