@@ -14,6 +14,9 @@ Rectangle {
     property bool current: false
     property bool selectable: true
     property int align: Text.AlignLeft
+    // The audio menu sets xeome's sizes (30px rows, 12px text at 550).
+    property int textSize: Theme.small
+    property int weight: 0
 
     signal clicked
 
@@ -44,14 +47,16 @@ Rectangle {
             text: root.label
             elide: Text.ElideRight
             horizontalAlignment: root.align
-            font.pixelSize: Theme.small
+            font.pixelSize: root.textSize
+            weight: root.weight
             color: root.current ? Theme.bright : Theme.text
         }
 
         BarText {
             visible: root.suffix !== ""
             text: root.suffix
-            font.pixelSize: Theme.small
+            font.pixelSize: root.textSize
+            weight: root.weight
             color: root.current ? Theme.text : Theme.dim
         }
     }

@@ -12,6 +12,14 @@ import qs.common
 Menu {
     id: root
 
+    // The audio menu's sizes (xeome's panel): 14px labels at 550, an 8px
+    // track, a 324px card.
+    readonly property int fs: 14
+    readonly property int wt: 550
+
+    contentWidth: 324
+    rowSpacing: 8
+
     readonly property var players: Pipewire.nodes.values.filter(n => n.isStream && n.type === PwNodeType.AudioOutStream && !!n.audio)
 
     // application.name is what pavucontrol shows; not every stream sets it.
@@ -42,7 +50,8 @@ Menu {
 
         BarText {
             text: `${Glyph.chevronLeft} Ses`
-            font.pixelSize: Theme.small
+            font.pixelSize: root.fs - 2
+            weight: root.wt
             color: backMa.containsMouse ? Theme.bright : Theme.dim
 
             MouseArea {
@@ -61,7 +70,8 @@ Menu {
 
         BarText {
             text: "Uygulamalar"
-            font.weight: Font.Medium
+            font.pixelSize: root.fs
+            weight: root.wt
             color: Theme.bright
         }
     }
@@ -71,7 +81,8 @@ Menu {
     BarText {
         visible: root.players.length === 0
         text: "Şu an ses çalan uygulama yok."
-        font.pixelSize: Theme.small
+        font.pixelSize: root.fs - 2
+        weight: root.wt
         color: Theme.dim
     }
 
@@ -93,16 +104,16 @@ Menu {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 10
 
                 Item {
-                    Layout.preferredWidth: 20
+                    Layout.preferredWidth: 24
                     Layout.preferredHeight: 18
 
                     IconImage {
                         visible: app.icon !== ""
                         anchors.centerIn: parent
-                        implicitSize: 16
+                        implicitSize: 18
                         source: app.icon
                         opacity: app.muted ? 0.35 : 1
                     }
@@ -140,8 +151,8 @@ Menu {
 
                 BarText {
                     text: root.appName(app.modelData)
-                    font.pixelSize: Theme.small
-                    font.weight: Font.Medium
+                    font.pixelSize: root.fs - 1
+                    weight: root.wt
                     color: app.muted ? Theme.dim : Theme.text
                 }
 
@@ -150,7 +161,8 @@ Menu {
                     visible: app.media !== "" && app.media !== root.appName(app.modelData)
                     text: app.media
                     elide: Text.ElideRight
-                    font.pixelSize: Theme.small - 1
+                    font.pixelSize: root.fs - 3
+                    weight: root.wt
                     color: Theme.dim
                 }
 
@@ -161,13 +173,15 @@ Menu {
 
                 BarText {
                     text: app.muted ? "sessiz" : `${Math.round(app.volume * 100)}%`
-                    font.pixelSize: Theme.small
+                    font.pixelSize: root.fs - 1
+                    weight: root.wt
                     color: app.muted ? Theme.dim : Theme.text
                 }
             }
 
             Track {
-                Layout.leftMargin: 28
+                thickness: 8
+                Layout.leftMargin: 34
                 value: app.muted ? 0 : app.volume
                 onMoved: fraction => {
                     if (!app.audio)

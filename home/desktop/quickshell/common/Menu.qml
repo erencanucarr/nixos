@@ -7,6 +7,8 @@ Popup {
     id: root
 
     default property alias rows: body.data
+    // Room between rows; the audio menu uses xeome's 8.
+    property alias rowSpacing: body.spacing
 
     contentWidth: Theme.menuWidth
     contentHeight: body.implicitHeight + Theme.pad * 2

@@ -8,9 +8,17 @@ import qs.common
 // input, each with a mute toggle, a volume bar and a collapsed device picker,
 // then Bluetooth headsets and the apps holding the mic. Per-app volume is on
 // AppsMenu, behind the top-right "Uygulamalar"; pavucontrol, on the
-// module's right click, has the rest.
+// module's right click, has the rest. Sized as xeome's panel (see `fs`).
 Menu {
     id: root
+
+    // xeome's panel sizes (his Theme: 14px labels at 550, 30px rows, an 8px
+    // track, a 324px card), larger than the bar's own 12px.
+    readonly property int fs: 14
+    readonly property int wt: 550
+
+    contentWidth: 324
+    rowSpacing: 8
 
     // Recording streams, filtered by Volume.
     required property var recorders
@@ -78,14 +86,14 @@ Menu {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: 10
 
             // Click the glyph to mute.
             BarText {
-                Layout.preferredWidth: 20
+                Layout.preferredWidth: 24
                 horizontalAlignment: Text.AlignHCenter
                 text: dev.glyph
-                font.pixelSize: Theme.size + 4
+                font.pixelSize: root.fs + 5
                 color: dev.muted ? Theme.dim : Theme.text
 
                 MouseArea {
@@ -100,17 +108,21 @@ Menu {
             BarText {
                 Layout.fillWidth: true
                 text: dev.label
-                font.weight: Font.Medium
-                color: dev.muted ? Theme.dim : Theme.bright
+                font.pixelSize: root.fs
+                weight: root.wt
+                color: dev.muted ? Theme.dim : Theme.text
             }
 
             BarText {
                 text: dev.muted ? "sessiz" : `${Math.round(dev.volume * 100)}%`
+                font.pixelSize: root.fs
+                weight: root.wt
                 color: dev.muted ? Theme.dim : Theme.text
             }
         }
 
         Track {
+            thickness: 8
             value: dev.muted ? 0 : dev.volume
             // Touching the bar un-mutes, so a drag is always heard.
             onMoved: fraction => {
@@ -122,7 +134,10 @@ Menu {
         }
 
         Pick {
-            Layout.topMargin: 3
+            Layout.topMargin: 4
+            implicitHeight: 30
+            textSize: root.fs - 2
+            weight: root.wt
             label: dev.node?.description ?? ""
             suffix: dev.selectable ? (dev.expanded ? Glyph.chevronUp : Glyph.chevronDown) : ""
             selectable: dev.selectable
@@ -140,6 +155,9 @@ Menu {
                 delegate: Pick {
                     required property var modelData
 
+                    implicitHeight: 30
+                    textSize: root.fs - 2
+                    weight: root.wt
                     label: modelData.description || modelData.name
                     // By id: the default node need not be the same wrapper object.
                     current: dev.node?.id === modelData.id
@@ -165,7 +183,8 @@ Menu {
             readonly property int count: Pipewire.nodes.values.filter(n => n.isStream && n.type === PwNodeType.AudioOutStream).length
 
             text: count > 0 ? `Uygulamalar ${count} ${Glyph.chevronRight}` : `Uygulamalar ${Glyph.chevronRight}`
-            font.pixelSize: Theme.small
+            font.pixelSize: root.fs - 2
+            weight: root.wt
             color: appsMa.containsMouse ? Theme.bright : Theme.dim
 
             MouseArea {
@@ -216,6 +235,9 @@ Menu {
         visible: !!root.adapter
 
         Pick {
+            implicitHeight: 30
+            textSize: root.fs - 2
+            weight: root.wt
             label: "Bluetooth"
             suffix: root.adapter?.enabled ? "açık" : "kapalı"
             current: root.adapter?.enabled ?? false
@@ -228,6 +250,9 @@ Menu {
             delegate: Pick {
                 required property var modelData
 
+                implicitHeight: 30
+                textSize: root.fs - 2
+                weight: root.wt
                 label: root.btLabel(modelData)
                 suffix: root.btDetail(modelData)
                 current: modelData.connected
@@ -248,8 +273,9 @@ Menu {
 
         BarText {
             text: `${root.recorders.length > 0 ? Glyph.mic : Glyph.micOff}  ${root.recorders.length > 0 ? "Mikrofonu kullanan" : "Mikrofon kullanılmıyor"}`
-            font.pixelSize: Theme.small
-            color: root.recorders.length > 0 ? Theme.warm : Theme.dim
+            font.pixelSize: root.fs - 2
+            weight: root.wt
+            color: root.recorders.length > 0 ? Theme.text : Theme.dim
         }
 
         Repeater {
@@ -259,10 +285,11 @@ Menu {
                 required property var modelData
 
                 Layout.fillWidth: true
-                Layout.leftMargin: 20
+                Layout.leftMargin: 22
                 text: root.appName(modelData)
                 elide: Text.ElideRight
-                font.pixelSize: Theme.small
+                font.pixelSize: root.fs - 3
+                weight: root.wt
                 color: Theme.dim
             }
         }

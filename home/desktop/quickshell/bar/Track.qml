@@ -9,6 +9,8 @@ Item {
     id: root
 
     property real value: 0
+    // The bar's thickness; the hit area is 10px taller.
+    property int thickness: 6
     signal moved(real fraction)
 
     function report(f: real): void {
@@ -16,7 +18,7 @@ Item {
     }
 
     Layout.fillWidth: true
-    implicitHeight: 16
+    implicitHeight: root.thickness + 10
 
     Rectangle {
         anchors {
@@ -24,7 +26,7 @@ Item {
             right: parent.right
             verticalCenter: parent.verticalCenter
         }
-        height: 6
+        height: root.thickness
         radius: height / 2
         color: Theme.rule
 
