@@ -181,6 +181,21 @@ PanelWindow {
         opacity: root.shown ? 1 : 0
         scale: root.shown ? 1 : 0.97
 
+        property real travel: 0
+
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: e => {
+                content.travel += e.angleDelta.y || e.angleDelta.x;
+                if (Math.abs(content.travel) < 120)
+                    return;
+                const step = content.travel > 0 ? -1 : 1;
+                content.travel = 0;
+                const i = root.workspaceIds.indexOf(root.shownId);
+                root.show(root.workspaceIds[((i < 0 ? 0 : i + step) + 5) % 5]);
+            }
+        }
+
         Behavior on opacity {
             NumberAnimation {
                 duration: 200
