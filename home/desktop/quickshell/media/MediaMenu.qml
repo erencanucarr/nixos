@@ -18,8 +18,9 @@ Menu {
     signal picked(string id)
 
     readonly property var players: Mpris.players.values
-    readonly property real length: root.player?.lengthSupported ? root.player.length : 0
-    readonly property bool hasLength: root.length > 0 && (root.player?.positionSupported ?? false)
+    readonly property real length: (root.player?.lengthSupported && root.player.length > 0) ? root.player.length : Math.max(0, Lengths.get(root.player?.metadata?.["xesam:url"] ?? ""))
+    readonly property bool hasLength: root.length > 0
+    readonly property real position: Math.min(root.player?.position ?? 0, root.length > 0 ? root.length : Infinity)
     readonly property bool canSeek: root.player?.canSeek ?? false
     readonly property bool canPrev: root.player?.canGoPrevious ?? false
     readonly property bool canNext: root.player?.canGoNext ?? false
@@ -246,10 +247,14 @@ Menu {
         Track {
             visible: root.hasLength
             thickness: 6
-            value: root.length > 0 ? (root.player?.position ?? 0) / root.length : 0
+            value: root.length > 0 ? root.position / root.length : 0
             onMoved: fraction => {
-                if (root.canSeek)
+                if (!root.canSeek)
+                    return;
+                if (root.player.positionSupported)
                     root.player.position = fraction * root.length;
+                else
+                    root.player.seek(fraction * root.length - root.position);
             }
         }
 
@@ -257,7 +262,7 @@ Menu {
             Layout.fillWidth: true
 
             BarText {
-                text: root.mmss(root.player?.position ?? 0)
+                text: root.mmss(root.position)
                 font.pixelSize: root.fs - 3
                 weight: root.wt
                 color: Theme.dim
@@ -268,7 +273,7 @@ Menu {
             }
 
             BarText {
-                text: root.hasLength ? `-${root.mmss(root.length - (root.player?.position ?? 0))}` : "süre bilinmiyor"
+                text: root.hasLength ? `-${root.mmss(root.length - root.position)}` : "süre bilinmiyor"
                 font.pixelSize: root.fs - 3
                 weight: root.wt
                 color: Theme.dim
