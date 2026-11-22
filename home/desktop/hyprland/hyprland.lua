@@ -161,6 +161,10 @@ key("Print", hl.dsp.exec_cmd(qs .. "shot open"), "Ekran görüntüsü: Alan, pen
 key("F8", hl.dsp.exec_cmd(qs .. "shot open"), "Ekran görüntüsü: Alan, pencere ya da ekran seç")
 key(mod .. " + SHIFT + S", hl.dsp.exec_cmd(qs .. "shot open"), "Ekran görüntüsü: Alan, pencere ya da ekran seç")
 key("SHIFT + Print", hl.dsp.exec_cmd(qs .. "shot screen"), "Ekran görüntüsü: Tüm ekran")
+key("CTRL + Print", hl.dsp.exec_cmd(qs .. "shot record"), "Ekran görüntüsü: Video kaydı başlat / durdur")
+key("CTRL + F8", hl.dsp.exec_cmd(qs .. "shot record"), "Ekran görüntüsü: Video kaydı başlat / durdur")
+key("CTRL + SHIFT + Print", hl.dsp.exec_cmd(qs .. "shot gif"), "Ekran görüntüsü: GIF kaydı başlat / durdur")
+key("CTRL + SHIFT + F8", hl.dsp.exec_cmd(qs .. "shot gif"), "Ekran görüntüsü: GIF kaydı başlat / durdur")
 
 key(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"), "Oturum: Kilitle")
 key(mod .. " + ESCAPE", hl.dsp.exec_cmd(qs .. "power toggle"), "Oturum: Güç menüsü (barda)")

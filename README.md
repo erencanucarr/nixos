@@ -29,7 +29,8 @@ Flake-based NixOS configuration with Home Manager.
 │   │   └── hyprland.nix      # Hyprland and its tools
 │   └── apps/
 │       ├── discord.nix       # Discord through the ByeDPI proxy
-│       └── firefox.nix       # Firefox's Black theme, installed on first run
+│       ├── firefox.nix       # Firefox's Black theme, installed on first run
+│       └── vaultwarden.nix   # Vaultwarden on https://localhost:3131
 └── home/                     # the user (Home Manager)
     ├── can.nix               # user apps and the GTK look
     ├── links.nix             # links the folders below into place, editable
@@ -53,7 +54,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── session/      # full-screen power menu (Super+P)
     │       ├── wallpaper/    # the wallpaper on every screen and its picker
     │       ├── osd/          # volume and mic pop-ups
-    │       └── shot/         # screenshots and their editor
+    │       └── shot/         # screenshots, their editor, video and GIF recording
     └── apps/
         ├── vicinae/          # launcher on Super+Space and its theme
         ├── ghostty.nix       # terminal

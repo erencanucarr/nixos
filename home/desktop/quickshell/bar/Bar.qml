@@ -7,6 +7,7 @@ import qs.common
 import qs.media
 import qs.notif
 import qs.net
+import qs.shot
 
 PanelWindow {
     id: root
@@ -84,6 +85,8 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
         spacing: 4
+
+        RecButton {}
 
         Tray {}
 

@@ -13,6 +13,7 @@ Scope {
 
     readonly property var modes: ["alan", "pencere", "ekran"]
     readonly property var delays: [0, 3, 10]
+    readonly property var kinds: ["foto", "video", "gif"]
     readonly property string run: Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"
 
     readonly property string script: `d="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Ekran Görüntüleri"
@@ -25,6 +26,8 @@ Scope {
 
     property int mode: 0
     property int delay: 0
+    property int kind: 0
+    property bool audio: true
     property string frozen: ""
     property var scr: null
     readonly property var wins: aim.visible ? root.windows(root.scr) : []
@@ -39,6 +42,8 @@ Scope {
     property string shotWhat: ""
     property string shotDims: ""
     property rect shotRect
+    property string shotFile: ""
+    property string shotKind: "foto"
 
     function focusedScreen(): var {
         return Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0];
@@ -53,9 +58,12 @@ Scope {
             .map(o => Qt.rect(o.at[0] - screen.x, o.at[1] - screen.y, o.size[0], o.size[1]));
     }
 
-    function open(): void {
+    function open(kind: int): void {
+        if (Recorder.busy)
+            return Recorder.stop();
         if (aim.visible)
             return;
+        root.kind = kind;
         root.scr = root.focusedScreen();
         Hyprland.refreshToplevels();
         freeze.next = `${root.run}/qs-shot-${Date.now()}.ppm`;
@@ -63,13 +71,14 @@ Scope {
     }
 
     function screenNow(): void {
-        if (aim.visible)
+        if (aim.visible || Recorder.busy)
             return;
         root.scr = root.focusedScreen();
         const d = root.scr.devicePixelRatio ?? 1;
         root.shotRect = Qt.rect(0, 0, root.scr.width, root.scr.height);
         root.shotWhat = `ekran · ${Qt.formatTime(new Date(), "HH:mm")}`;
         root.shotDims = `${Math.round(root.scr.width * d)} × ${Math.round(root.scr.height * d)}`;
+        root.shotKind = "foto";
         take.exec(["sh", "-c", root.script, "sh", "0", "", "", "", root.scr.name]);
     }
 
@@ -94,7 +103,10 @@ Scope {
         const c = Calc.crop(r, aim.width, aim.height, frozenImg.sourceSize.width, frozenImg.sourceSize.height);
         if (!c)
             return;
+        if (root.kind > 0)
+            return root.record(r, c);
         root.shotRect = r;
+        root.shotKind = "foto";
         root.shotWhat = `${root.modes[root.mode]} · ${Qt.formatTime(new Date(), "HH:mm")}`;
         root.shotDims = `${c.w} × ${c.h}`;
         const frame = root.frozen;
@@ -103,11 +115,46 @@ Scope {
         root.close();
     }
 
+    function record(r: rect, c: var): void {
+        const x = Math.round(root.scr.x + c.x / root.k), y = Math.round(root.scr.y + c.y / root.k);
+        const w = Math.round(c.w / root.k) & ~1, h = Math.round(c.h / root.k) & ~1;
+        const target = root.mode === 2 ? ["-o", root.scr.name] : ["-g", `${x},${y} ${w}x${h}`];
+        Quickshell.execDetached(["rm", "-f", root.frozen]);
+        root.close();
+        Recorder.start(root.kinds[root.kind], target, root.delays[root.delay], root.audio, r);
+    }
+
+    Connections {
+        target: Recorder
+
+        function onSaved(file: string, thumb: string, kind: string, seconds: int, area: rect): void {
+            root.shot = thumb;
+            root.shotFile = file;
+            root.shotKind = kind;
+            root.shotRect = area;
+            root.shotDims = Recorder.clock(seconds);
+            root.shotWhat = `${kind} · ${Qt.formatTime(new Date(), "HH:mm")}`;
+            fx.restart();
+        }
+    }
+
     IpcHandler {
         target: "shot"
 
         function open(): void {
-            root.open();
+            root.open(0);
+        }
+
+        function record(): void {
+            root.open(1);
+        }
+
+        function gif(): void {
+            root.open(2);
+        }
+
+        function stop(): void {
+            Recorder.stop();
         }
 
         function screen(): void {
@@ -128,7 +175,7 @@ Scope {
         }
 
         function edit(): void {
-            if (!root.shot || aim.visible)
+            if (!root.shot || aim.visible || root.shotKind !== "foto")
                 return;
             fx.stop();
             fired.visible = false;
@@ -219,6 +266,10 @@ Scope {
                     root.mode = (root.mode + 2) % 3;
                 else if (e.key === Qt.Key_T)
                     root.delay = (root.delay + 1) % 3;
+                else if (e.key === Qt.Key_R)
+                    root.kind = (root.kind + 1) % 3;
+                else if (e.key === Qt.Key_A && root.kind === 1)
+                    root.audio = !root.audio;
                 else
                     return;
                 e.accepted = true;
@@ -316,7 +367,7 @@ Scope {
                         id: dims
 
                         anchors.centerIn: parent
-                        text: `${root.modes[root.mode]}  ${Math.round(root.sel.width * root.k)} × ${Math.round(root.sel.height * root.k)}`
+                        text: `${root.kind ? root.kinds[root.kind] + " · " : ""}${root.modes[root.mode]}  ${Math.round(root.sel.width * root.k)} × ${Math.round(root.sel.height * root.k)}`
                         color: Theme.bright
                     }
                 }
@@ -487,6 +538,21 @@ Scope {
                         spacing: 4
 
                         Repeater {
+                            model: root.kinds
+
+                            Chip {
+                                required property string modelData
+                                required property int index
+
+                                text: modelData
+                                on: index === root.kind
+                                onClicked: root.kind = index
+                            }
+                        }
+
+                        Sep {}
+
+                        Repeater {
                             model: root.modes
 
                             Chip {
@@ -506,6 +572,13 @@ Scope {
                             on: root.delay > 0
                             onClicked: root.delay = (root.delay + 1) % 3
                         }
+
+                        Chip {
+                            visible: root.kind === 1
+                            text: root.audio ? "ses açık" : "ses kapalı"
+                            on: root.audio
+                            onClicked: root.audio = !root.audio
+                        }
                     }
                 }
 
@@ -519,7 +592,7 @@ Scope {
                         id: keys
 
                         anchors.centerIn: parent
-                        text: "sürükle  alan     boşluk  pencere     tab  kip     t  gecikme     ↵  çek     esc  iptal"
+                        text: root.kind ? `sürükle  alan     boşluk  pencere     r  tür     t  gecikme${root.kind === 1 ? "     a  ses" : ""}     ↵  kaydı başlat     esc  iptal` : "sürükle  alan     boşluk  pencere     tab  kip     r  kayıt     t  gecikme     ↵  çek     esc  iptal"
                         color: Theme.dim
                         font.pixelSize: Theme.size - 1
                     }
@@ -614,7 +687,7 @@ Scope {
                 }
 
                 BarText {
-                    text: "Kaydedildi ve kopyalandı · düzenlemek için tıkla"
+                    text: root.shotKind === "foto" ? "Kaydedildi ve kopyalandı · düzenlemek için tıkla" : root.shotKind === "gif" ? "GIF kaydedildi ve kopyalandı · açmak için tıkla" : "Video kaydedildi, dosya kopyalandı · açmak için tıkla"
                     color: Theme.dim
                 }
             }
@@ -625,7 +698,10 @@ Scope {
                 onClicked: {
                     fx.stop();
                     fired.visible = false;
-                    editor.open(root.shot, root.scr);
+                    if (root.shotKind === "foto")
+                        editor.open(root.shot, root.scr);
+                    else
+                        Qt.openUrlExternally("file://" + root.shotFile);
                 }
             }
         }

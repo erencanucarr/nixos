@@ -351,7 +351,8 @@ _zh_add " Hyprland tuşlar" "$c_purple" \
   "Super+P"         "tam ekran güç menüsü: kilitle, çıkış, uyku, yeniden başlat, kapat" \
   "Super+Shift+W"   "duvar kağıdı seç (siyah da var): ←→ gez, Enter uygula" \
   "Super+K"         "tüm kısayollar, aranabilir" \
-  "F8 / Print"      "ekran görüntüsü: alan / pencere (Boşluk) / ekran (Tab), T gecikme; karta tıkla: düzenle  ·  Shift+Print: tüm ekran" \
+  "F8 / Print"      "ekran görüntüsü: alan / pencere (Boşluk) / ekran (Tab), T gecikme, R video/gif; karta tıkla: düzenle  ·  Shift+Print: tüm ekran" \
+  "Ctrl+F8"         "video kaydı (Ctrl+Shift+F8: gif)  ·  durdurmak için tekrar bas ya da bardaki sayaca tıkla" \
   "F9"              "mikrofonu sustur / aç (barda kırmızı mikrofon)" \
   "Super+V"         "pano geçmişi (Ctrl+Alt+V de olur)"
 _zh_add " Klavye" "$c_green" \

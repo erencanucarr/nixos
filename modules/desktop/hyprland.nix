@@ -20,7 +20,8 @@ in
     pavucontrol
     playerctl
     grim
-    slurp
+    wf-recorder
+    ffmpeg
     vips
     jq
     xdg-user-dirs
