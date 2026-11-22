@@ -14,8 +14,11 @@ import qs.osd
 import qs.overview
 import qs.session
 import qs.shot
+import qs.wallpaper
 
 ShellRoot {
+    Wallpaper {}
+
     Variants {
         model: Quickshell.screens
         delegate: Bar {}
@@ -44,6 +47,12 @@ ShellRoot {
         active: Panels.sessionOpen
 
         Session {}
+    }
+
+    LazyLoader {
+        active: Panels.wallsOpen
+
+        Picker {}
     }
 
     // Calendar notes that are due (Notes.qml).

@@ -124,7 +124,7 @@ hl.window_rule({
 -- The app drawer, power menu and window overview blur what is behind them.
 hl.layer_rule({
   name = "shell-overlay-blur",
-  match = { namespace = "^(can-drawer|can-power|can-overview)$" },
+  match = { namespace = "^(can-drawer|can-power|can-overview|can-walls)$" },
   blur = true,
   ignore_alpha = 0.3,
 })
@@ -170,6 +170,8 @@ hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"))
 
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(mod .. " + ESCAPE", hl.dsp.exec_cmd(qs .. "power toggle"))
+-- The wallpaper picker (quickshell/wallpaper/Picker.qml).
+hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd(qs .. "walls toggle"))
 -- The full-screen power menu, in the lock screen's look.
 hl.bind(mod .. " + P", hl.dsp.exec_cmd(qs .. "session toggle"))
 hl.bind(mod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))

@@ -10,6 +10,7 @@ import Quickshell.Io
 //   qs ipc call audio toggle     qs ipc call weather toggle
 //   qs ipc call net toggle       qs ipc call overview toggle
 //   qs ipc call session toggle   qs ipc call calendar toggle
+//   qs ipc call walls toggle
 // The bar popups (Power, AudioMenu) open on the focused monitor's bar.
 Singleton {
     id: root
@@ -19,6 +20,9 @@ Singleton {
     property string drawerScreen: ""
     property bool overviewOpen: false
     property bool sessionOpen: false
+    // The wallpaper picker, and the screen it opened on.
+    property bool wallsOpen: false
+    property string wallsScreen: ""
     // The open bar popup as "<key>@<screen>" (Popup.qml), or "".
     property string popup: ""
 
@@ -34,6 +38,7 @@ Singleton {
     readonly property bool awake: awakeSpan >= 0
 
     function toggleDrawer(): void {
+        root.wallsOpen = false;
         root.popup = "";
         root.overviewOpen = false;
         root.drawerScreen = root.focusedScreen();
@@ -42,6 +47,7 @@ Singleton {
     }
 
     function togglePopup(key: string, screen: string): void {
+        root.wallsOpen = false;
         const id = `${key}@${screen}`;
         root.drawerOpen = false;
         root.overviewOpen = false;
@@ -84,7 +90,17 @@ Singleton {
         }
     }
 
+    function toggleWalls(): void {
+        root.popup = "";
+        root.drawerOpen = false;
+        root.overviewOpen = false;
+        root.sessionOpen = false;
+        root.wallsScreen = root.focusedScreen();
+        root.wallsOpen = !root.wallsOpen;
+    }
+
     function toggleSession(): void {
+        root.wallsOpen = false;
         root.popup = "";
         root.drawerOpen = false;
         root.overviewOpen = false;
@@ -92,10 +108,22 @@ Singleton {
     }
 
     function toggleOverview(): void {
+        root.wallsOpen = false;
         root.popup = "";
         root.drawerOpen = false;
         root.sessionOpen = false;
         root.overviewOpen = !root.overviewOpen;
+    }
+
+    IpcHandler {
+        target: "walls"
+
+        function toggle(): void {
+            root.toggleWalls();
+        }
+        function close(): void {
+            root.wallsOpen = false;
+        }
     }
 
     IpcHandler {

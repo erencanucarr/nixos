@@ -35,6 +35,7 @@ Flake-based NixOS configuration with Home Manager.
     ├── desktop/
     │   ├── hyprland.nix      # links hyprland/ and quickshell/
     │   ├── hyprland/         # hyprland.lua, lock, idle, notifications
+    │   ├── wallpapers/       # wallpaper images, picked with Super+Shift+W
     │   └── quickshell/       # the shell: shell.qml starts it
     │       ├── common/       # theme, glyphs, shared cards and menus
     │       ├── bar/          # the bar; its calendar (with notes), audio and power menus
@@ -43,6 +44,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── drawer/       # app drawer
     │       ├── overview/     # window overview (mouse thumb button, Super+Tab)
     │       ├── session/      # full-screen power menu (Super+P)
+    │       ├── wallpaper/    # the wallpaper on every screen and its picker
     │       ├── osd/          # volume and mic pop-ups
     │       └── shot/         # screenshots and their editor
     └── apps/
