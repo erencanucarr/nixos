@@ -13,6 +13,7 @@ Flake-based NixOS configuration with Home Manager.
 ```text
 .
 ├── flake.nix                 # inputs and hosts
+├── .github/workflows/        # weekly flake.lock update as a pull request
 ├── hosts/<host>/
 │   ├── default.nix           # which modules the host uses, its hostname
 │   └── hardware.nix          # kernel modules and disk UUIDs
@@ -25,7 +26,8 @@ Flake-based NixOS configuration with Home Manager.
 │   │   ├── desktop.nix       # login screen, GNOME apps, theme, fonts
 │   │   └── hyprland.nix      # Hyprland and its tools
 │   └── apps/
-│       └── discord.nix       # Discord through the ByeDPI proxy
+│       ├── discord.nix       # Discord through the ByeDPI proxy
+│       └── firefox.nix       # Firefox's Black theme, installed on first run
 └── home/                     # the user (Home Manager)
     ├── can.nix               # user apps and the GTK look
     ├── links.nix             # links the folders below into place, editable
