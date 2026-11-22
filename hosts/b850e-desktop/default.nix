@@ -8,6 +8,7 @@
     ../../modules/core/audio.nix
     ../../modules/desktop/desktop.nix
     ../../modules/apps/discord.nix
+    ../../modules/apps/firefox.nix
     ../../modules/desktop/hyprland.nix
   ];
 
