@@ -147,7 +147,7 @@ PanelWindow {
         left: true
         right: true
     }
-    color: "#a60a0a0c"
+    color: Theme.alpha(Theme.ground, 0.65)
 
     Component.onCompleted: {
         reader.running = true;

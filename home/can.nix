@@ -13,6 +13,7 @@ in
 {
   imports = [
     ./links.nix
+    ./theme.nix
     ./shell
     ./desktop/hyprland.nix
     ./apps/vicinae
@@ -29,7 +30,6 @@ in
     fzf
     zoxide
     fd
-    starship
     wl-clipboard
     duf
     ncdu

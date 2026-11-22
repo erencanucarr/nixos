@@ -20,7 +20,7 @@ Rectangle {
     readonly property var defaultAction: notif?.actions.find(a => a.identifier === "default") ?? null
     readonly property var otherActions: notif?.actions.filter(a => a.identifier !== "default") ?? []
 
-    readonly property var tints: ["#e6e7ea", "#e5ae52", "#b5c98f", "#8fb3d9", "#c3a1d9", "#d9a38f"]
+    readonly property var tints: [Theme.text, Theme.warm, Theme.green, Theme.blue, Theme.magenta, Theme.cyan]
     readonly property color tint: {
         if (root.critical)
             return Theme.hot;

@@ -17,10 +17,11 @@
         inherit system;
         config.allowUnfree = true;
       };
+      theme = import ./theme { inherit (nixpkgs) lib; };
 
       mkHost = host: nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit unstable; };
+        specialArgs = { inherit unstable theme; };
         modules = [
           ./hosts/${host}
           home-manager.nixosModules.home-manager
@@ -28,7 +29,7 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = { inherit unstable; };
+              extraSpecialArgs = { inherit unstable theme; };
               users.can = import ./home/can.nix;
             };
           }

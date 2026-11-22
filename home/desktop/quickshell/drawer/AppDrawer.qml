@@ -133,7 +133,7 @@ PanelWindow {
         left: true
         right: true
     }
-    color: "#990a0a0c"
+    color: Theme.alpha(Theme.ground, 0.6)
 
     property bool shown: false
 

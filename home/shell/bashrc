@@ -24,7 +24,7 @@ PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 # ═══ .bashrc ════════════════════════════════════════════════════════════
 alias zreload='source ~/.bashrc && ok ".bashrc yeniden yüklendi"'
 alias zedit='$EDITOR ~/.bashrc && source ~/.bashrc && ok "kaydedildi ve yüklendi"'
-alias zprompt='$EDITOR ~/.config/starship.toml'
+alias zprompt='$EDITOR ~/nixos/home/shell/starship.toml'
 if has bat; then alias zcat='bat -l bash ~/.bashrc'; else alias zcat='cat ~/.bashrc'; fi
 
 # ═══ Gezinme ════════════════════════════════════════════════════════════

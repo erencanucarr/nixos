@@ -1,12 +1,12 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, theme, ... }:
 {
   services.displayManager.ly = {
     enable = true;
     settings = {
-      bg = "0x000a0a0c";
-      fg = "0x00e6e7ea";
-      border_fg = "0x00232427";
-      error_fg = "0x01e2715a";
+      bg = "0x00${theme.bare theme.colors.ground}";
+      fg = "0x00${theme.bare theme.colors.text}";
+      border_fg = "0x00${theme.bare theme.colors.rule}";
+      error_fg = "0x01${theme.bare theme.colors.hot}";
       clock = "%H:%M  %d.%m.%Y";
       bigclock = "en";
       animation = "none";

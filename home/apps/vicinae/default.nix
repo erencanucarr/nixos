@@ -1,8 +1,8 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, theme, ... }:
 {
   home.packages = [ pkgs.vicinae ];
 
-  xdg.dataFile."vicinae/themes/graphite.toml".source = ./graphite.toml;
+  xdg.dataFile."vicinae/themes/graphite.toml".source = import ./graphite.nix { inherit pkgs theme; };
 
   xdg.configFile."vicinae/nix.json".text = builtins.toJSON {
     theme.dark.name = "graphite";

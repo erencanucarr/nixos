@@ -47,7 +47,7 @@ PanelWindow {
         left: true
         right: true
     }
-    color: "#b30a0a0c"
+    color: Theme.alpha(Theme.ground, 0.7)
 
     Component.onCompleted: {
         root.main = Hyprland.focusedMonitor?.name === root.modelData.name;

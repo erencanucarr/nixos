@@ -13,6 +13,7 @@ Flake-based NixOS configuration with Home Manager.
 ```text
 .
 ├── flake.nix                 # inputs and hosts
+├── theme/palette.nix         # every colour, in one place; the files below read it
 ├── .github/workflows/        # weekly flake.lock update as a pull request
 ├── hosts/<host>/
 │   ├── default.nix           # which modules the host uses, its hostname
@@ -32,6 +33,7 @@ Flake-based NixOS configuration with Home Manager.
 └── home/                     # the user (Home Manager)
     ├── can.nix               # user apps and the GTK look
     ├── links.nix             # links the folders below into place, editable
+    ├── theme.nix             # writes the palette to ~/.config/can-theme for qs, Hyprland, GTK
     ├── shell/                # ~/.bashrc (aliases, zhelp) and the prompt
     ├── desktop/
     │   ├── hyprland.nix      # links hyprland/ and quickshell/

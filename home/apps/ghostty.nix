@@ -1,4 +1,7 @@
-{ ... }:
+{ lib, theme, ... }:
+let
+  c = theme.colors;
+in
 {
   programs.ghostty = {
     enable = true;
@@ -26,18 +29,13 @@
     };
 
     themes.caffeine = {
-      palette = [
-        "0=#232427" "1=#e06c75" "2=#b5c98f" "3=#ffd9a0"
-        "4=#8fb0d9" "5=#cba6c9" "6=#88c0c8" "7=#e6e7ea"
-        "8=#8a8f98" "9=#ff8a93" "10=#c9dba8" "11=#ffe6c4"
-        "12=#a9c3e0" "13=#ddc0db" "14=#a4d4da" "15=#f7f8f8"
-      ];
-      background = "#0e0e10";
-      foreground = "#e6e7ea";
-      cursor-color = "#f7f8f8";
-      cursor-text = "#0e0e10";
-      selection-background = "#e6e7ea";
-      selection-foreground = "#0a0a0c";
+      palette = lib.imap0 (i: v: "${toString i}=${v}") theme.palette.ansi;
+      background = c.panel;
+      foreground = c.text;
+      cursor-color = c.bright;
+      cursor-text = c.panel;
+      selection-background = c.text;
+      selection-foreground = c.ground;
     };
 
     themes.caffeine-light = {

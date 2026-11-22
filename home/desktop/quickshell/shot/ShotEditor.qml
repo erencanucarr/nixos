@@ -11,7 +11,7 @@ Scope {
     readonly property var tools: ["kalem", "ok", "kutu", "bulanık", "yazı"]
     readonly property var kinds: ["pen", "arrow", "rect", "blur", "text"]
     readonly property var hotkeys: [Qt.Key_P, Qt.Key_A, Qt.Key_R, Qt.Key_B, Qt.Key_T]
-    readonly property var inks: ["#E2715A", "#E5AE52", "#FFFFFF", "#000000"]
+    readonly property var inks: [Theme.hot, Theme.warm, "#FFFFFF", "#000000"]
     readonly property var sizes: [3, 6, 12]
 
     property string shot: ""
@@ -73,7 +73,7 @@ Scope {
             top: true
             bottom: true
         }
-        color: "#F20A0A0C"
+        color: Theme.alpha(Theme.ground, 0.95)
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

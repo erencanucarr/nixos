@@ -3,6 +3,8 @@ local terminal = "ghostty"
 local files = "thunar"
 local browser = "firefox"
 local hypr = os.getenv("HOME") .. "/.config/hypr"
+local ok, palette = pcall(dofile, os.getenv("HOME") .. "/.config/can-theme/palette.lua")
+if not ok or type(palette) ~= "table" then palette = { ground = "#0a0a0c" } end
 
 local focus = "rgba(ffffff80)"
 local line = "rgba(ffffff14)"
@@ -80,7 +82,7 @@ hl.config({
     force_default_wallpaper = 0,
     disable_hyprland_logo = true,
     disable_splash_rendering = true,
-    background_color = 0xff0a0a0c,
+    background_color = tonumber("ff" .. palette.ground:sub(2), 16),
     vrr = 2,
   },
 })

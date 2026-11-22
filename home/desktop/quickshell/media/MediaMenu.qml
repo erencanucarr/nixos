@@ -187,7 +187,7 @@ Menu {
                 }
                 GradientStop {
                     position: 1
-                    color: "#cc0a0a0c"
+                    color: Theme.alpha(Theme.ground, 0.8)
                 }
             }
         }
@@ -201,7 +201,7 @@ Menu {
             implicitWidth: who.implicitWidth + 14
             implicitHeight: 22
             radius: 11
-            color: "#b30a0a0c"
+            color: Theme.alpha(Theme.ground, 0.7)
             border.width: 1
             border.color: Theme.edge
 

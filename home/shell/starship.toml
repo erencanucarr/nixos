@@ -1,21 +1,21 @@
 add_newline = true
 format = """
-[](fg:#e6e7ea)$os$username[](bg:#232427 fg:#e6e7ea)$directory[](fg:#232427 bg:#151618)$git_branch$git_status[](fg:#151618 bg:#1d1d1f)$nix_shell$cmd_duration[](fg:#1d1d1f)$fill$time
+[](fg:text)$os$username[](bg:rule fg:text)$directory[](fg:rule bg:raised)$git_branch$git_status[](fg:raised bg:line)$nix_shell$cmd_duration[](fg:line)$fill$time
 $character"""
 
 [os]
 disabled = false
-style = "bg:#e6e7ea fg:#0a0a0c"
+style = "bg:text fg:ground"
 format = "[$symbol]($style)"
 symbols.NixOS = " "
 
 [username]
 show_always = true
-style_user = "bg:#e6e7ea fg:#0a0a0c bold"
+style_user = "bg:text fg:ground bold"
 format = "[$user ]($style)"
 
 [directory]
-style = "bg:#232427 fg:#f7f8f8 bold"
+style = "bg:rule fg:bright bold"
 format = "[ $path ]($style)"
 truncation_length = 3
 truncation_symbol = "…/"
@@ -23,21 +23,21 @@ home_symbol = "  ~"
 
 [git_branch]
 symbol = ""
-style = "bg:#151618 fg:#8a8f98"
+style = "bg:raised fg:dim"
 format = "[ $symbol $branch ]($style)"
 
 [git_status]
-style = "bg:#151618 fg:#e6e7ea bold"
+style = "bg:raised fg:text bold"
 format = "[$all_status$ahead_behind ]($style)"
 
 [nix_shell]
 symbol = ""
-style = "bg:#1d1d1f fg:#8a8f98"
+style = "bg:line fg:dim"
 format = "[ $symbol $name ]($style)"
 
 [cmd_duration]
 min_time = 2000
-style = "bg:#1d1d1f fg:#e5ae52"
+style = "bg:line fg:warm"
 format = "[ 󱦟 $duration ]($style)"
 
 [fill]
@@ -46,9 +46,9 @@ symbol = " "
 [time]
 disabled = false
 time_format = "%H:%M"
-style = "fg:#8a8f98"
+style = "fg:dim"
 format = "[ $time]($style)"
 
 [character]
-success_symbol = "[❯](bold #f7f8f8)"
-error_symbol = "[❯](bold #e2715a)"
+success_symbol = "[❯](bold bright)"
+error_symbol = "[❯](bold hot)"
