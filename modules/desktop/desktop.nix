@@ -1,39 +1,57 @@
-# What the desktop needs besides Hyprland (hyprland.nix next to it): the login
-# screen, the pieces GNOME used to bring along, a few GNOME apps, and the look
-# GTK apps read (adw-gtk3, WhiteSur icons and cursors, Inter and JetBrains
-# Mono). The per-user settings are in home/can.nix.
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
-  # GDM as the login screen, straight into Hyprland.
-  services.displayManager.gdm.enable = true;
+  services.displayManager.ly = {
+    enable = true;
+    settings = {
+      bg = "0x000a0a0c";
+      fg = "0x00e6e7ea";
+      border_fg = "0x00232427";
+      error_fg = "0x01e2715a";
+      clock = "%H:%M  %d.%m.%Y";
+      bigclock = "en";
+      animation = "none";
+    };
+  };
   services.displayManager.defaultSession = "hyprland";
 
-  # Saved passwords (Wi-Fi, Firefox, 1Password), unlocked at login by GDM.
   services.gnome.gnome-keyring.enable = true;
-  # The settings store GTK apps and home/can.nix's dconf.settings use.
+  security.pam.services.ly.enableGnomeKeyring = true;
   programs.dconf.enable = true;
-  # Trash, network places and phones in Nautilus; USB drives mounting.
+  programs.thunar = {
+    enable = true;
+    plugins = with pkgs; [
+      thunar-archive-plugin
+      thunar-volman
+    ];
+  };
+  services.tumbler.enable = true;
   services.gvfs.enable = true;
   services.udisks2.enable = true;
-  # Power profiles for the bar's power menu (performance, balanced, power
-  # saver); on amd-pstate-epp it sets the CPU's energy preference.
+  xdg.mime.defaultApplications = {
+    "inode/directory" = "thunar.desktop";
+    "application/pdf" = "org.pwmt.zathura.desktop";
+    "text/plain" = "org.xfce.mousepad.desktop";
+  }
+  // lib.genAttrs [
+    "image/png"
+    "image/jpeg"
+    "image/gif"
+    "image/webp"
+    "image/bmp"
+    "image/svg+xml"
+    "image/avif"
+    "image/tiff"
+  ] (_: "imv.desktop");
   services.power-profiles-daemon.enable = true;
-  # File pickers and the light/dark setting for apps, next to Hyprland's own
-  # portal (screen sharing).
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   environment.systemPackages = with pkgs; [
-    nautilus # files
-    loupe # images
-    papers # PDFs
-    gnome-calculator
-    gnome-text-editor
-    file-roller # archives
-    dconf-editor
+    mousepad
+    xarchiver
 
     adw-gtk3
-    whitesur-icon-theme
-    whitesur-cursors
+    (papirus-icon-theme.override { color = "grey"; })
+    bibata-cursors
   ];
 
   fonts.packages = with pkgs; [
@@ -41,17 +59,12 @@
     nerd-fonts.jetbrains-mono
   ];
 
-  # The fonts and rendering xeome/dots uses (home/.config/fontconfig/fonts.conf).
-  # GTK apps take their fonts from dconf (home/can.nix); everything else
-  # (Firefox, Discord, Electron and Qt apps) asks fontconfig for "sans-serif"
-  # and "monospace", which would otherwise be DejaVu.
   fonts.fontconfig = {
     defaultFonts = {
       sansSerif = [ "Inter" ];
       monospace = [ "JetBrainsMono Nerd Font" ];
     };
     antialias = true;
-    # Grayscale, not subpixel: GTK 4 already renders grayscale.
     subpixel.rgba = "none";
     hinting = {
       enable = true;

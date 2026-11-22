@@ -1,12 +1,7 @@
-# From `nixos-generate-config` on this machine. The disk UUIDs change on
-# every reinstall: take them from the new /etc/nixos/hardware-configuration.nix.
 { config, lib, modulesPath, ... }:
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  # The installer also lists xhci_pci_prom21, which the LTS kernel this host
-  # runs (modules/core/nvidia.nix) does not have, so the initrd fails to
-  # build with it.
   boot.initrd.availableKernelModules = [ "nvme" "ahci" "xhci_pci" "usb_storage" "usbhid" "sd_mod" ];
   boot.kernelModules = [ "kvm-amd" ];
 

@@ -1,4 +1,3 @@
-# What every host shares: boot, locale, the user, networking, nix itself.
 { pkgs, unstable, ... }:
 {
   boot.loader.systemd-boot.enable = true;
@@ -25,14 +24,12 @@
     isNormalUser = true;
     description = "Can";
     extraGroups = [ "networkmanager" "wheel" "video" ];
-    # The MacBook's key for this machine, so SSH survives a reinstall.
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEsarS+DLcG9flUUe2RIgAp8uKQlKxsmgtGFMW0pE6Iq claude-mac-to-b850e"
     ];
   };
 
   networking.networkmanager.enable = true;
-  # The firewall stays on; the openssh module opens port 22 itself.
   networking.firewall.enable = true;
   services.openssh.enable = true;
 
@@ -41,8 +38,6 @@
 
   programs.firefox.enable = true;
 
-  # 1Password's app and CLI. The polkit owner lets the CLI and the browser
-  # extension unlock through the app (system authentication) for this user.
   programs._1password.enable = true;
   programs._1password-gui = {
     enable = true;
