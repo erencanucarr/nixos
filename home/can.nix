@@ -19,6 +19,7 @@ in
     ./apps/vicinae
     ./apps/ghostty.nix
     ./apps/viewers.nix
+    ./apps/equibop
   ];
 
   home.stateVersion = "26.05";
