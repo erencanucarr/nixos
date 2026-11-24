@@ -48,7 +48,7 @@ in
       paths = [ pkgs.equibop ];
       nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
-        wrapProgram $out/bin/equibop --add-flags "--proxy-server=${proxy}"
+        wrapProgram $out/bin/equibop --add-flags "--proxy-server=${proxy}" --set PULSE_SINK arctis_chat
       '';
     })
   ];

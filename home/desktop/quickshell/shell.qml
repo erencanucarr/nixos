@@ -2,6 +2,7 @@
 import Quickshell
 import qs.bar
 import qs.common
+import qs.headset
 import qs.drawer
 import qs.keys
 import qs.notif
@@ -12,6 +13,8 @@ import qs.shot
 import qs.wallpaper
 
 ShellRoot {
+    readonly property bool headsetPresent: Headset.present
+
     Wallpaper {}
 
     Variants {

@@ -3,12 +3,16 @@ import QtQuick.Layouts
 import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
 import qs.common
+import qs.headset
 
 Menu {
     id: root
 
     readonly property int fs: 14
     readonly property int wt: 550
+
+    Component.onCompleted: Headset.watch(true)
+    Component.onDestruction: Headset.watch(false)
 
     contentWidth: 324
     rowSpacing: 8
@@ -202,6 +206,159 @@ Menu {
 
     Rule {
         visible: bt.visible
+    }
+
+    Rectangle {
+        id: headset
+
+        readonly property color tone: Headset.charging ? Theme.green : Headset.level >= 0 && Headset.level <= 25 ? Theme.hot : Theme.text
+        readonly property string batteryGlyph: {
+            if (Headset.charging)
+                return String.fromCodePoint(0xF0084);
+            const l = Headset.level;
+            return String.fromCodePoint(l <= 0 ? 0xF008E : l <= 25 ? 0xF007B : l <= 50 ? 0xF007E : l <= 75 ? 0xF0080 : 0xF0079);
+        }
+
+        Layout.fillWidth: true
+        visible: Headset.present
+        implicitHeight: 34
+        radius: Theme.radius
+        color: headsetMa.containsMouse ? Theme.hoverRaised : "transparent"
+        border.width: 1
+        border.color: Theme.edge
+
+        RowLayout {
+            anchors {
+                fill: parent
+                leftMargin: 10
+                rightMargin: 10
+            }
+            spacing: 8
+
+            BarText {
+                text: String.fromCodePoint(0xF02CE)
+                font.pixelSize: root.fs + 1
+                color: Headset.online ? Theme.bright : Theme.dim
+            }
+
+            BarText {
+                Layout.fillWidth: true
+                text: Headset.name || "Kulaklık"
+                elide: Text.ElideRight
+                font.pixelSize: root.fs - 2
+                weight: root.wt
+                color: Headset.online ? Theme.bright : Theme.text
+            }
+
+            BarText {
+                visible: Headset.online
+                text: headset.batteryGlyph
+                font.pixelSize: root.fs + 1
+                color: headset.tone
+            }
+
+            BarText {
+                text: !Headset.online ? "kapalı" : Headset.charging ? `şarj oluyor  ${Headset.level}%` : `${Headset.level}%`
+                font.pixelSize: root.fs - 2
+                weight: root.wt
+                color: Headset.online ? headset.tone : Theme.dim
+            }
+        }
+
+        MouseArea {
+            id: headsetMa
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: Headset.refresh()
+        }
+    }
+
+    Item {
+        id: mix
+
+        Layout.fillWidth: true
+        visible: Headset.present && Headset.mixing
+        implicitHeight: 38
+
+        BarText {
+            id: gameLabel
+            anchors.left: parent.left
+            anchors.leftMargin: 2
+            anchors.top: parent.top
+            text: `Oyun  ${Headset.game}%`
+            font.pixelSize: root.fs - 4
+            weight: root.wt
+            color: Headset.balance <= 0.5 ? Theme.text : Theme.dim
+        }
+
+        BarText {
+            anchors.right: parent.right
+            anchors.rightMargin: 2
+            anchors.top: parent.top
+            text: `${Headset.chat}%  Sohbet`
+            font.pixelSize: root.fs - 4
+            weight: root.wt
+            color: Headset.balance >= 0.5 ? Theme.text : Theme.dim
+        }
+
+        Item {
+            id: track
+
+            anchors {
+                left: parent.left
+                right: parent.right
+                bottom: parent.bottom
+                leftMargin: 7
+                rightMargin: 7
+                bottomMargin: 6
+            }
+            height: 4
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 2
+                color: Theme.edge
+            }
+
+            Rectangle {
+                x: Math.min(track.width / 2, knob.x + knob.width / 2)
+                width: Math.abs(knob.x + knob.width / 2 - track.width / 2)
+                height: parent.height
+                radius: 2
+                color: Theme.blue
+                opacity: 0.6
+            }
+
+            Rectangle {
+                x: track.width / 2 - 1
+                y: -3
+                width: 2
+                height: 10
+                radius: 1
+                color: Theme.dim
+                opacity: 0.6
+            }
+
+            Rectangle {
+                id: knob
+
+                x: Headset.balance * track.width - width / 2
+                anchors.verticalCenter: parent.verticalCenter
+                width: 12
+                height: 12
+                radius: 6
+                color: Theme.bright
+                border.width: 2
+                border.color: Theme.raised
+
+                Behavior on x {
+                    NumberAnimation {
+                        duration: Theme.anim
+                        easing.type: Theme.ease
+                    }
+                }
+            }
+        }
     }
 
     ColumnLayout {

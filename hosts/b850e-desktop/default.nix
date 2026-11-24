@@ -10,6 +10,7 @@
     ../../modules/desktop/desktop.nix
     ../../modules/apps/discord.nix
     ../../modules/apps/firefox.nix
+    ../../modules/apps/headset.nix
     ../../modules/desktop/hyprland.nix
   ];
 
