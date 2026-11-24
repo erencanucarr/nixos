@@ -6,94 +6,100 @@ import qs.common
 Popup {
     id: root
 
+    readonly property int fs: 14
+    readonly property int wt: 550
+
     readonly property var ts: TailscaleData
     readonly property string stateText: ts.running ? (ts.tailnet || "Bağlı") : ts.needsLogin ? "Giriş gerekli" : ts.state === "Stopped" ? "Bağlantı kapalı" : ts.state === "Starting" ? "Bağlanıyor…" : "Servis çalışmıyor"
 
-    contentWidth: 340
+    contentWidth: 360
     contentHeight: body.implicitHeight + 2 * Theme.pad + 4
 
     onVisibleChanged: TailscaleData.watching = visible
     Component.onCompleted: TailscaleData.watching = visible
     Component.onDestruction: TailscaleData.watching = false
 
-    component Heading: RowLayout {
-        id: heading
-
-        required property string title
-        property string extra: ""
-
-        Layout.fillWidth: true
-        Layout.topMargin: 2
-
-        BarText {
-            text: heading.title
-            font.pixelSize: Theme.small - 1
-            font.weight: Font.Medium
-            font.letterSpacing: 0.4
-            color: Theme.dim
-        }
-
-        Item {
-            Layout.fillWidth: true
-        }
-
-        BarText {
-            visible: heading.extra !== ""
-            text: heading.extra
-            font.pixelSize: Theme.small - 1
-            color: Theme.dim
-        }
-    }
-
-    component Info: RowLayout {
-        id: info
+    component Value: Item {
+        id: kv
 
         required property string label
         required property string value
 
         Layout.fillWidth: true
-        spacing: 8
+        implicitHeight: 26
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.leftMargin: -6
+            anchors.rightMargin: -6
+            radius: Theme.radius
+            color: kvMa.containsMouse ? Theme.hoverRaised : "transparent"
+        }
 
         BarText {
-            text: info.label
-            font.pixelSize: Theme.small
+            id: kvLabel
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: kv.label
+            font.pixelSize: root.fs - 3
+            weight: root.wt
             color: Theme.dim
         }
 
         BarText {
-            Layout.fillWidth: true
+            anchors.left: kvLabel.right
+            anchors.leftMargin: 12
+            anchors.right: kvCopy.left
+            anchors.rightMargin: kvCopy.visible ? 6 : 0
+            anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
-            text: info.value || "—"
+            text: kv.value || "—"
             elide: Text.ElideLeft
-            font.pixelSize: Theme.small
-            color: infoMa.containsMouse ? Theme.bright : Theme.text
+            font.family: "JetBrainsMono Nerd Font"
+            font.pixelSize: root.fs - 3
+            color: kvMa.containsMouse ? Theme.bright : Theme.text
+        }
 
-            MouseArea {
-                id: infoMa
-                anchors.fill: parent
-                enabled: info.value !== ""
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: TailscaleData.copy(info.value)
-            }
+        BarText {
+            id: kvCopy
+            visible: kvMa.containsMouse
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: Glyph.copy
+            font.pixelSize: root.fs - 2
+            color: Theme.dim
+        }
+
+        MouseArea {
+            id: kvMa
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: kv.value !== ""
+            cursorShape: Qt.PointingHandCursor
+            onClicked: TailscaleData.copy(kv.value)
         }
     }
 
-    component Link: BarText {
-        id: link
+    component Header: RowLayout {
+        id: header
 
-        signal clicked
+        required property string title
+        property string extra: ""
+        property color extraTone: Theme.dim
 
-        font.pixelSize: Theme.small
-        color: linkMa.containsMouse ? Theme.bright : Theme.dim
+        Layout.fillWidth: true
+        Layout.bottomMargin: 2
 
-        MouseArea {
-            id: linkMa
-            anchors.fill: parent
-            anchors.margins: -4
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: link.clicked()
+        Caption {
+            Layout.fillWidth: true
+            text: header.title
+        }
+
+        Tag {
+            visible: header.extra !== ""
+            implicitHeight: 20
+            text: header.extra
+            tone: header.extraTone
         }
     }
 
@@ -111,326 +117,318 @@ Popup {
             right: parent.right
             top: parent.top
             topMargin: Theme.pad + 2
-            leftMargin: Theme.pad + 4
-            rightMargin: Theme.pad + 4
+            leftMargin: Theme.pad + 2
+            rightMargin: Theme.pad + 2
         }
-        spacing: 9
+        spacing: 8
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-
-            TailscaleIcon {
-                dot: 5
-                lit: root.ts.running
-                color: root.ts.running ? Theme.bright : Theme.dim
-            }
-
-            ColumnLayout {
+        Card {
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: 1
+                spacing: 12
 
-                BarText {
-                    text: "Tailscale"
-                    font.weight: Font.Medium
-                    color: Theme.bright
+                Tile {
+                    glyph: ""
+                    lit: root.ts.running
+
+                    TailscaleIcon {
+                        anchors.centerIn: parent
+                        dot: 4.2
+                        lit: root.ts.running
+                        color: root.ts.running ? Theme.bright : Theme.dim
+                    }
                 }
 
-                BarText {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    text: root.stateText
-                    elide: Text.ElideRight
-                    font.pixelSize: Theme.small
-                    color: Theme.dim
-                }
-            }
+                    spacing: 2
 
-            Rectangle {
-                id: toggle
-
-                readonly property bool on: root.ts.running
-
-                implicitWidth: 40
-                implicitHeight: 22
-                radius: height / 2
-                opacity: root.ts.busy ? 0.5 : 1
-                color: on ? Theme.text : "transparent"
-                border.width: 1
-                border.color: on ? Theme.text : Theme.edge
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.anim
-                    }
-                }
-
-                Rectangle {
-                    x: toggle.on ? toggle.width - width - 4 : 4
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 14
-                    height: 14
-                    radius: 7
-                    color: toggle.on ? Theme.ground : Theme.dim
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Theme.anim
-                            easing.type: Theme.ease
-                        }
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    enabled: !root.ts.busy
-                    onClicked: TailscaleData.setUp(!toggle.on)
-                }
-            }
-        }
-
-        Pick {
-            visible: root.ts.needsLogin
-            label: "Giriş yap"
-            suffix: "tarayıcıda açılır"
-            onClicked: TailscaleData.login()
-        }
-
-        ColumnLayout {
-            visible: root.ts.running
-            Layout.fillWidth: true
-            spacing: 5
-
-            Info {
-                label: "Bu cihaz"
-                value: root.ts.self.name ?? ""
-            }
-
-            Info {
-                label: "IPv4"
-                value: root.ts.self.ip4 ?? ""
-            }
-
-            Info {
-                label: "MagicDNS"
-                value: root.ts.self.dns ?? ""
-            }
-        }
-
-        Rule {
-            visible: root.ts.running
-        }
-
-        Heading {
-            visible: root.ts.running
-            title: "CİHAZLAR"
-            extra: `${root.ts.onlineCount} / ${root.ts.peers.length} çevrimiçi`
-        }
-
-        BarText {
-            visible: root.ts.running && root.ts.peers.length === 0
-            text: "Bu tailnet'te başka cihaz yok"
-            font.pixelSize: Theme.small
-            color: Theme.dim
-        }
-
-        Flickable {
-            visible: root.ts.running && root.ts.peers.length > 0
-            Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(peerList.implicitHeight, 236)
-            contentHeight: peerList.implicitHeight
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-
-            ColumnLayout {
-                id: peerList
-
-                width: parent.width
-                spacing: 2
-
-                Repeater {
-                    model: root.ts.peers
-
-                    Rectangle {
-                        id: peer
-
-                        required property var modelData
-
-                        Layout.fillWidth: true
-                        implicitHeight: 38
-                        radius: Theme.radius
-                        color: peerMa.containsMouse ? Theme.hoverRaised : "transparent"
-
-                        RowLayout {
-                            anchors {
-                                fill: parent
-                                leftMargin: 8
-                                rightMargin: 8
-                            }
-                            spacing: 9
-
-                            Dot {
-                                color: peer.modelData.online ? Theme.green : Theme.rule
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 6
-
-                                    BarText {
-                                        Layout.fillWidth: true
-                                        text: peer.modelData.name
-                                        elide: Text.ElideRight
-                                        font.pixelSize: Theme.small + 1
-                                        color: peer.modelData.online ? Theme.bright : Theme.dim
-                                    }
-
-                                    BarText {
-                                        visible: peer.modelData.exitActive
-                                        text: "çıkış"
-                                        font.pixelSize: Theme.small - 1
-                                        color: Theme.warm
-                                    }
-
-                                    BarText {
-                                        text: peerMa.containsMouse ? "kopyala" : peer.modelData.ip4
-                                        font.pixelSize: Theme.small
-                                        color: peerMa.containsMouse ? Theme.bright : Theme.dim
-                                    }
-                                }
-
-                                BarText {
-                                    Layout.fillWidth: true
-                                    text: [peer.modelData.os, peer.modelData.online ? (peer.modelData.active ? (peer.modelData.direct ? "doğrudan" : peer.modelData.relay ? `relay · ${peer.modelData.relay}` : "") : "") : (peer.modelData.seen ? `son görülme ${peer.modelData.seen}` : "çevrimdışı")].filter(s => s).join("  ·  ")
-                                    elide: Text.ElideRight
-                                    font.pixelSize: Theme.small - 1
-                                    color: Theme.dim
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            id: peerMa
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: TailscaleData.copy(peer.modelData.ip4)
-                        }
-                    }
-                }
-            }
-        }
-
-        Heading {
-            visible: root.ts.running && root.ts.exitNodes.length > 0
-            title: "ÇIKIŞ DÜĞÜMÜ"
-            extra: root.ts.exitNode ? "trafik bu cihazdan çıkıyor" : ""
-        }
-
-        Flow {
-            visible: root.ts.running && root.ts.exitNodes.length > 0
-            Layout.fillWidth: true
-            spacing: 4
-
-            Pick {
-                width: implicitWidth
-                implicitWidth: 74
-                label: "Kapalı"
-                align: Text.AlignHCenter
-                current: root.ts.exitNode === ""
-                onClicked: if (!current)
-                    TailscaleData.useExit("")
-            }
-
-            Repeater {
-                model: root.ts.exitNodes
-
-                Pick {
-                    required property var modelData
-
-                    width: implicitWidth
-                    implicitWidth: Math.max(74, exitLabel.implicitWidth + 22)
-                    label: modelData.name
-                    align: Text.AlignHCenter
-                    current: modelData.exitActive
-                    selectable: modelData.online
-                    opacity: modelData.online ? 1 : 0.45
-                    onClicked: if (!current)
-                        TailscaleData.useExit(modelData.ip4 || modelData.name)
-
-                    TextMetrics {
-                        id: exitLabel
-                        font.pixelSize: Theme.small
-                        text: modelData.name
-                    }
-                }
-            }
-        }
-
-        Heading {
-            visible: root.ts.running && root.ts.services.length > 0
-            title: "SERVİSLER"
-            extra: root.ts.probing ? "kontrol ediliyor…" : `${root.ts.servicesUp} / ${root.ts.services.length} yanıt veriyor`
-        }
-
-        Repeater {
-            model: root.ts.running ? root.ts.services : []
-
-            Rectangle {
-                id: svc
-
-                required property var modelData
-
-                Layout.fillWidth: true
-                implicitHeight: 30
-                radius: Theme.radius
-                color: svcMa.containsMouse ? Theme.hoverRaised : "transparent"
-
-                RowLayout {
-                    anchors {
-                        fill: parent
-                        leftMargin: 8
-                        rightMargin: 8
-                    }
-                    spacing: 9
-
-                    Dot {
-                        color: svc.modelData.code < 0 ? Theme.rule : svc.modelData.reachable ? Theme.green : Theme.hot
-                    }
-
-                    BarText {
-                        text: svc.modelData.name
-                        font.pixelSize: Theme.small + 1
-                        color: Theme.bright
+                    Caption {
+                        text: "TAILSCALE"
                     }
 
                     BarText {
                         Layout.fillWidth: true
-                        text: svc.modelData.host
+                        text: root.stateText
                         elide: Text.ElideRight
-                        font.pixelSize: Theme.small - 1
-                        color: Theme.dim
-                    }
-
-                    BarText {
-                        text: svc.modelData.code < 0 ? "" : svc.modelData.reachable ? `${svc.modelData.ms} ms` : svc.modelData.code ? `HTTP ${svc.modelData.code}` : "yanıt yok"
-                        font.pixelSize: Theme.small
-                        color: svc.modelData.reachable ? Theme.dim : Theme.hot
+                        font.pixelSize: root.fs - 1
+                        weight: 600
+                        color: root.ts.running ? Theme.bright : Theme.dim
                     }
                 }
 
-                MouseArea {
-                    id: svcMa
+                Toggle {
+                    on: root.ts.running
+                    opacity: root.ts.busy ? 0.5 : 1
+                    enabled: !root.ts.busy
+                    onToggled: TailscaleData.setUp(!root.ts.running)
+                }
+            }
 
+            Rectangle {
+                Layout.fillWidth: true
+                visible: root.ts.needsLogin
+                implicitHeight: 34
+                radius: Theme.radius + 2
+                color: loginMa.containsMouse ? Theme.bright : Theme.text
+
+                BarText {
+                    anchors.centerIn: parent
+                    text: "Giriş yap  ·  tarayıcıda açılır"
+                    font.pixelSize: root.fs - 2
+                    weight: 650
+                    color: Theme.ground
+                }
+
+                MouseArea {
+                    id: loginMa
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Qt.openUrlExternally(svc.modelData.url)
+                    onClicked: TailscaleData.login()
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: root.ts.running
+                spacing: 0
+
+                Rule {
+                    Layout.bottomMargin: 6
+                }
+
+                Value {
+                    label: "Bu cihaz"
+                    value: root.ts.self.name ?? ""
+                }
+
+                Value {
+                    label: "IPv4"
+                    value: root.ts.self.ip4 ?? ""
+                }
+
+                Value {
+                    label: "MagicDNS"
+                    value: root.ts.self.dns ?? ""
+                }
+            }
+        }
+
+        Card {
+            visible: root.ts.running
+            padding: 10
+            spacing: 2
+
+            Header {
+                title: "CİHAZLAR"
+                extra: `${root.ts.onlineCount} / ${root.ts.peers.length} çevrimiçi`
+                extraTone: root.ts.onlineCount > 0 ? Theme.green : Theme.dim
+            }
+
+            BarText {
+                visible: root.ts.peers.length === 0
+                Layout.leftMargin: 2
+                text: "Bu tailnet'te başka cihaz yok"
+                font.pixelSize: root.fs - 3
+                weight: root.wt
+                color: Theme.dim
+            }
+
+            Flickable {
+                visible: root.ts.peers.length > 0
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(peerList.implicitHeight, 236)
+                contentHeight: peerList.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                ColumnLayout {
+                    id: peerList
+
+                    width: parent.width
+                    spacing: 2
+
+                    Repeater {
+                        model: root.ts.peers
+
+                        Rectangle {
+                            id: peer
+
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            implicitHeight: 40
+                            radius: Theme.radius
+                            color: peerMa.containsMouse ? Theme.hoverRaised : "transparent"
+
+                            RowLayout {
+                                anchors {
+                                    fill: parent
+                                    leftMargin: 8
+                                    rightMargin: 8
+                                }
+                                spacing: 10
+
+                                Dot {
+                                    color: peer.modelData.online ? Theme.green : Theme.rule
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 1
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 6
+
+                                        BarText {
+                                            Layout.fillWidth: true
+                                            text: peer.modelData.name
+                                            elide: Text.ElideRight
+                                            font.pixelSize: root.fs - 2
+                                            weight: peer.modelData.online ? 600 : root.wt
+                                            color: peer.modelData.online ? Theme.bright : Theme.dim
+                                        }
+
+                                        Tag {
+                                            visible: peer.modelData.exitActive
+                                            implicitHeight: 18
+                                            text: "exit node"
+                                            tone: Theme.warm
+                                            accent: true
+                                        }
+
+                                        BarText {
+                                            text: peerMa.containsMouse ? "kopyala" : peer.modelData.ip4
+                                            font.family: peerMa.containsMouse ? Theme.family : "JetBrainsMono Nerd Font"
+                                            font.pixelSize: root.fs - 4
+                                            color: peerMa.containsMouse ? Theme.bright : Theme.dim
+                                        }
+                                    }
+
+                                    BarText {
+                                        Layout.fillWidth: true
+                                        text: [peer.modelData.os, peer.modelData.online ? (peer.modelData.active ? (peer.modelData.direct ? "doğrudan" : peer.modelData.relay ? `relay · ${peer.modelData.relay}` : "") : "") : (peer.modelData.seen ? `son görülme ${peer.modelData.seen}` : "çevrimdışı")].filter(s => s).join("  ·  ")
+                                        elide: Text.ElideRight
+                                        font.pixelSize: root.fs - 4
+                                        weight: root.wt
+                                        color: Theme.dim
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: peerMa
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: TailscaleData.copy(peer.modelData.ip4)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Card {
+            visible: root.ts.running && root.ts.exitNodes.length > 0
+            padding: 10
+            spacing: 8
+
+            Header {
+                title: "EXIT NODE"
+                extra: root.ts.exitNode ? "trafik dışarı çıkıyor" : ""
+                extraTone: Theme.warm
+            }
+
+            Segments {
+                options: [
+                    {
+                        name: "Kapalı",
+                        ip4: "",
+                        online: true,
+                        off: true
+                    }
+                ].concat(root.ts.exitNodes)
+                selected: o => o.off ? root.ts.exitNode === "" : o.exitActive === true
+                onPicked: o => {
+                    if (!o.online || selected(o))
+                        return;
+                    TailscaleData.useExit(o.off ? "" : (o.ip4 || o.name));
+                }
+            }
+        }
+
+        Card {
+            visible: root.ts.running && root.ts.services.length > 0
+            padding: 10
+            spacing: 2
+
+            Header {
+                title: "SERVİSLER"
+                extra: root.ts.probing ? "kontrol ediliyor…" : `${root.ts.servicesUp} / ${root.ts.services.length} yanıt veriyor`
+                extraTone: root.ts.probing ? Theme.dim : root.ts.servicesUp === root.ts.services.length ? Theme.green : Theme.hot
+            }
+
+            Repeater {
+                model: root.ts.services
+
+                Rectangle {
+                    id: svc
+
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    implicitHeight: 32
+                    radius: Theme.radius
+                    color: svcMa.containsMouse ? Theme.hoverRaised : "transparent"
+
+                    RowLayout {
+                        anchors {
+                            fill: parent
+                            leftMargin: 8
+                            rightMargin: 8
+                        }
+                        spacing: 10
+
+                        Dot {
+                            color: svc.modelData.code < 0 ? Theme.rule : svc.modelData.reachable ? Theme.green : Theme.hot
+                        }
+
+                        BarText {
+                            text: svc.modelData.name
+                            font.pixelSize: root.fs - 2
+                            weight: 600
+                            color: Theme.bright
+                        }
+
+                        BarText {
+                            Layout.fillWidth: true
+                            text: svc.modelData.host
+                            elide: Text.ElideRight
+                            font.pixelSize: root.fs - 4
+                            weight: root.wt
+                            color: Theme.dim
+                        }
+
+                        BarText {
+                            text: svc.modelData.code < 0 ? "" : svc.modelData.reachable ? `${svc.modelData.ms} ms` : svc.modelData.code ? `HTTP ${svc.modelData.code}` : "yanıt yok"
+                            font.family: "JetBrainsMono Nerd Font"
+                            font.pixelSize: root.fs - 4
+                            color: svc.modelData.reachable ? Theme.dim : Theme.hot
+                        }
+                    }
+
+                    MouseArea {
+                        id: svcMa
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Qt.openUrlExternally(svc.modelData.url)
+                    }
                 }
             }
         }
@@ -438,28 +436,33 @@ Popup {
         BarText {
             visible: root.ts.status !== ""
             Layout.fillWidth: true
+            Layout.leftMargin: 2
             text: root.ts.status
             wrapMode: Text.Wrap
-            font.pixelSize: Theme.small
+            font.pixelSize: root.fs - 3
+            weight: root.wt
             color: root.ts.statusError ? Theme.hot : Theme.dim
         }
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.bottomMargin: 2
-            spacing: 14
+            spacing: 6
 
-            Link {
-                text: "Yönetim paneli"
+            Tag {
+                text: `Yönetim paneli  ${Glyph.chevronRight}`
+                tone: Theme.text
+                clickable: true
                 onClicked: {
                     Qt.openUrlExternally("https://login.tailscale.com/admin/machines");
                     Panels.popup = "";
                 }
             }
 
-            Link {
+            Tag {
                 visible: root.ts.running && root.ts.services.length > 0
                 text: "Servisleri yenile"
+                tone: Theme.text
+                clickable: true
                 onClicked: TailscaleData.probe()
             }
 
@@ -467,9 +470,12 @@ Popup {
                 Layout.fillWidth: true
             }
 
-            Link {
+            Tag {
                 visible: root.ts.running
                 text: "Çıkış yap"
+                tone: Theme.hot
+                accent: true
+                clickable: true
                 onClicked: TailscaleData.run(["logout"], "Oturum kapatıldı")
             }
         }

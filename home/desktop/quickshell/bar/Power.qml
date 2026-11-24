@@ -1,200 +1,318 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.UPower
 import qs.common
 
 Popup {
     id: root
 
+    readonly property int fs: 14
+    readonly property int wt: 550
+
     readonly property var profiles: [
-        { profile: PowerProfile.Performance, glyph: Glyph.perf, name: "Performans", detail: "en hızlı tepki, daha çok güç" },
-        { profile: PowerProfile.Balanced, glyph: Glyph.balanced, name: "Dengeli", detail: "varsayılan" },
-        { profile: PowerProfile.PowerSaver, glyph: Glyph.saver, name: "Güç tasarrufu", detail: "daha az güç, daha serin" }
-    ]
+        { profile: PowerProfile.PowerSaver, glyph: Glyph.saver, name: "Tasarruf", detail: "Daha az güç, daha serin ve sessiz." },
+        { profile: PowerProfile.Balanced, glyph: Glyph.balanced, name: "Dengeli", detail: "Varsayılan, çoğu iş için yeterli." },
+        { profile: PowerProfile.Performance, glyph: Glyph.perf, name: "Performans", detail: "En hızlı tepki, daha çok güç ve ısı." }
+    ].filter(p => p.profile !== PowerProfile.Performance || PowerProfiles.hasPerformanceProfile)
 
     readonly property var actions: [
-        { glyph: Glyph.lock, name: "Kilitle", detail: "Super+L", cmd: ["loginctl", "lock-session"] },
-        { glyph: Glyph.logout, name: "Oturumu kapat", detail: "Hyprland'den çık", cmd: ["hyprctl", "dispatch", "hl.dsp.exit()"] },
-        { glyph: Glyph.sleep, name: "Uyku", detail: "belleğe askıya al", cmd: ["systemctl", "suspend"] },
-        { glyph: Glyph.reboot, name: "Yeniden başlat", detail: "sistemi yeniden başlat", cmd: ["systemctl", "reboot"] },
-        { glyph: Glyph.power, name: "Kapat", detail: "sistemi kapat", cmd: ["systemctl", "poweroff"] }
+        { glyph: Glyph.lock, name: "Kilitle", cmd: ["loginctl", "lock-session"] },
+        { glyph: Glyph.logout, name: "Çıkış", cmd: ["hyprctl", "dispatch", "hl.dsp.exit()"] },
+        { glyph: Glyph.sleep, name: "Uyku", cmd: ["systemctl", "suspend"] },
+        { glyph: Glyph.reboot, name: "Yeniden", cmd: ["systemctl", "reboot"] },
+        { glyph: Glyph.power, name: "Kapat", cmd: ["systemctl", "poweroff"], danger: true }
     ]
 
     readonly property var spans: [
-        { label: "30 dk", minutes: 30 },
-        { label: "1 sa", minutes: 60 },
-        { label: "2 sa", minutes: 120 },
-        { label: "Sürekli", minutes: 0 }
+        { name: "30 dk", minutes: 30 },
+        { name: "1 sa", minutes: 60 },
+        { name: "2 sa", minutes: 120 },
+        { name: "Sürekli", minutes: 0 }
     ]
+
+    readonly property var current: root.profiles.find(p => p.profile === PowerProfiles.profile) ?? null
+
+    property real uptime: 0
 
     function run(a: var): void {
         Panels.popup = "";
         Quickshell.execDetached(a.cmd);
     }
 
+    function since(seconds: real): string {
+        const m = Math.floor(seconds / 60);
+        const d = Math.floor(m / 1440);
+        const h = Math.floor(m % 1440 / 60);
+        if (d > 0)
+            return `${d} gün ${h} sa`;
+        if (h > 0)
+            return `${h} sa ${m % 60} dk`;
+        return `${m} dk`;
+    }
+
     alignRight: true
-    contentWidth: body.implicitWidth + 2 * Theme.pad
-    contentHeight: body.implicitHeight + 2 * Theme.pad
+    contentWidth: 340
+    contentHeight: body.implicitHeight + 2 * Theme.pad + 4
 
-    component Row: Rectangle {
-        id: row
+    FileView {
+        id: uptimeFile
+        path: "/proc/uptime"
+        onLoaded: root.uptime = Number(text().split(" ")[0]) || 0
+    }
 
-        required property string glyph
-        required property string name
-        required property string detail
-        property bool current: false
-        signal clicked
+    FileView {
+        id: hostFile
+        path: "/proc/sys/kernel/hostname"
+    }
 
-        Layout.fillWidth: true
-        implicitWidth: 230
-        implicitHeight: 38
-        radius: Theme.radius
-        color: row.current ? Theme.sel : rowMa.containsMouse ? Theme.hoverRaised : "transparent"
-        border.width: 1
-        border.color: Theme.edge
+    Timer {
+        interval: 60000
+        running: root.visible
+        repeat: true
+        onTriggered: uptimeFile.reload()
+    }
 
-        Behavior on color {
-            ColorAnimation {
-                duration: Theme.anim
-                easing.type: Theme.ease
+    ColumnLayout {
+        id: body
+
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            topMargin: Theme.pad + 2
+            leftMargin: Theme.pad + 2
+            rightMargin: Theme.pad + 2
+        }
+        spacing: 8
+
+        Card {
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                Tile {
+                    glyph: (Quickshell.env("USER") || "?").charAt(0).toUpperCase()
+                    glyphSize: 17
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Caption {
+                        text: "OTURUM"
+                    }
+
+                    BarText {
+                        Layout.fillWidth: true
+                        text: `${Quickshell.env("USER")}@${hostFile.text().trim()}`
+                        elide: Text.ElideRight
+                        font.pixelSize: root.fs - 1
+                        weight: 600
+                        color: Theme.bright
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: 2
+
+                    Caption {
+                        Layout.alignment: Qt.AlignRight
+                        text: "AÇIK"
+                    }
+
+                    BarText {
+                        Layout.alignment: Qt.AlignRight
+                        text: root.since(root.uptime)
+                        font.pixelSize: root.fs - 2
+                        weight: 600
+                        color: Theme.text
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: root.actions
+
+                    delegate: Rectangle {
+                        id: action
+
+                        required property var modelData
+                        readonly property bool danger: modelData.danger === true
+                        readonly property color tone: action.danger ? Theme.hot : Theme.bright
+
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        implicitHeight: 58
+                        radius: Theme.radius + 2
+                        color: action.danger ? Qt.alpha(Theme.hot, actionMa.containsMouse ? 0.16 : 0.06) : actionMa.containsMouse ? Theme.selRaised : Theme.hoverRaised
+                        border.width: 1
+                        border.color: action.danger ? Qt.alpha(Theme.hot, actionMa.containsMouse ? 0.5 : 0.25) : Theme.edge
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.anim
+                            }
+                        }
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            BarText {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: action.modelData.glyph
+                                font.pixelSize: 17
+                                color: action.danger ? Theme.hot : actionMa.containsMouse ? Theme.bright : Theme.text
+                            }
+
+                            BarText {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: action.modelData.name
+                                font.pixelSize: root.fs - 4
+                                weight: 600
+                                color: action.danger ? Theme.hot : actionMa.containsMouse ? Theme.bright : Theme.dim
+                            }
+                        }
+
+                        MouseArea {
+                            id: actionMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.run(action.modelData)
+                        }
+                    }
+                }
             }
         }
 
-        RowLayout {
-            anchors {
-                fill: parent
-                leftMargin: 10
-                rightMargin: 10
-            }
+        Card {
+            padding: 10
             spacing: 8
 
-            BarText {
-                Layout.preferredWidth: 20
-                horizontalAlignment: Text.AlignHCenter
-                text: row.glyph
-                font.pixelSize: Theme.size + 4
-                color: row.current || rowMa.containsMouse ? Theme.bright : Theme.text
-            }
-
-            ColumnLayout {
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: 0
 
-                BarText {
+                Caption {
                     Layout.fillWidth: true
-                    text: row.name
-                    font.weight: Font.Medium
-                    color: row.current || rowMa.containsMouse ? Theme.bright : Theme.text
+                    text: "GÜÇ PROFİLİ"
                 }
 
                 BarText {
+                    visible: !!root.current
+                    text: root.current?.glyph ?? ""
+                    font.pixelSize: root.fs
+                    color: PowerProfiles.profile === PowerProfile.Performance ? Theme.warm : Theme.text
+                }
+            }
+
+            Segments {
+                options: root.profiles
+                selected: o => PowerProfiles.profile === o.profile
+                onPicked: o => PowerProfiles.profile = o.profile
+            }
+
+            BarText {
+                Layout.fillWidth: true
+                Layout.leftMargin: 2
+                text: root.current?.detail ?? ""
+                wrapMode: Text.Wrap
+                font.pixelSize: root.fs - 4
+                weight: root.wt
+                color: Theme.dim
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                visible: PowerProfiles.degradationReason !== PerformanceDegradationReason.None
+                implicitHeight: 30
+                radius: Theme.radius
+                color: Qt.alpha(Theme.warm, 0.08)
+                border.width: 1
+                border.color: Qt.alpha(Theme.warm, 0.25)
+
+                BarText {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: `${Glyph.warn}  ${PowerProfiles.degradationReason === PerformanceDegradationReason.HighTemperature ? "Yüksek sıcaklık, işlemci kısıldı" : "İşlemci kısıldı"}`
+                    font.pixelSize: root.fs - 3
+                    weight: 600
+                    color: Theme.warm
+                }
+            }
+
+            Repeater {
+                model: PowerProfiles.holds
+
+                delegate: BarText {
+                    required property var modelData
+
                     Layout.fillWidth: true
-                    text: row.detail
-                    font.pixelSize: Theme.small - 1
+                    Layout.leftMargin: 2
+                    text: `${modelData.applicationId}: ${modelData.reason || "profili tutuyor"}`
+                    elide: Text.ElideRight
+                    font.pixelSize: root.fs - 4
+                    weight: root.wt
                     color: Theme.dim
                 }
             }
         }
 
-        MouseArea {
-            id: rowMa
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: row.clicked()
-        }
-    }
+        Card {
+            padding: 10
+            spacing: 8
 
-    ColumnLayout {
-        id: body
-        anchors.centerIn: parent
-        spacing: 4
-
-        Repeater {
-            model: root.profiles.filter(p => p.profile !== PowerProfile.Performance || PowerProfiles.hasPerformanceProfile)
-
-            delegate: Row {
-                required property var modelData
-
-                glyph: modelData.glyph
-                name: modelData.name
-                detail: modelData.detail
-                current: PowerProfiles.profile === modelData.profile
-                onClicked: PowerProfiles.profile = modelData.profile
-            }
-        }
-
-        BarText {
-            Layout.fillWidth: true
-            Layout.leftMargin: 2
-            visible: PowerProfiles.degradationReason !== PerformanceDegradationReason.None
-            text: `${Glyph.warn}  ${PowerProfiles.degradationReason === PerformanceDegradationReason.HighTemperature ? "yüksek sıcaklık: işlemci kısıldı" : "işlemci kısıldı"}`
-            font.pixelSize: Theme.small
-            color: Theme.warm
-        }
-
-        Repeater {
-            model: PowerProfiles.holds
-
-            delegate: BarText {
-                required property var modelData
-
+            RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 2
-                text: `${modelData.applicationId}: ${modelData.reason || "profili tutuyor"}`
-                elide: Text.ElideRight
-                font.pixelSize: Theme.small
-                color: Theme.dim
-            }
-        }
+                spacing: 10
 
-        Rule {
-            Layout.topMargin: 4
-            Layout.bottomMargin: 2
-        }
-
-        Repeater {
-            model: root.actions
-
-            delegate: Row {
-                required property var modelData
-
-                glyph: modelData.glyph
-                name: modelData.name
-                detail: modelData.detail
-                onClicked: root.run(modelData)
-            }
-        }
-
-        Rule {
-            Layout.topMargin: 4
-            Layout.bottomMargin: 2
-        }
-
-        BarText {
-            Layout.fillWidth: true
-            Layout.leftMargin: 2
-            text: !Panels.awake ? `${Glyph.sleepAllowed}  Uykuya izin var` : Panels.awakeUntil > 0 ? `${Glyph.awake}  Uyanık kalıyor · ${Panels.awakeLeft()} kaldı` : `${Glyph.awake}  Uyanık kalıyor`
-            font.pixelSize: Theme.small
-            color: Panels.awake ? Theme.text : Theme.dim
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 4
-
-            Repeater {
-                model: root.spans
-
-                delegate: Pick {
-                    required property var modelData
-
-                    label: modelData.label
-                    align: Text.AlignHCenter
-                    current: Panels.awakeSpan === modelData.minutes
-                    onClicked: Panels.setAwake(modelData.minutes)
+                BarText {
+                    text: Panels.awake ? Glyph.awake : Glyph.sleepAllowed
+                    font.pixelSize: root.fs + 2
+                    color: Panels.awake ? Theme.bright : Theme.dim
                 }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    BarText {
+                        text: "Uyanık kal"
+                        font.pixelSize: root.fs - 1
+                        weight: 600
+                        color: Panels.awake ? Theme.text : Theme.dim
+                    }
+
+                    BarText {
+                        text: !Panels.awake ? "Ekran kapanabilir, sistem uyuyabilir" : Panels.awakeUntil > 0 ? `${Panels.awakeLeft()} kaldı` : "Sen kapatana kadar"
+                        font.pixelSize: root.fs - 4
+                        weight: root.wt
+                        color: Theme.dim
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                Toggle {
+                    on: Panels.awake
+                    onToggled: Panels.setAwake(Panels.awake ? Panels.awakeSpan : 0)
+                }
+            }
+
+            Segments {
+                options: root.spans
+                selected: o => Panels.awakeSpan === o.minutes
+                onPicked: o => Panels.setAwake(o.minutes)
             }
         }
     }

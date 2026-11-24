@@ -8,6 +8,9 @@ import qs.common
 Popup {
     id: root
 
+    readonly property int fs: 14
+    readonly property int wt: 550
+
     property string page: "main"
     property bool renaming: false
     property string askingFor: ""
@@ -17,6 +20,7 @@ Popup {
     property bool formManual: false
 
     readonly property var link: NetData.link
+    readonly property bool online: root.link.state?.startsWith("100") ?? false
     readonly property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property var wifiNetworks: wifiDevice ? wifiDevice.networks.values.filter(n => n.name).sort((a, b) => b.connected - a.connected || b.known - a.known || b.signalStrength - a.signalStrength).slice(0, 6) : []
 
@@ -43,7 +47,7 @@ Popup {
     }
 
     alignRight: true
-    contentWidth: 340
+    contentWidth: 360
     contentHeight: (page === "main" ? main.implicitHeight : ipPage.implicitHeight) + 2 * Theme.pad + 4
 
     onVisibleChanged: {
@@ -72,94 +76,144 @@ Popup {
         }
     }
 
-    component Info: RowLayout {
-        id: info
+    component Value: Item {
+        id: kv
 
         required property string label
-        required property string value
+        property string value: ""
         property bool copyable: false
+        property string action: ""
+        signal acted
 
         Layout.fillWidth: true
-        spacing: 8
+        implicitHeight: 26
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.leftMargin: -6
+            anchors.rightMargin: -6
+            radius: Theme.radius
+            color: kvMa.containsMouse ? Theme.hoverRaised : "transparent"
+        }
 
         BarText {
-            text: info.label
-            font.pixelSize: Theme.small
+            id: kvLabel
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: kv.label
+            font.pixelSize: root.fs - 3
+            weight: root.wt
             color: Theme.dim
         }
 
         BarText {
-            Layout.fillWidth: true
+            anchors.left: kvLabel.right
+            anchors.leftMargin: 12
+            anchors.right: kvAction.visible ? kvAction.left : kvCopy.left
+            anchors.rightMargin: kvAction.visible ? 10 : (kvCopy.visible ? 6 : 0)
+            anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
-            text: info.value || "—"
+            text: kv.value || "—"
             elide: Text.ElideLeft
-            font.pixelSize: Theme.small
-            color: infoMa.containsMouse ? Theme.bright : Theme.text
-
-            MouseArea {
-                id: infoMa
-                anchors.fill: parent
-                enabled: info.copyable && info.value !== ""
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: NetData.copy(info.value)
-            }
+            font.family: "JetBrainsMono Nerd Font"
+            font.pixelSize: root.fs - 3
+            color: kvMa.containsMouse && kv.copyable ? Theme.bright : Theme.text
         }
-    }
 
-    component Link: BarText {
-        id: link
-
-        signal clicked
-
-        font.pixelSize: Theme.small
-        color: linkMa.containsMouse ? Theme.bright : Theme.dim
+        BarText {
+            id: kvCopy
+            visible: kv.copyable && kvMa.containsMouse && !kvAction.visible
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: Glyph.copy
+            font.pixelSize: root.fs - 2
+            color: Theme.dim
+        }
 
         MouseArea {
-            id: linkMa
+            id: kvMa
             anchors.fill: parent
-            anchors.margins: -4
             hoverEnabled: true
+            enabled: kv.copyable && kv.value !== ""
             cursorShape: Qt.PointingHandCursor
-            onClicked: link.clicked()
+            onClicked: NetData.copy(kv.value)
+        }
+
+        Tag {
+            id: kvAction
+            visible: kv.action !== ""
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            implicitHeight: 20
+            text: kv.action
+            tone: Theme.text
+            clickable: true
+            onClicked: kv.acted()
         }
     }
 
-    component Heading: BarText {
-        font.pixelSize: Theme.small - 1
-        font.weight: Font.Medium
-        font.letterSpacing: 0.4
-        color: Theme.dim
-    }
+    component Stat: ColumnLayout {
+        id: stat
 
-    component Traffic: ColumnLayout {
+        required property string caption
         required property string glyph
-        required property string label
         required property real rate
         required property real total
 
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        Layout.maximumWidth: Number.POSITIVE_INFINITY
-        spacing: 1
+        spacing: 3
 
-        BarText {
-            text: parent.label
-            font.pixelSize: Theme.small - 1
-            color: Theme.dim
+        Caption {
+            text: stat.caption
         }
 
         BarText {
-            text: `${parent.glyph} ${NetData.human(parent.rate, true)}`
-            font.weight: Font.Medium
-            font.wordSpacing: Theme.glyphGap
+            text: `${stat.glyph} ${NetData.human(stat.rate, true)}`
+            font.pixelSize: 18
+            weight: 350
             color: Theme.bright
         }
 
         BarText {
-            text: `toplam ${NetData.human(parent.total, false)}`
-            font.pixelSize: Theme.small - 1
+            text: `toplam ${NetData.human(stat.total, false)}`
+            font.pixelSize: root.fs - 4
+            weight: root.wt
             color: Theme.dim
+        }
+    }
+
+    component Button: Rectangle {
+        id: btn
+
+        required property string text
+        property bool primary: false
+        property bool enabledState: true
+        signal clicked
+
+        Layout.fillWidth: true
+        implicitHeight: 34
+        radius: Theme.radius + 2
+        opacity: btn.enabledState ? 1 : 0.45
+        color: btn.primary ? (btnMa.containsMouse ? Theme.bright : Theme.text) : (btnMa.containsMouse ? Theme.selRaised : Theme.hoverRaised)
+        border.width: btn.primary ? 0 : 1
+        border.color: Theme.edge
+
+        BarText {
+            anchors.centerIn: parent
+            text: btn.text
+            font.pixelSize: root.fs - 2
+            weight: 650
+            color: btn.primary ? Theme.ground : Theme.text
+        }
+
+        MouseArea {
+            id: btnMa
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: btn.enabledState
+            cursorShape: Qt.PointingHandCursor
+            onClicked: btn.clicked()
         }
     }
 
@@ -172,319 +226,337 @@ Popup {
             right: parent.right
             top: parent.top
             topMargin: Theme.pad + 2
-            leftMargin: Theme.pad + 4
-            rightMargin: Theme.pad + 4
+            leftMargin: Theme.pad + 2
+            rightMargin: Theme.pad + 2
         }
-        spacing: 9
+        spacing: 8
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10
-
-            BarText {
-                text: root.link.type === "wifi" ? Glyph.wifi[4] : Glyph.wired
-                font.pixelSize: 22
-                color: root.link.state?.startsWith("100") ? Theme.bright : Theme.dim
-            }
-
-            ColumnLayout {
+        Card {
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: 1
+                spacing: 12
 
-                BarText {
-                    visible: !root.renaming
-                    Layout.fillWidth: true
-                    text: root.link.name || "Bağlantı yok"
-                    elide: Text.ElideRight
-                    font.weight: Font.Medium
-                    color: Theme.bright
+                Tile {
+                    glyph: root.link.type === "wifi" ? Glyph.wifi[4] : Glyph.wired
+                    lit: root.online
+                    tone: root.online ? Theme.bright : Theme.dim
                 }
 
-                Field {
-                    id: renameField
-                    visible: root.renaming
-                    onAccepted: {
-                        NetData.rename(text);
-                        root.renaming = false;
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Caption {
+                        Layout.fillWidth: true
+                        text: [root.typeName(root.link.type), root.speedName(root.link.speed), root.link.device].filter(s => s).join("  ·  ").toLocaleUpperCase("tr-TR")
+                        elide: Text.ElideRight
                     }
-                    input.Keys.onEscapePressed: root.renaming = false
+
+                    BarText {
+                        visible: !root.renaming
+                        Layout.fillWidth: true
+                        text: root.link.name || "Bağlantı yok"
+                        elide: Text.ElideRight
+                        font.pixelSize: root.fs - 1
+                        weight: 600
+                        color: Theme.bright
+                    }
+
+                    Field {
+                        id: renameField
+                        visible: root.renaming
+                        onAccepted: {
+                            NetData.rename(text);
+                            root.renaming = false;
+                        }
+                        input.Keys.onEscapePressed: root.renaming = false
+                    }
                 }
 
-                BarText {
-                    Layout.fillWidth: true
-                    text: [root.typeName(root.link.type), root.speedName(root.link.speed), root.link.device].filter(s => s).join(" · ")
-                    elide: Text.ElideRight
-                    font.pixelSize: Theme.small - 1
-                    color: Theme.dim
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignTop
+                    spacing: 4
+
+                    Tag {
+                        Layout.alignment: Qt.AlignRight
+                        implicitHeight: 20
+                        text: root.online ? "Bağlı" : "Bağlantı yok"
+                        dot: true
+                        accent: true
+                        tone: root.online ? Theme.green : Theme.hot
+                    }
+
+                    Tile {
+                        Layout.alignment: Qt.AlignRight
+                        visible: !!root.link.uuid
+                        implicitWidth: 30
+                        implicitHeight: 30
+                        glyphSize: root.renaming ? 14 : 15
+                        glyph: root.renaming ? String.fromCodePoint(0xF0156) : Glyph.pencil
+                        lit: false
+                        tone: Theme.dim
+                        border.color: "transparent"
+                        clickable: true
+                        onClicked: {
+                            root.renaming = !root.renaming;
+                            if (root.renaming) {
+                                renameField.text = root.link.name;
+                                renameField.input.forceActiveFocus();
+                                renameField.input.selectAll();
+                            }
+                        }
+                    }
                 }
             }
 
-            Link {
-                visible: !!root.link.uuid
-                text: root.renaming ? "vazgeç" : Glyph.pencil
-                font.pixelSize: root.renaming ? Theme.small : Theme.size + 2
-                onClicked: {
-                    root.renaming = !root.renaming;
-                    if (root.renaming) {
-                        renameField.text = root.link.name;
-                        renameField.input.forceActiveFocus();
-                        renameField.input.selectAll();
-                    }
+            Rule {}
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                Stat {
+                    caption: "İNDİRME"
+                    glyph: Glyph.down
+                    rate: NetData.rxRate
+                    total: NetData.rxTotal
+                }
+
+                Rectangle {
+                    Layout.fillHeight: true
+                    implicitWidth: 1
+                    color: Theme.edge
+                }
+
+                Stat {
+                    caption: "YÜKLEME"
+                    glyph: Glyph.up
+                    rate: NetData.txRate
+                    total: NetData.txTotal
                 }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
+        Card {
+            spacing: 0
+            padding: 10
 
-            Traffic {
-                glyph: Glyph.down
-                label: "İndirme"
-                rate: NetData.rxRate
-                total: NetData.rxTotal
+            Caption {
+                Layout.bottomMargin: 4
+                text: "ADRESLER"
             }
-            Traffic {
-                glyph: Glyph.up
-                label: "Yükleme"
-                rate: NetData.txRate
-                total: NetData.txTotal
-            }
-        }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 4
-
-            Info {
+            Value {
                 label: "IP adresi"
                 value: root.link.ip ?? ""
                 copyable: true
             }
-            Info {
+            Value {
                 label: "Ağ geçidi"
                 value: root.link.gateway ?? ""
                 copyable: true
             }
-            Info {
+            Value {
                 label: "DNS"
                 value: root.link.dns ?? ""
                 copyable: true
             }
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                BarText {
-                    text: "MAC"
-                    font.pixelSize: Theme.small
-                    color: Theme.dim
-                }
-                BarText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignRight
-                    text: root.showMac ? (root.link.mac || "—") : ""
-                    font.pixelSize: Theme.small
-                    color: macMa.containsMouse ? Theme.bright : Theme.text
-
-                    MouseArea {
-                        id: macMa
-                        anchors.fill: parent
-                        enabled: root.showMac && !!root.link.mac
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: NetData.copy(root.link.mac)
-                    }
-                }
-                Link {
-                    text: root.showMac ? "gizle" : "göster"
-                    onClicked: root.showMac = !root.showMac
-                }
+            Value {
+                label: "MAC"
+                value: root.showMac ? (root.link.mac || "—") : "••:••:••:••:••:••"
+                copyable: root.showMac
+                action: root.showMac ? "gizle" : "göster"
+                onActed: root.showMac = !root.showMac
             }
-            Info {
+            Value {
                 label: "Adres alma · MTU"
                 value: `${root.link.method === "manual" ? "Elle" : "DHCP"} · ${root.link.mtu ?? "—"}`
             }
+            Value {
+                label: "Genel IP"
+                value: NetData.publicIpBusy ? "soruluyor…" : NetData.publicIp
+                copyable: /^[\d.]+$/.test(NetData.publicIp)
+                action: NetData.publicIp ? "yenile" : "göster"
+                onActed: NetData.lookupPublicIp()
+            }
+            Value {
+                label: "Ping"
+                value: NetData.pingBusy ? "ölçülüyor…" : NetData.ping
+                action: NetData.ping ? "yenile" : "ölç"
+                onActed: NetData.measurePing()
+            }
         }
 
-        Rule {}
-
-        RowLayout {
-            Layout.fillWidth: true
+        Card {
+            padding: 10
             spacing: 8
 
-            BarText {
-                text: "Ping"
-                font.pixelSize: Theme.small
-                color: Theme.dim
+            Caption {
+                text: "DNS SUNUCUSU"
             }
-            BarText {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignRight
-                text: NetData.pingBusy ? "ölçülüyor…" : NetData.ping
-                font.pixelSize: Theme.small
-                color: Theme.text
-            }
-            Link {
-                text: NetData.ping ? "yenile" : "ölç"
-                onClicked: NetData.measurePing()
+
+            Segments {
+                options: NetData.dnsPresets
+                selected: o => NetData.dnsPreset === o.name
+                onPicked: o => NetData.setDns(o.servers)
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            BarText {
-                text: "Genel IP"
-                font.pixelSize: Theme.small
-                color: Theme.dim
-            }
-            BarText {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignRight
-                text: NetData.publicIpBusy ? "soruluyor…" : NetData.publicIp
-                font.pixelSize: Theme.small
-                color: pubMa.containsMouse ? Theme.bright : Theme.text
-
-                MouseArea {
-                    id: pubMa
-                    anchors.fill: parent
-                    enabled: /^[\d.]+$/.test(NetData.publicIp)
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: NetData.copy(NetData.publicIp)
-                }
-            }
-            Link {
-                text: NetData.publicIp ? "yenile" : "göster"
-                onClicked: NetData.lookupPublicIp()
-            }
-        }
-
-        Rule {}
-
-        Heading {
-            text: "DNS SUNUCUSU"
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
+        Card {
+            visible: !!root.wifiDevice
+            padding: 10
             spacing: 4
 
-            Repeater {
-                model: NetData.dnsPresets
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.bottomMargin: 2
+                spacing: 10
 
-                delegate: Pick {
-                    required property var modelData
+                BarText {
+                    text: Networking.wifiEnabled ? Glyph.wifi[4] : Glyph.wifiOff
+                    font.pixelSize: root.fs + 2
+                    color: Networking.wifiEnabled ? Theme.bright : Theme.dim
+                }
 
-                    Layout.preferredWidth: 1
-                    label: modelData.name
-                    align: Text.AlignHCenter
-                    current: NetData.dnsPreset === modelData.name
-                    onClicked: NetData.setDns(modelData.servers)
+                BarText {
+                    Layout.fillWidth: true
+                    text: "Wi-Fi"
+                    font.pixelSize: root.fs - 1
+                    weight: 600
+                    color: Networking.wifiEnabled ? Theme.text : Theme.dim
+                }
+
+                Toggle {
+                    on: Networking.wifiEnabled
+                    onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
                 }
             }
-        }
 
-        Rule {
-            visible: !!root.wifiDevice
-        }
-
-        RowLayout {
-            visible: !!root.wifiDevice
-            Layout.fillWidth: true
-            spacing: 8
-
-            Heading {
-                Layout.fillWidth: true
-                text: "WI-FI"
+            BarText {
+                visible: Networking.wifiEnabled && root.wifiNetworks.length === 0
+                Layout.leftMargin: 2
+                text: "Ağ aranıyor…"
+                font.pixelSize: root.fs - 3
+                weight: root.wt
+                color: Theme.dim
             }
 
-            Pick {
-                Layout.fillWidth: false
-                implicitWidth: 64
-                label: Networking.wifiEnabled ? "açık" : "kapalı"
-                align: Text.AlignHCenter
-                current: Networking.wifiEnabled
-                onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
-            }
-        }
+            Repeater {
+                model: Networking.wifiEnabled ? root.wifiNetworks : []
 
-        BarText {
-            visible: !!root.wifiDevice && Networking.wifiEnabled && root.wifiNetworks.length === 0
-            text: "Ağ aranıyor…"
-            font.pixelSize: Theme.small
-            color: Theme.dim
-        }
+                delegate: ColumnLayout {
+                    id: net
 
-        Repeater {
-            model: Networking.wifiEnabled ? root.wifiNetworks : []
+                    required property var modelData
+                    readonly property bool open: modelData.security === WifiSecurityType.Open || modelData.security === WifiSecurityType.Owe
 
-            delegate: ColumnLayout {
-                id: net
+                    Layout.fillWidth: true
+                    spacing: 4
 
-                required property var modelData
-                readonly property bool open: modelData.security === WifiSecurityType.Open || modelData.security === WifiSecurityType.Owe
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        radius: Theme.radius
+                        color: net.modelData.connected ? Theme.sel : netMa.containsMouse ? Theme.hoverRaised : "transparent"
 
-                Layout.fillWidth: true
-                spacing: 4
+                        BarText {
+                            id: netSignal
+                            anchors.left: parent.left
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Glyph.wifi[Math.min(4, Math.floor(net.modelData.signalStrength * 5))]
+                            font.pixelSize: root.fs
+                            color: net.modelData.connected ? Theme.bright : Theme.text
+                        }
 
-                Pick {
-                    label: `${Glyph.wifi[Math.min(4, Math.floor(net.modelData.signalStrength * 5))]}  ${net.modelData.name}`
-                    suffix: net.modelData.stateChanging ? "···" : net.modelData.connected ? "bağlı · kes" : net.open ? "" : Glyph.padlock
-                    current: net.modelData.connected
-                    onClicked: {
-                        if (net.modelData.connected)
-                            net.modelData.disconnect();
-                        else if (net.modelData.known || net.open)
-                            net.modelData.connect();
-                        else {
-                            root.askingFor = root.askingFor === net.modelData.name ? "" : net.modelData.name;
-                            if (root.askingFor)
-                                psk.input.forceActiveFocus();
+                        BarText {
+                            anchors.left: netSignal.right
+                            anchors.leftMargin: 10
+                            anchors.right: netState.left
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: net.modelData.name
+                            elide: Text.ElideRight
+                            font.pixelSize: root.fs - 2
+                            weight: net.modelData.connected ? 650 : root.wt
+                            color: net.modelData.connected ? Theme.bright : Theme.text
+                        }
+
+                        BarText {
+                            id: netState
+                            anchors.right: parent.right
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: net.modelData.stateChanging ? "···" : net.modelData.connected ? (netMa.containsMouse ? "kes" : "bağlı") : net.open ? "" : Glyph.padlock
+                            font.pixelSize: root.fs - 3
+                            weight: root.wt
+                            color: net.modelData.connected && !netMa.containsMouse ? Theme.green : Theme.dim
+                        }
+
+                        MouseArea {
+                            id: netMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (net.modelData.connected)
+                                    net.modelData.disconnect();
+                                else if (net.modelData.known || net.open)
+                                    net.modelData.connect();
+                                else {
+                                    root.askingFor = root.askingFor === net.modelData.name ? "" : net.modelData.name;
+                                    if (root.askingFor)
+                                        psk.input.forceActiveFocus();
+                                }
+                            }
                         }
                     }
-                }
 
-                Field {
-                    id: psk
-                    visible: root.askingFor === net.modelData.name
-                    secret: true
-                    placeholder: "Şifre, Enter ile bağlan"
-                    onAccepted: {
-                        net.modelData.connectWithPsk(text);
-                        text = "";
-                        root.askingFor = "";
+                    Field {
+                        id: psk
+                        visible: root.askingFor === net.modelData.name
+                        secret: true
+                        placeholder: "Şifre, Enter ile bağlan"
+                        onAccepted: {
+                            net.modelData.connectWithPsk(text);
+                            text = "";
+                            root.askingFor = "";
+                        }
+                        input.Keys.onEscapePressed: root.askingFor = ""
                     }
-                    input.Keys.onEscapePressed: root.askingFor = ""
                 }
             }
         }
-
-        Rule {}
 
         BarText {
             visible: NetData.status !== ""
             Layout.fillWidth: true
             text: NetData.status
             wrapMode: Text.Wrap
-            font.pixelSize: Theme.small
+            font.pixelSize: root.fs - 3
+            weight: root.wt
             color: NetData.statusError ? Theme.hot : Theme.text
         }
 
         RowLayout {
             Layout.fillWidth: true
+            spacing: 6
 
-            Link {
-                text: `IP ayarları ${Glyph.chevronRight}`
+            Tag {
+                text: `IP ayarları  ${Glyph.chevronRight}`
+                tone: Theme.text
+                clickable: true
                 onClicked: root.openIpPage()
             }
+
             Item {
                 Layout.fillWidth: true
             }
-            Link {
-                text: `Gelişmiş ${Glyph.chevronRight}`
+
+            Tag {
+                text: `Gelişmiş  ${Glyph.chevronRight}`
+                tone: Theme.text
+                clickable: true
                 onClicked: {
                     Panels.popup = "";
                     Quickshell.execDetached(["nm-connection-editor"]);
@@ -502,140 +574,196 @@ Popup {
             right: parent.right
             top: parent.top
             topMargin: Theme.pad + 2
-            leftMargin: Theme.pad + 4
-            rightMargin: Theme.pad + 4
+            leftMargin: Theme.pad + 2
+            rightMargin: Theme.pad + 2
         }
         spacing: 8
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.topMargin: 2
+            spacing: 10
 
-            Link {
-                text: `${Glyph.chevronLeft} Ağ`
+            Tag {
+                text: `${Glyph.chevronLeft}  Ağ`
+                tone: Theme.text
+                clickable: true
                 onClicked: root.page = "main"
             }
-            Item {
-                Layout.fillWidth: true
-            }
+
             BarText {
+                Layout.fillWidth: true
                 text: "IP ayarları"
-                font.weight: Font.Medium
+                font.pixelSize: root.fs + 2
+                weight: 680
                 color: Theme.bright
             }
         }
 
-        Heading {
-            Layout.topMargin: 2
-            text: "BAĞLANTI"
-        }
-
-        Repeater {
-            model: NetData.connections
-
-            delegate: Pick {
-                required property var modelData
-
-                label: modelData.name
-                suffix: modelData.type === "802-11-wireless" ? "Wi-Fi" : "Ethernet"
-                current: root.formUuid === modelData.uuid
-                onClicked: root.loadForm(modelData.uuid)
-            }
-        }
-
-        Heading {
-            Layout.topMargin: 2
-            text: "ADRES ALMA"
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
+        Card {
+            padding: 10
             spacing: 4
 
-            Pick {
-                Layout.preferredWidth: 1
-                label: "Otomatik (DHCP)"
-                align: Text.AlignHCenter
-                current: !root.formManual
-                onClicked: root.formManual = false
+            Caption {
+                Layout.bottomMargin: 2
+                text: "BAĞLANTI"
             }
-            Pick {
-                Layout.preferredWidth: 1
-                label: "Elle"
-                align: Text.AlignHCenter
-                current: root.formManual
-                onClicked: root.formManual = true
-            }
-        }
 
-        RowLayout {
-            visible: root.formManual
-            Layout.fillWidth: true
+            Repeater {
+                model: NetData.connections
 
-            Heading {
-                Layout.fillWidth: true
-                text: "ADRES / ÖNEK"
-            }
-            Link {
-                visible: root.formUuid === root.link.uuid
-                text: "şimdikini kullan"
-                onClicked: {
-                    addressField.text = (root.link.ip ?? "").split(" | ")[0];
-                    gatewayField.text = root.link.gateway ?? "";
-                    if (!dnsField.text)
-                        dnsField.text = (root.link.dns ?? "").replace(/, /g, " ");
+                delegate: Rectangle {
+                    id: conn
+
+                    required property var modelData
+                    readonly property bool current: root.formUuid === modelData.uuid
+
+                    Layout.fillWidth: true
+                    implicitHeight: 30
+                    radius: Theme.radius
+                    color: connMa.containsMouse ? Theme.hoverRaised : "transparent"
+
+                    Rectangle {
+                        id: connDot
+                        anchors.left: parent.left
+                        anchors.leftMargin: 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 12
+                        height: 12
+                        radius: 6
+                        color: "transparent"
+                        border.width: conn.current ? 4 : 1.5
+                        border.color: conn.current ? Theme.bright : Theme.edge
+                    }
+
+                    BarText {
+                        anchors.left: connDot.right
+                        anchors.leftMargin: 10
+                        anchors.right: connType.left
+                        anchors.rightMargin: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: conn.modelData.name
+                        elide: Text.ElideRight
+                        font.pixelSize: root.fs - 2
+                        weight: conn.current ? 600 : root.wt
+                        color: conn.current ? Theme.bright : Theme.text
+                    }
+
+                    BarText {
+                        id: connType
+                        anchors.right: parent.right
+                        anchors.rightMargin: 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: conn.modelData.type === "802-11-wireless" ? "Wi-Fi" : "Ethernet"
+                        font.pixelSize: root.fs - 4
+                        weight: root.wt
+                        color: Theme.dim
+                    }
+
+                    MouseArea {
+                        id: connMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.loadForm(conn.modelData.uuid)
+                    }
                 }
             }
         }
 
-        Field {
-            id: addressField
-            visible: root.formManual
-            placeholder: "192.168.0.50/24"
-        }
+        Card {
+            padding: 10
+            spacing: 8
 
-        Heading {
-            visible: root.formManual
-            text: "AĞ GEÇİDİ"
-        }
+            Caption {
+                text: "ADRES ALMA"
+            }
 
-        Field {
-            id: gatewayField
-            visible: root.formManual
-            placeholder: "192.168.0.1"
-        }
+            Segments {
+                options: [
+                    {
+                        name: "Otomatik (DHCP)",
+                        manual: false
+                    },
+                    {
+                        name: "Elle",
+                        manual: true
+                    }
+                ]
+                selected: o => root.formManual === o.manual
+                onPicked: o => root.formManual = o.manual
+            }
 
-        Heading {
-            text: root.formManual ? "DNS" : "EK DNS (İSTEĞE BAĞLI)"
-        }
+            RowLayout {
+                visible: root.formManual
+                Layout.fillWidth: true
+                Layout.topMargin: 2
 
-        Field {
-            id: dnsField
-            placeholder: "1.1.1.1 1.0.0.1"
+                Caption {
+                    Layout.fillWidth: true
+                    text: "ADRES / ÖNEK"
+                }
+
+                Tag {
+                    visible: root.formUuid === root.link.uuid
+                    implicitHeight: 20
+                    text: "şimdikini kullan"
+                    tone: Theme.text
+                    clickable: true
+                    onClicked: {
+                        addressField.text = (root.link.ip ?? "").split(" | ")[0];
+                        gatewayField.text = root.link.gateway ?? "";
+                        if (!dnsField.text)
+                            dnsField.text = (root.link.dns ?? "").replace(/, /g, " ");
+                    }
+                }
+            }
+
+            Field {
+                id: addressField
+                visible: root.formManual
+                implicitHeight: 30
+                placeholder: "192.168.0.50/24"
+            }
+
+            Caption {
+                visible: root.formManual
+                Layout.topMargin: 2
+                text: "AĞ GEÇİDİ"
+            }
+
+            Field {
+                id: gatewayField
+                visible: root.formManual
+                implicitHeight: 30
+                placeholder: "192.168.0.1"
+            }
+
+            Caption {
+                Layout.topMargin: 2
+                text: root.formManual ? "DNS" : "EK DNS (İSTEĞE BAĞLI)"
+            }
+
+            Field {
+                id: dnsField
+                implicitHeight: 30
+                placeholder: "1.1.1.1 1.0.0.1"
+            }
         }
 
         BarText {
             Layout.fillWidth: true
-            Layout.topMargin: 2
-            visible: NetData.status === ""
-            text: "Kaydedince bağlantı bir an kopup yeniden kurulur."
+            text: NetData.status !== "" ? NetData.status : "Kaydedince bağlantı bir an kopup yeniden kurulur."
             wrapMode: Text.Wrap
-            font.pixelSize: Theme.small - 1
-            color: Theme.dim
+            font.pixelSize: root.fs - 4
+            weight: root.wt
+            color: NetData.status !== "" ? (NetData.statusError ? Theme.hot : Theme.text) : Theme.dim
         }
 
-        BarText {
-            visible: NetData.status !== ""
-            Layout.fillWidth: true
-            text: NetData.status
-            wrapMode: Text.Wrap
-            font.pixelSize: Theme.small
-            color: NetData.statusError ? Theme.hot : Theme.text
-        }
-
-        Pick {
-            label: NetData.busy ? "kaydediliyor…" : "Kaydet"
-            align: Text.AlignHCenter
-            selectable: !NetData.busy && root.formUuid !== ""
+        Button {
+            text: NetData.busy ? "kaydediliyor…" : "Kaydet"
+            primary: true
+            enabledState: !NetData.busy && root.formUuid !== ""
             onClicked: NetData.saveIp(root.formUuid, root.formManual, addressField.text, gatewayField.text, dnsField.text)
         }
     }
