@@ -78,13 +78,6 @@ Menu {
         objects: root.stream ? [root.stream] : []
     }
 
-    Timer {
-        interval: 1000
-        repeat: true
-        running: root.player?.isPlaying ?? false
-        onTriggered: root.player.positionChanged()
-    }
-
     component Button: Rectangle {
         id: btn
 

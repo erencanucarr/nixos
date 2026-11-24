@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 
 Singleton {
@@ -83,6 +84,45 @@ Singleton {
             playing: s.playing
         };
         root.tracks = next;
+    }
+
+    function sync(p: var, to: real): void {
+        const key = root.keyOf(p);
+        const next = Object.assign({}, root.tracks);
+        next[p.dbusName] = {
+            key,
+            base: to,
+            at: Date.now(),
+            playing: p.isPlaying
+        };
+        root.tracks = next;
+    }
+
+    Process {
+        id: seekWatch
+
+        property bool seeked: false
+
+        running: Mpris.players.values.some(p => root.broken(p))
+        command: ["dbus-monitor", "--session", "type='signal',interface='org.mpris.MediaPlayer2.Player',member='Seeked'"]
+        stdout: SplitParser {
+            onRead: line => {
+                if (line.includes("member=Seeked")) {
+                    seekWatch.seeked = true;
+                    return;
+                }
+                const m = /^\s*int64 (-?\d+)/.exec(line);
+                if (!seekWatch.seeked || !m)
+                    return;
+                seekWatch.seeked = false;
+                const to = Number(m[1]) / 1e6;
+                if (to <= 0.5)
+                    return;
+                for (const p of Mpris.players.values)
+                    if (root.broken(p))
+                        root.sync(p, to);
+            }
+        }
     }
 
     Timer {
