@@ -39,6 +39,7 @@ jobs:
         run: nix eval --raw .#nixosConfigurations.b850e-desktop.config.system.build.toplevel.drvPath
 
       - name: Open pull request
+        id: pr
         uses: peter-evans/create-pull-request@v8
         with:
           branch: update-flake-lock
@@ -53,4 +54,10 @@ jobs:
             ${{ steps.update.outputs.log }}
             ```
 
-            Review the changes, then `nixos-rebuild switch` after merging.
+            Merged automatically once the system evaluates. Run `nixup` after pulling.
+
+      - name: Merge pull request
+        if: steps.pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge "${{ steps.pr.outputs.pull-request-number }}" --squash --delete-branch
