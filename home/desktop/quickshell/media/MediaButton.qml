@@ -6,6 +6,8 @@ import qs.common
 BarModule {
     id: root
 
+    readonly property bool tracking: Positions.now > 0
+
     required property string screenName
 
     readonly property bool open: Panels.popup === `media@${root.screenName}`

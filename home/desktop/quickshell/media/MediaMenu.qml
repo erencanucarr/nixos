@@ -20,7 +20,7 @@ Menu {
     readonly property var players: Mpris.players.values
     readonly property real length: (root.player?.lengthSupported && root.player.length > 0) ? root.player.length : Math.max(0, Lengths.get(root.player?.metadata?.["xesam:url"] ?? ""))
     readonly property bool hasLength: root.length > 0
-    readonly property real position: Math.min(root.player?.position ?? 0, root.length > 0 ? root.length : Infinity)
+    readonly property real position: Math.min(Positions.get(root.player), root.length > 0 ? root.length : Infinity)
     readonly property bool canSeek: root.player?.canSeek ?? false
     readonly property bool canPrev: root.player?.canGoPrevious ?? false
     readonly property bool canNext: root.player?.canGoNext ?? false
@@ -251,6 +251,7 @@ Menu {
             onMoved: fraction => {
                 if (!root.canSeek)
                     return;
+                Positions.seek(root.player, fraction * root.length);
                 if (root.player.positionSupported)
                     root.player.position = fraction * root.length;
                 else
@@ -302,7 +303,10 @@ Menu {
             visible: root.canSeek
             glyph: String.fromCodePoint(0xF045F)
             hint: "10"
-            onActivated: root.player.seek(-10)
+            onActivated: {
+                Positions.seek(root.player, root.position - 10);
+                root.player.seek(-10);
+            }
         }
 
         Button {
@@ -316,7 +320,10 @@ Menu {
             visible: root.canSeek
             glyph: String.fromCodePoint(0xF0211)
             hint: "10"
-            onActivated: root.player.seek(10)
+            onActivated: {
+                Positions.seek(root.player, root.position + 10);
+                root.player.seek(10);
+            }
         }
 
         Button {
