@@ -27,7 +27,7 @@ PanelWindow {
     screen: Quickshell.screens.find(s => s.name === root.screenName) ?? null
     visible: wanted
 
-    WlrLayershell.namespace: "can-menu"
+    WlrLayershell.namespace: "ecu-menu"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore

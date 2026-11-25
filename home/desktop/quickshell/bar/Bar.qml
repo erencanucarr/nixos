@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.UPower
 import qs.weather
+import qs.audio
 import qs.common
 import qs.media
 import qs.notif
@@ -16,7 +17,7 @@ PanelWindow {
     required property var modelData
     screen: modelData
 
-    WlrLayershell.namespace: "can-bar"
+    WlrLayershell.namespace: "ecu-bar"
     anchors {
         top: true
         left: true

@@ -23,23 +23,30 @@ Singleton {
     property double now: 0
     readonly property bool awake: awakeSpan >= 0
 
+    function closeExcept(keep: string): void {
+        if (keep !== "popup")
+            root.popup = "";
+        if (keep !== "drawer")
+            root.drawerOpen = false;
+        if (keep !== "overview")
+            root.overviewOpen = false;
+        if (keep !== "session")
+            root.sessionOpen = false;
+        if (keep !== "walls")
+            root.wallsOpen = false;
+        if (keep !== "keys")
+            root.keysOpen = false;
+    }
+
     function toggleDrawer(): void {
-        root.keysOpen = false;
-        root.wallsOpen = false;
-        root.popup = "";
-        root.overviewOpen = false;
+        root.closeExcept("drawer");
         root.drawerScreen = root.focusedScreen();
-        root.sessionOpen = false;
         root.drawerOpen = !root.drawerOpen;
     }
 
     function togglePopup(key: string, screen: string): void {
-        root.keysOpen = false;
-        root.wallsOpen = false;
         const id = `${key}@${screen}`;
-        root.drawerOpen = false;
-        root.overviewOpen = false;
-        root.sessionOpen = false;
+        root.closeExcept("popup");
         root.popup = root.popup === id ? "" : id;
     }
 
@@ -77,40 +84,24 @@ Singleton {
     }
 
     function toggleKeys(): void {
-        root.popup = "";
-        root.drawerOpen = false;
-        root.overviewOpen = false;
-        root.sessionOpen = false;
-        root.wallsOpen = false;
+        root.closeExcept("keys");
         root.keysScreen = root.focusedScreen();
         root.keysOpen = !root.keysOpen;
     }
 
     function toggleWalls(): void {
-        root.keysOpen = false;
-        root.popup = "";
-        root.drawerOpen = false;
-        root.overviewOpen = false;
-        root.sessionOpen = false;
+        root.closeExcept("walls");
         root.wallsScreen = root.focusedScreen();
         root.wallsOpen = !root.wallsOpen;
     }
 
     function toggleSession(): void {
-        root.keysOpen = false;
-        root.wallsOpen = false;
-        root.popup = "";
-        root.drawerOpen = false;
-        root.overviewOpen = false;
+        root.closeExcept("session");
         root.sessionOpen = !root.sessionOpen;
     }
 
     function toggleOverview(): void {
-        root.keysOpen = false;
-        root.wallsOpen = false;
-        root.popup = "";
-        root.drawerOpen = false;
-        root.sessionOpen = false;
+        root.closeExcept("overview");
         root.overviewOpen = !root.overviewOpen;
     }
 
@@ -169,59 +160,35 @@ Singleton {
         }
     }
 
-    IpcHandler {
+    component PopupIpc: IpcHandler {
+        id: popupIpc
+
+        function toggle(): void {
+            root.togglePopup(popupIpc.target, root.focusedScreen());
+        }
+        function close(): void {
+            root.popup = "";
+        }
+    }
+
+    PopupIpc {
         target: "power"
-
-        function toggle(): void {
-            root.togglePopup("power", root.focusedScreen());
-        }
-        function close(): void {
-            root.popup = "";
-        }
     }
 
-    IpcHandler {
+    PopupIpc {
         target: "net"
-
-        function toggle(): void {
-            root.togglePopup("net", root.focusedScreen());
-        }
-        function close(): void {
-            root.popup = "";
-        }
     }
 
-    IpcHandler {
+    PopupIpc {
         target: "media"
-
-        function toggle(): void {
-            root.togglePopup("media", root.focusedScreen());
-        }
-        function close(): void {
-            root.popup = "";
-        }
     }
 
-    IpcHandler {
+    PopupIpc {
         target: "calendar"
-
-        function toggle(): void {
-            root.togglePopup("calendar", root.focusedScreen());
-        }
-        function close(): void {
-            root.popup = "";
-        }
     }
 
-    IpcHandler {
+    PopupIpc {
         target: "weather"
-
-        function toggle(): void {
-            root.togglePopup("weather", root.focusedScreen());
-        }
-        function close(): void {
-            root.popup = "";
-        }
     }
 
     IpcHandler {

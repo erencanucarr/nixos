@@ -71,7 +71,7 @@ Singleton {
     FileView {
         id: mixFile
 
-        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/arctis-chatmix`
+        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/ecu-chatmix`
         watchChanges: true
         printErrors: false
         onFileChanged: reload()

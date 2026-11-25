@@ -51,7 +51,11 @@ Singleton {
     }
 
     function remove(dateKey: string, id: string): void {
-        root.edit(dateKey, day => day.splice(day.findIndex(n => n.id === id), 1));
+        root.edit(dateKey, day => {
+            const i = day.findIndex(n => n.id === id);
+            if (i >= 0)
+                day.splice(i, 1);
+        });
         root.due = root.due.filter(n => n.id !== id);
     }
 
@@ -72,29 +76,33 @@ Singleton {
 
     function check(): void {
         const now = new Date();
+        const ms = now.getTime();
         const today = root.key(now);
         const hm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-        const fresh = (root.notes[today] ?? []).filter(n => !n.reminded && (n.snoozeUntil > 0 ? Date.now() >= n.snoozeUntil : hm >= (n.time || root.untimed)));
-        if (fresh.length === 0)
-            return;
-        root.edit(today, day => day.forEach(n => {
-                if (fresh.some(f => f.id === n.id)) {
-                    n.reminded = true;
-                    n.snoozeUntil = 0;
-                }
-            }));
-        root.due = root.due.concat(fresh.map(n => ({
-                    date: today,
-                    id: n.id,
-                    text: n.text,
-                    time: n.time
-                })));
+        const all = root.notes;
+        for (const dateKey of Object.keys(all)) {
+            const fresh = (Array.isArray(all[dateKey]) ? all[dateKey] : []).filter(n => !n.reminded && (n.snoozeUntil > 0 ? ms >= n.snoozeUntil : dateKey === today && hm >= (n.time || root.untimed)));
+            if (fresh.length === 0)
+                continue;
+            root.edit(dateKey, day => day.forEach(n => {
+                    if (fresh.some(f => f.id === n.id)) {
+                        n.reminded = true;
+                        n.snoozeUntil = 0;
+                    }
+                }));
+            root.due = root.due.concat(fresh.map(n => ({
+                        date: dateKey,
+                        id: n.id,
+                        text: n.text,
+                        time: n.time
+                    })));
+        }
     }
 
     FileView {
         id: file
 
-        path: `${Quickshell.env("HOME")}/.local/state/can-notes.json`
+        path: `${Quickshell.env("HOME")}/.local/state/ecu-notes.json`
         watchChanges: true
         atomicWrites: true
         printErrors: false

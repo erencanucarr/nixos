@@ -8,17 +8,13 @@ import qs.common
 Menu {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     contentWidth: 324
     rowSpacing: 8
 
-    readonly property var players: Pipewire.nodes.values.filter(n => n.isStream && n.type === PwNodeType.AudioOutStream && !!n.audio)
-
-    function appName(n: var): string {
-        return n.properties["application.name"] || n.description || n.name;
-    }
+    readonly property var players: AudioNodes.outStreams.filter(n => !!n.audio)
 
     function appIcon(n: var): string {
         const p = n.properties;
@@ -38,20 +34,11 @@ Menu {
     RowLayout {
         Layout.fillWidth: true
 
-        BarText {
+        Link {
             text: `${Glyph.chevronLeft} Ses`
             font.pixelSize: root.fs - 2
             weight: root.wt
-            color: backMa.containsMouse ? Theme.bright : Theme.dim
-
-            MouseArea {
-                id: backMa
-                anchors.fill: parent
-                anchors.margins: -4
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Panels.popup = `audio@${root.screenName}`
-            }
+            onClicked: Panels.popup = `audio@${root.screenName}`
         }
 
         Item {
@@ -139,7 +126,7 @@ Menu {
                 }
 
                 BarText {
-                    text: root.appName(app.modelData)
+                    text: AudioNodes.appName(app.modelData)
                     font.pixelSize: root.fs - 1
                     weight: root.wt
                     color: app.muted ? Theme.dim : Theme.text
@@ -147,7 +134,7 @@ Menu {
 
                 BarText {
                     Layout.fillWidth: true
-                    visible: app.media !== "" && app.media !== root.appName(app.modelData)
+                    visible: app.media !== "" && app.media !== AudioNodes.appName(app.modelData)
                     text: app.media
                     elide: Text.ElideRight
                     font.pixelSize: root.fs - 3
@@ -157,7 +144,7 @@ Menu {
 
                 Item {
                     Layout.fillWidth: true
-                    visible: !(app.media !== "" && app.media !== root.appName(app.modelData))
+                    visible: !(app.media !== "" && app.media !== AudioNodes.appName(app.modelData))
                 }
 
                 BarText {

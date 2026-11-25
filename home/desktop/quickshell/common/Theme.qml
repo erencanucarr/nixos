@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
     FileView {
         id: paletteFile
-        path: Quickshell.env("HOME") + "/.config/can-theme/palette.json"
+        path: Quickshell.env("HOME") + "/.config/ecu-theme/palette.json"
         blockLoading: true
     }
     readonly property var palette: {
@@ -19,7 +19,6 @@ Singleton {
     }
 
     readonly property color ground: palette.ground
-    readonly property color panel: palette.panel
     readonly property color raised: palette.raised
     readonly property color rule: palette.rule
     readonly property color line: palette.line
@@ -36,10 +35,6 @@ Singleton {
     readonly property color blue: palette.blue
     readonly property color cyan: palette.cyan
     readonly property color magenta: palette.magenta
-
-    function alpha(c, a) {
-        return Qt.rgba(c.r, c.g, c.b, a);
-    }
 
     readonly property color card: "#05ffffff"
     readonly property color ring: "#4d000000"
@@ -61,5 +56,7 @@ Singleton {
     readonly property int anim: 160
 
     readonly property int small: 11
+    readonly property int menuSize: 14
+    readonly property int menuWeight: 550
     readonly property int menuWidth: 280
 }

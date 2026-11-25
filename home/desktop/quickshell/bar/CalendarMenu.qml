@@ -6,8 +6,8 @@ import qs.common
 Menu {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
     readonly property var tr: Qt.locale("tr_TR")
 
     property date month: firstOf(clock.date)
@@ -114,47 +114,36 @@ Menu {
             color: Theme.text
         }
 
-        component Nav: BarText {
-            id: nav
-
-            signal clicked
-
-            font.pixelSize: root.fs
-            weight: root.wt
-            color: navMa.containsMouse ? Theme.bright : Theme.dim
-
-            MouseArea {
-                id: navMa
-                anchors.fill: parent
-                anchors.margins: -6
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: nav.clicked()
-            }
-        }
-
-        Nav {
+        Link {
             visible: !root.sameDay(root.month, root.firstOf(clock.date))
             Layout.rightMargin: 6
+            reach: 6
             text: "bugün"
             font.pixelSize: root.fs - 2
+            weight: root.wt
             onClicked: {
                 root.month = root.firstOf(clock.date);
                 root.picked = null;
             }
         }
 
-        Nav {
+        Link {
             Layout.preferredWidth: 22
+            reach: 6
             horizontalAlignment: Text.AlignHCenter
             text: Glyph.chevronLeft
+            font.pixelSize: root.fs
+            weight: root.wt
             onClicked: root.shift(-1)
         }
 
-        Nav {
+        Link {
             Layout.preferredWidth: 22
+            reach: 6
             horizontalAlignment: Text.AlignHCenter
             text: Glyph.chevronRight
+            font.pixelSize: root.fs
+            weight: root.wt
             onClicked: root.shift(1)
         }
     }
@@ -382,21 +371,15 @@ Menu {
                         color: Theme.text
                     }
 
-                    BarText {
-                        Layout.alignment: Qt.AlignTop
-                        visible: noteMa.containsMouse || delMa.containsMouse
-                        text: String.fromCodePoint(0xF0156)
-                        font.pixelSize: root.fs
-                        color: delMa.containsMouse ? Theme.hot : Theme.dim
+                    Link {
+                        id: del
 
-                        MouseArea {
-                            id: delMa
-                            anchors.fill: parent
-                            anchors.margins: -4
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Notes.remove(Notes.key(root.focusDay), note.modelData.id)
-                        }
+                        Layout.alignment: Qt.AlignTop
+                        visible: noteMa.containsMouse || del.hovered
+                        text: Glyph.close
+                        font.pixelSize: root.fs
+                        hoverColor: Theme.hot
+                        onClicked: Notes.remove(Notes.key(root.focusDay), note.modelData.id)
                     }
                 }
             }
@@ -443,21 +426,12 @@ Menu {
             color: Theme.dim
         }
 
-        BarText {
+        Link {
             visible: !root.adding
             text: `+ ${root.picked ? "bu güne" : "bugüne"} not ekle`
             font.pixelSize: root.fs - 3
             weight: root.wt
-            color: addMa.containsMouse ? Theme.bright : Theme.dim
-
-            MouseArea {
-                id: addMa
-                anchors.fill: parent
-                anchors.margins: -4
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.adding = true
-            }
+            onClicked: root.adding = true
         }
     }
 

@@ -12,7 +12,7 @@ PanelWindow {
     screen: modelData
     visible: busy !== "" && busy !== modelData.name
 
-    WlrLayershell.namespace: "can-catcher"
+    WlrLayershell.namespace: "ecu-catcher"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore

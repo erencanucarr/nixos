@@ -8,8 +8,8 @@ import qs.common
 Popup {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     readonly property var profiles: [
         { profile: PowerProfile.PowerSaver, glyph: Glyph.saver, name: "Tasarruf", detail: "Daha az güç, daha serin ve sessiz." },

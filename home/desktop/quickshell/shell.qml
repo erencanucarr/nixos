@@ -2,9 +2,10 @@
 import Quickshell
 import qs.bar
 import qs.common
-import qs.headset
+import qs.audio
 import qs.drawer
 import qs.keys
+import qs.media
 import qs.notif
 import qs.osd
 import qs.overview
@@ -13,7 +14,8 @@ import qs.shot
 import qs.wallpaper
 
 ShellRoot {
-    readonly property bool headsetPresent: Headset.present
+    readonly property var keepHeadset: Headset
+    readonly property var keepPositions: Positions
 
     Wallpaper {}
 

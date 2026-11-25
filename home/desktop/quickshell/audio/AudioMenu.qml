@@ -3,13 +3,12 @@ import QtQuick.Layouts
 import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
 import qs.common
-import qs.headset
 
 Menu {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     Component.onCompleted: Headset.watch(true)
     Component.onDestruction: Headset.watch(false)
@@ -17,14 +16,10 @@ Menu {
     contentWidth: 344
     rowSpacing: 8
 
-    required property var recorders
-
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
-
-    readonly property var sinks: Pipewire.nodes.values.filter(n => !n.isStream && (n.type & PwNodeType.AudioSink) === PwNodeType.AudioSink)
-    readonly property var sources: Pipewire.nodes.values.filter(n => !n.isStream && (n.type & PwNodeType.AudioSource) === PwNodeType.AudioSource)
-    readonly property int streams: Pipewire.nodes.values.filter(n => n.isStream && n.type === PwNodeType.AudioOutStream).length
+    readonly property var recorders: AudioNodes.recorders
+    readonly property int streams: AudioNodes.outStreams.length
 
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property var headsets: root.adapter ? Bluetooth.devices.values.filter(d => d.paired && d.icon.startsWith("audio")).sort((a, b) => b.connected - a.connected) : []
@@ -41,85 +36,8 @@ Menu {
         return d.connected ? "bağlı" : "bağlan";
     }
 
-    function appName(n: var): string {
-        return n.properties["application.name"] || n.description || n.name;
-    }
-
-    onVisibleChanged: if (!visible) {
-        out.expanded = false;
-        mic.expanded = false;
-    }
-
     PwObjectTracker {
         objects: [root.sink, root.source].concat(root.recorders)
-    }
-
-    component Slider: Item {
-        id: slider
-
-        property real value: 0
-        property bool dim: false
-        signal moved(real fraction)
-
-        function report(f: real): void {
-            slider.moved(Math.max(0, Math.min(1, f)));
-        }
-
-        Layout.fillWidth: true
-        implicitHeight: 18
-
-        Rectangle {
-            id: groove
-            anchors {
-                left: parent.left
-                right: parent.right
-                leftMargin: 6
-                rightMargin: 6
-                verticalCenter: parent.verticalCenter
-            }
-            height: 4
-            radius: 2
-            color: Theme.rule
-
-            Rectangle {
-                width: parent.width * Math.max(0, Math.min(1, slider.value))
-                height: parent.height
-                radius: 2
-                color: slider.dim ? Theme.dim : sliderMa.containsMouse || sliderMa.pressed ? Theme.bright : Theme.text
-            }
-        }
-
-        Rectangle {
-            x: groove.x + groove.width * Math.max(0, Math.min(1, slider.value)) - width / 2
-            anchors.verticalCenter: parent.verticalCenter
-            width: sliderMa.containsMouse || sliderMa.pressed ? 14 : 10
-            height: width
-            radius: width / 2
-            color: slider.dim ? Theme.dim : Theme.bright
-            border.width: 3
-            border.color: Theme.raised
-
-            Behavior on width {
-                NumberAnimation {
-                    duration: Theme.anim
-                    easing.type: Theme.ease
-                }
-            }
-        }
-
-        MouseArea {
-            id: sliderMa
-            anchors.fill: parent
-            anchors.margins: -4
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onPressed: e => slider.report((e.x - 4 - groove.x) / groove.width)
-            onPositionChanged: e => {
-                if (pressed)
-                    slider.report((e.x - 4 - groove.x) / groove.width);
-            }
-            onWheel: e => slider.report(slider.value + (e.angleDelta.y > 0 ? 0.05 : -0.05))
-        }
     }
 
     component Channel: Card {
@@ -252,7 +170,9 @@ Menu {
             }
         }
 
-        Slider {
+        Track {
+            knob: true
+            thickness: 4
             value: dev.muted ? 0 : dev.volume
             dim: dev.muted
             onMoved: fraction => {
@@ -331,7 +251,7 @@ Menu {
         node: root.sink
         caption: "ÇIKIŞ"
         appsButton: true
-        devices: root.sinks
+        devices: AudioNodes.sinks
         glyph: out.muted ? Glyph.volOff : out.volume > 0.66 ? Glyph.volHigh : out.volume > 0.33 ? Glyph.volMid : Glyph.volLow
         onPicked: node => Pipewire.preferredDefaultAudioSink = node
     }
@@ -341,7 +261,7 @@ Menu {
 
         node: root.source
         caption: "GİRİŞ"
-        devices: root.sources
+        devices: AudioNodes.sources
         glyph: mic.muted ? Glyph.micOff : Glyph.mic
         onPicked: node => Pipewire.preferredDefaultAudioSource = node
     }
@@ -645,7 +565,7 @@ Menu {
                     color: Qt.alpha(Theme.hot, 0.18)
 
                     SequentialAnimation on opacity {
-                        running: parent.visible && root.visible
+                        running: parent.visible
                         loops: Animation.Infinite
                         NumberAnimation {
                             to: 0.35
@@ -698,7 +618,7 @@ Menu {
                 delegate: Tag {
                     required property var modelData
 
-                    text: root.appName(modelData)
+                    text: AudioNodes.appName(modelData)
                     dot: true
                     accent: true
                     tone: Theme.hot

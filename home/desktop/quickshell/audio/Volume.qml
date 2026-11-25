@@ -10,7 +10,6 @@ BarModule {
     readonly property int volume: Math.round((sink?.audio?.volume ?? 0) * 100)
     readonly property bool muted: sink?.audio?.muted ?? false
     readonly property bool overBluetooth: sink?.name.startsWith("bluez_output.") ?? false
-    readonly property var recorders: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioInStream && !n.name.startsWith("capture."))
     readonly property var source: Pipewire.defaultAudioSource
     readonly property bool micMuted: source?.audio?.muted ?? false
 
@@ -44,7 +43,7 @@ BarModule {
     }
 
     BarText {
-        visible: root.micMuted || root.recorders.length > 0
+        visible: root.micMuted || AudioNodes.recorders.length > 0
         anchors.verticalCenter: parent.verticalCenter
         text: root.micMuted ? Glyph.micOff : Glyph.mic
         color: root.micMuted ? Theme.hot : Theme.warm
@@ -67,7 +66,6 @@ BarModule {
             anchorItem: root
             screenName: root.screenName
             alignRight: true
-            recorders: root.recorders
         }
     }
 

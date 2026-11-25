@@ -6,17 +6,10 @@ Item {
 
     property color fill: Theme.raised
     property int radius: Theme.radiusLg
-    property bool edged: true
-    property bool lifted: true
-    property color glow: Theme.glowPanel
-    property color glowFar: Theme.glowPanelFar
-    property real glowSize: 480
-    property string grain: "grain-raised.png"
 
-    readonly property int inset: edged ? 1 : 0
+    readonly property real glowSize: 480
 
     Rectangle {
-        visible: root.edged
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
@@ -28,10 +21,10 @@ Item {
         id: shape
 
         anchors.fill: parent
-        anchors.margins: root.inset
+        anchors.margins: 1
         preferredRendererType: Shape.CurveRenderer
 
-        readonly property int r: Math.max(0, root.radius - root.inset)
+        readonly property int r: Math.max(0, root.radius - 1)
 
         ShapePath {
             strokeWidth: -1
@@ -51,7 +44,7 @@ Item {
                 centerRadius: root.glowSize * 0.75
                 focalX: 0
                 focalY: 0
-                GradientStop { position: 0; color: root.glow }
+                GradientStop { position: 0; color: Theme.glowPanel }
                 GradientStop { position: 1; color: "transparent" }
             }
             fillTransform: PlanarTransform.fromScale(1, 0.52)
@@ -70,7 +63,7 @@ Item {
                 centerRadius: root.glowSize * 0.62
                 focalX: shape.width
                 focalY: 0
-                GradientStop { position: 0; color: root.glowFar }
+                GradientStop { position: 0; color: Theme.glowPanelFar }
                 GradientStop { position: 1; color: "transparent" }
             }
             fillTransform: PlanarTransform.fromScale(1, 0.5)
@@ -84,7 +77,7 @@ Item {
         ShapePath {
             strokeWidth: -1
             fillColor: "transparent"
-            fillItem: root.grain ? tile : null
+            fillItem: tile
             PathRectangle {
                 width: shape.width
                 height: shape.height
@@ -99,13 +92,12 @@ Item {
         width: shape.width
         height: shape.height
         visible: false
-        source: root.grain
+        source: "grain-raised.png"
         fillMode: Image.Tile
         layer.enabled: true
     }
 
     Rectangle {
-        visible: root.edged
         anchors.fill: parent
         anchors.margins: 1
         radius: Math.max(0, root.radius - 1)
@@ -115,7 +107,6 @@ Item {
     }
 
     Item {
-        visible: root.edged && root.lifted
         anchors {
             left: parent.left
             right: parent.right
