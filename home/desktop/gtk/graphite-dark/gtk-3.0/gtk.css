@@ -1,6 +1,6 @@
 @import url("file:///run/current-system/sw/share/themes/adw-gtk3-dark/gtk-3.0/gtk.css");
 
-@import url("file:///home/can/.config/can-theme/gtk.css");
+@import url("file:///home/can/.config/ecu-theme/gtk.css");
 
 switch:checked:not(:disabled) slider,
 headerbar switch:backdrop:checked:not(:disabled) > slider,

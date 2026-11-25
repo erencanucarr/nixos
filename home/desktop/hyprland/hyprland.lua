@@ -3,7 +3,7 @@ local terminal = "ghostty"
 local files = "thunar"
 local browser = "firefox"
 local hypr = os.getenv("HOME") .. "/.config/hypr"
-local ok, palette = pcall(dofile, os.getenv("HOME") .. "/.config/can-theme/palette.lua")
+local ok, palette = pcall(dofile, os.getenv("HOME") .. "/.config/ecu-theme/palette.lua")
 if not ok or type(palette) ~= "table" then palette = { ground = "#0a0a0c" } end
 
 local focus = "rgba(ffffff80)"
@@ -100,7 +100,7 @@ hl.window_rule({
 
 hl.layer_rule({
   name = "shell-overlay-blur",
-  match = { namespace = "^(can-drawer|can-power|can-overview|can-walls|can-keys)$" },
+  match = { namespace = "^(ecu-drawer|ecu-power|ecu-overview|ecu-walls|ecu-keys)$" },
   blur = true,
   ignore_alpha = 0.3,
 })
@@ -165,6 +165,8 @@ key("CTRL + Print", hl.dsp.exec_cmd(qs .. "shot record"), "Ekran görüntüsü: 
 key("CTRL + F8", hl.dsp.exec_cmd(qs .. "shot record"), "Ekran görüntüsü: Video kaydı başlat / durdur")
 key("CTRL + SHIFT + Print", hl.dsp.exec_cmd(qs .. "shot gif"), "Ekran görüntüsü: GIF kaydı başlat / durdur")
 key("CTRL + SHIFT + F8", hl.dsp.exec_cmd(qs .. "shot gif"), "Ekran görüntüsü: GIF kaydı başlat / durdur")
+key(mod .. " + SHIFT + T", hl.dsp.exec_cmd(qs .. "shot text"), "Ekran görüntüsü: Ekrandaki yazıyı kopyala (OCR)")
+key(mod .. " + SHIFT + Q", hl.dsp.exec_cmd(qs .. "shot qr"), "Ekran görüntüsü: Ekrandaki QR kodu oku")
 
 key(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"), "Oturum: Kilitle")
 key(mod .. " + ESCAPE", hl.dsp.exec_cmd(qs .. "power toggle"), "Oturum: Güç menüsü (barda)")
@@ -184,13 +186,12 @@ key("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), "Ses ve medya: Önce
 
 -------------------------------------------------------------------- startup
 hl.on("hyprland.start", function()
-  hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE XCURSOR_THEME XCURSOR_SIZE QT_QPA_PLATFORM NIXOS_OZONE_WL")
+  hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE XCURSOR_THEME XCURSOR_SIZE QT_QPA_PLATFORM NIXOS_OZONE_WL; systemctl --user start vicinae.service app-com.mitchellh.ghostty.service")
   hl.exec_cmd("qs")
   hl.exec_cmd("hypridle")
   hl.exec_cmd(hypr .. "/bin/sunset")
   hl.exec_cmd("hyprpolkitagent")
   hl.exec_cmd("blueman-applet")
-  hl.exec_cmd("systemctl --user start vicinae.service app-com.mitchellh.ghostty.service")
 end)
 
 pcall(dofile, hypr .. "/local.lua")

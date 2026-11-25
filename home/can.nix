@@ -32,6 +32,7 @@ in
     fzf
     zoxide
     fd
+    ripgrep
     wl-clipboard
     duf
     ncdu

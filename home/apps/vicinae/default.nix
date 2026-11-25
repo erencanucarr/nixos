@@ -10,8 +10,7 @@
   home.activation.vicinaeImport = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     f="${config.xdg.configHome}/vicinae/settings.json"
     if [ ! -s "$f" ]; then
-      run mkdir -p "$(dirname "$f")"
-      run printf '{\n   "imports": ["nix.json"]\n}\n' > "$f"
+      run install -Dm644 ${pkgs.writeText "vicinae-settings.json" "{\n   \"imports\": [\"nix.json\"]\n}\n"} "$f"
     elif ! grep -q '"nix.json"' "$f"; then
       if grep -q '"imports"[[:space:]]*:[[:space:]]*\[[[:space:]]*\]' "$f"; then
         run sed -i 's/"imports"[[:space:]]*:[[:space:]]*\[[[:space:]]*\]/"imports": ["nix.json"]/' "$f"

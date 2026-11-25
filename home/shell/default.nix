@@ -1,4 +1,4 @@
-{ lib, theme, ... }:
+{ theme, ... }:
 {
   imports = [ ./ssh.nix ];
 
@@ -12,11 +12,4 @@
       palettes.graphite = theme.colors;
     };
   };
-
-  home.activation.dropStarshipLink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-    t="$HOME/.config/starship.toml"
-    if [ -L "$t" ] && [ "$(readlink "$t")" = "$HOME/nixos/home/shell/starship.toml" ]; then
-      run rm "$t"
-    fi
-  '';
 }

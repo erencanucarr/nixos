@@ -1,12 +1,48 @@
 #!/usr/bin/env bash
 state="${XDG_STATE_HOME:-$HOME/.local/state}/hyprsunset"
-p=$(cat "$state" 2>/dev/null)
-[[ "$p" =~ ^[0-9]+$ ]] && (( p <= 100 )) || p=95
+
+level() {
+  local p
+  p=$(cat "$state" 2>/dev/null)
+  if [[ "$p" =~ ^[0-9]+$ ]] && (( 10#$p <= 100 )); then echo $((10#$p)); else echo 95; fi
+}
+
+kelvin() { echo $((6500 - 40 * $1)); }
+
+running() { hyprctl hyprsunset temperature >/dev/null 2>&1; }
+
+case "${1:-}" in
+  level)
+    level
+    exit
+    ;;
+  set)
+    [[ "${2:-}" =~ ^[0-9]+$ ]] && (( 10#$2 <= 100 )) || exit 2
+    p=$((10#$2))
+    mkdir -p "${state%/*}" && echo "$p" > "$state"
+    if running; then
+      if (( p == 0 )); then cur=$(hyprctl hyprsunset identity)
+      else cur=$(hyprctl hyprsunset temperature "$(kelvin "$p")"); fi
+      [ "$cur" = ok ] || { echo "$cur"; exit 1; }
+    else
+      hyprctl dispatch "hl.dsp.exec_cmd(\"$0\")" >/dev/null || exit 3
+      i=0
+      until running; do
+        (( ++i > 10 )) && exit 4
+        sleep 0.2
+      done
+    fi
+    kelvin "$p"
+    exit
+    ;;
+esac
+
+p=$(level)
 if pkill -x hyprsunset; then
   for _ in {1..20}; do pgrep -x hyprsunset >/dev/null || break; sleep 0.1; done
 fi
 if (( p == 0 )); then
   exec hyprsunset -i
 else
-  exec hyprsunset -t $((6500 - 40 * p))
+  exec hyprsunset -t "$(kelvin "$p")"
 fi

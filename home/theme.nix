@@ -61,12 +61,12 @@ let
 in
 {
   xdg.configFile = {
-    "can-theme/palette.json".text = builtins.toJSON c;
-    "can-theme/palette.lua".text = "return " + lib.generators.toLua { } c + "\n";
-    "can-theme/hyprlock.conf".text = lib.concatStrings (
+    "ecu-theme/palette.json".text = builtins.toJSON c;
+    "ecu-theme/palette.lua".text = "return " + lib.generators.toLua { } c + "\n";
+    "ecu-theme/hyprlock.conf".text = lib.concatStrings (
       lib.mapAttrsToList (n: v: "$" + "${n} = ${theme.bare v}\n") c
     );
-    "can-theme/gtk.css".text = lib.concatStrings (
+    "ecu-theme/gtk.css".text = lib.concatStrings (
       lib.mapAttrsToList (n: v: "@define-color ${n} ${v};\n") gtk
     );
   };

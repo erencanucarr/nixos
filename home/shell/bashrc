@@ -216,9 +216,9 @@ hyprbarreload() {
 }
 alias barlog='qs log 2>/dev/null | tail -40'
 hyprsunset() {
-  local state="${XDG_STATE_HOME:-$HOME/.local/state}/hyprsunset" p k cur
+  local sunset="$HOME/.config/hypr/bin/sunset" p k cur
   if [ $# -eq 0 ]; then
-    p=$(cat "$state" 2>/dev/null) || p=95
+    p=$("$sunset" level)
     if cur=$(hyprctl hyprsunset temperature 2>/dev/null); then
       if [ "$p" = 0 ]; then ok "hyprsunset çalışıyor, filtre kapalı (0%)"
       else ok "hyprsunset: %$p sıcaklık (${cur}K)"; fi
@@ -229,24 +229,16 @@ hyprsunset() {
     return 0
   fi
   case "$1" in -h|--help|-*) command hyprsunset "$@"; return ;; esac
-  if ! [[ "$1" =~ ^[0-9]+$ ]] || [ $# -gt 1 ] || (( 10#$1 > 100 )); then
-    err "0 ile 100 arasında bir sayı yaz (ör. hyprsunset 50)"; return 1
-  fi
-  p=$((10#$1)) k=$((6500 - 40 * p))
-  mkdir -p "${state%/*}" && echo "$p" > "$state"
-  if hyprctl hyprsunset temperature >/dev/null 2>&1; then
-    if (( p == 0 )); then cur=$(hyprctl hyprsunset identity)
-    else cur=$(hyprctl hyprsunset temperature "$k"); fi
-    [ "$cur" = ok ] || { err "hyprsunset: $cur"; return 1; }
-  else
-    hyprctl dispatch "hl.dsp.exec_cmd(\"$HOME/.config/hypr/bin/sunset\")" >/dev/null \
-      || { err "hyprsunset başlatılamadı"; return 1; }
-    local i=0
-    until hyprctl hyprsunset temperature >/dev/null 2>&1; do
-      (( ++i > 10 )) && { err "hyprsunset başlatılamadı (kurulu mu? nixup)"; return 1; }
-      sleep 0.2
-    done
-  fi
+  [ $# -gt 1 ] && set -- x
+  k=$("$sunset" set "$1")
+  case $? in
+    0) ;;
+    2) err "0 ile 100 arasında bir sayı yaz (ör. hyprsunset 50)"; return 1 ;;
+    3) err "hyprsunset başlatılamadı"; return 1 ;;
+    4) err "hyprsunset başlatılamadı (kurulu mu? nixup)"; return 1 ;;
+    *) err "hyprsunset: $k"; return 1 ;;
+  esac
+  p=$((10#$1))
   if (( p == 0 )); then ok "Ekran filtresi kapatıldı (0%)"
   else ok "Ekran sıcaklığı: %$p (${k}K)"; fi
 }
@@ -365,6 +357,8 @@ _zh_add " Hyprland tuşlar" "$c_purple" \
   "Super+K"         "tüm kısayollar, aranabilir" \
   "F8 / Print"      "ekran görüntüsü: alan / pencere (Boşluk) / ekran (Tab), T gecikme, R video/gif; karta tıkla: düzenle  ·  Shift+Print: tüm ekran" \
   "Ctrl+F8"         "video kaydı (Ctrl+Shift+F8: gif)  ·  durdurmak için tekrar bas ya da bardaki sayaca tıkla" \
+  "Super+Shift+T"   "ekrandaki yazıyı kopyala (OCR)" \
+  "Super+Shift+Q"   "ekrandaki QR kodu oku" \
   "F9"              "mikrofonu sustur / aç (barda kırmızı mikrofon)" \
   "Super+V"         "pano geçmişi (Ctrl+Alt+V de olur)"
 _zh_add " Klavye" "$c_green" \
