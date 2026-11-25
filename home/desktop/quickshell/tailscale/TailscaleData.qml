@@ -23,6 +23,7 @@ Singleton {
     property bool statusError: false
     property bool busy: false
     property bool probing: false
+    property bool wantFull: true
 
     readonly property bool running: state === "Running"
     readonly property bool needsLogin: state === "NeedsLogin" || state === "NeedsMachineAuth"
@@ -52,7 +53,7 @@ Singleton {
         return m[os] ?? os ?? "";
     }
 
-    function parse(text: string): void {
+    function parse(text: string, full: bool): void {
         let j;
         try {
             j = JSON.parse(text);
@@ -74,6 +75,16 @@ Singleton {
             os: root.osName(s.OS)
         };
 
+        if (!full) {
+            const exitId = j.ExitNodeStatus?.ID ?? "";
+            const known = root.peers.find(p => p.id === exitId);
+            if (exitId && !known)
+                root.wantFull = true;
+            else
+                root.exitNode = known?.name ?? "";
+            return;
+        }
+
         const list = Object.values(j.Peer ?? {}).map(p => ({
             id: p.ID ?? p.PublicKey,
             name: root.shortName(p.DNSName, p.HostName),
@@ -87,6 +98,7 @@ Singleton {
             seen: root.ago(p.LastSeen),
             exitOption: !!p.ExitNodeOption,
             exitActive: !!p.ExitNode,
+            mine: p.UserID === s.UserID && !(p.Tags ?? []).length,
             routes: p.PrimaryRoutes ?? []
         }));
         list.sort((a, b) => b.online - a.online || a.name.localeCompare(b.name));
@@ -121,8 +133,11 @@ Singleton {
     }
 
     function refresh(): void {
-        if (!reader.running)
-            reader.running = true;
+        if (reader.running)
+            return;
+        reader.full = root.watching || root.wantFull;
+        root.wantFull = false;
+        reader.running = true;
     }
 
     function probe(): void {
@@ -219,14 +234,18 @@ Singleton {
     Process {
         id: reader
 
-        command: ["tailscale", "status", "--json"]
+        property bool full: true
+
+        command: ["tailscale", "status", "--json", `--peers=${reader.full}`]
         stdout: StdioCollector {
             onStreamFinished: if (text)
-                root.parse(text)
+                root.parse(text, reader.full)
         }
         onExited: code => {
             if (code !== 0 && code !== 1)
                 root.state = "NoState";
+            if (!reader.full && (root.watching || root.wantFull))
+                Qt.callLater(root.refresh);
         }
     }
 

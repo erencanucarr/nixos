@@ -8,8 +8,8 @@ import qs.common
 Popup {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     property string page: "main"
     property bool renaming: false
@@ -36,6 +36,7 @@ Popup {
     }
 
     function openIpPage(): void {
+        NetData.loadConnections();
         root.loadForm(root.link.uuid ?? (NetData.connections[0]?.uuid ?? ""));
         root.page = "ip";
     }
@@ -50,15 +51,7 @@ Popup {
     contentWidth: 360
     contentHeight: (page === "main" ? main.implicitHeight : ipPage.implicitHeight) + 2 * Theme.pad + 4
 
-    onVisibleChanged: {
-        NetData.watching = visible;
-        if (!visible) {
-            root.page = "main";
-            root.renaming = false;
-            root.askingFor = "";
-            root.showMac = false;
-        }
-    }
+    onVisibleChanged: NetData.watching = visible
     Component.onCompleted: NetData.watching = visible
     Component.onDestruction: NetData.watching = false
 
@@ -73,82 +66,6 @@ Popup {
                 gatewayField.text = gateway ?? "";
                 dnsField.text = dns ?? "";
             }
-        }
-    }
-
-    component Value: Item {
-        id: kv
-
-        required property string label
-        property string value: ""
-        property bool copyable: false
-        property string action: ""
-        signal acted
-
-        Layout.fillWidth: true
-        implicitHeight: 26
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.leftMargin: -6
-            anchors.rightMargin: -6
-            radius: Theme.radius
-            color: kvMa.containsMouse ? Theme.hoverRaised : "transparent"
-        }
-
-        BarText {
-            id: kvLabel
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            text: kv.label
-            font.pixelSize: root.fs - 3
-            weight: root.wt
-            color: Theme.dim
-        }
-
-        BarText {
-            anchors.left: kvLabel.right
-            anchors.leftMargin: 12
-            anchors.right: kvAction.visible ? kvAction.left : kvCopy.left
-            anchors.rightMargin: kvAction.visible ? 10 : (kvCopy.visible ? 6 : 0)
-            anchors.verticalCenter: parent.verticalCenter
-            horizontalAlignment: Text.AlignRight
-            text: kv.value || "—"
-            elide: Text.ElideLeft
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: root.fs - 3
-            color: kvMa.containsMouse && kv.copyable ? Theme.bright : Theme.text
-        }
-
-        BarText {
-            id: kvCopy
-            visible: kv.copyable && kvMa.containsMouse && !kvAction.visible
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            text: Glyph.copy
-            font.pixelSize: root.fs - 2
-            color: Theme.dim
-        }
-
-        MouseArea {
-            id: kvMa
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: kv.copyable && kv.value !== ""
-            cursorShape: Qt.PointingHandCursor
-            onClicked: NetData.copy(kv.value)
-        }
-
-        Tag {
-            id: kvAction
-            visible: kv.action !== ""
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            implicitHeight: 20
-            text: kv.action
-            tone: Theme.text
-            clickable: true
-            onClicked: kv.acted()
         }
     }
 
@@ -180,40 +97,6 @@ Popup {
             font.pixelSize: root.fs - 4
             weight: root.wt
             color: Theme.dim
-        }
-    }
-
-    component Button: Rectangle {
-        id: btn
-
-        required property string text
-        property bool primary: false
-        property bool enabledState: true
-        signal clicked
-
-        Layout.fillWidth: true
-        implicitHeight: 34
-        radius: Theme.radius + 2
-        opacity: btn.enabledState ? 1 : 0.45
-        color: btn.primary ? (btnMa.containsMouse ? Theme.bright : Theme.text) : (btnMa.containsMouse ? Theme.selRaised : Theme.hoverRaised)
-        border.width: btn.primary ? 0 : 1
-        border.color: Theme.edge
-
-        BarText {
-            anchors.centerIn: parent
-            text: btn.text
-            font.pixelSize: root.fs - 2
-            weight: 650
-            color: btn.primary ? Theme.ground : Theme.text
-        }
-
-        MouseArea {
-            id: btnMa
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: btn.enabledState
-            cursorShape: Qt.PointingHandCursor
-            onClicked: btn.clicked()
         }
     }
 
@@ -292,7 +175,7 @@ Popup {
                         implicitWidth: 30
                         implicitHeight: 30
                         glyphSize: root.renaming ? 14 : 15
-                        glyph: root.renaming ? String.fromCodePoint(0xF0156) : Glyph.pencil
+                        glyph: root.renaming ? Glyph.close : Glyph.pencil
                         lit: false
                         tone: Theme.dim
                         border.color: "transparent"
@@ -349,21 +232,22 @@ Popup {
             Value {
                 label: "IP adresi"
                 value: root.link.ip ?? ""
-                copyable: true
+                copier: NetData.copy
             }
             Value {
                 label: "Ağ geçidi"
                 value: root.link.gateway ?? ""
-                copyable: true
+                copier: NetData.copy
             }
             Value {
                 label: "DNS"
                 value: root.link.dns ?? ""
-                copyable: true
+                copier: NetData.copy
             }
             Value {
                 label: "MAC"
                 value: root.showMac ? (root.link.mac || "—") : "••:••:••:••:••:••"
+                copier: NetData.copy
                 copyable: root.showMac
                 action: root.showMac ? "gizle" : "göster"
                 onActed: root.showMac = !root.showMac
@@ -375,6 +259,7 @@ Popup {
             Value {
                 label: "Genel IP"
                 value: NetData.publicIpBusy ? "soruluyor…" : NetData.publicIp
+                copier: NetData.copy
                 copyable: /^[\d.]+$/.test(NetData.publicIp)
                 action: NetData.publicIp ? "yenile" : "göster"
                 onActed: NetData.lookupPublicIp()
@@ -453,6 +338,14 @@ Popup {
                     Layout.fillWidth: true
                     spacing: 4
 
+                    Connections {
+                        target: net.modelData
+
+                        function onConnectedChanged(): void {
+                            NetData.refresh();
+                        }
+                    }
+
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 32
@@ -487,7 +380,7 @@ Popup {
                             anchors.right: parent.right
                             anchors.rightMargin: 8
                             anchors.verticalCenter: parent.verticalCenter
-                            text: net.modelData.stateChanging ? "···" : net.modelData.connected ? (netMa.containsMouse ? "kes" : "bağlı") : net.open ? "" : Glyph.padlock
+                            text: net.modelData.stateChanging ? "···" : net.modelData.connected ? (netMa.containsMouse ? "kes" : "bağlı") : net.open ? "" : Glyph.lock
                             font.pixelSize: root.fs - 3
                             weight: root.wt
                             color: net.modelData.connected && !netMa.containsMouse ? Theme.green : Theme.dim
@@ -760,10 +653,10 @@ Popup {
             color: NetData.status !== "" ? (NetData.statusError ? Theme.hot : Theme.text) : Theme.dim
         }
 
-        Button {
+        ActionButton {
             text: NetData.busy ? "kaydediliyor…" : "Kaydet"
             primary: true
-            enabledState: !NetData.busy && root.formUuid !== ""
+            enabled: !NetData.busy && root.formUuid !== ""
             onClicked: NetData.saveIp(root.formUuid, root.formManual, addressField.text, gatewayField.text, dnsField.text)
         }
     }

@@ -1,84 +1,37 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.common
 
 Popup {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     readonly property var ts: TailscaleData
+    property bool taildrop: false
     readonly property string stateText: ts.running ? (ts.tailnet || "Bağlı") : ts.needsLogin ? "Giriş gerekli" : ts.state === "Stopped" ? "Bağlantı kapalı" : ts.state === "Starting" ? "Bağlanıyor…" : "Servis çalışmıyor"
 
     contentWidth: 360
     contentHeight: body.implicitHeight + 2 * Theme.pad + 4
 
+    FileView {
+        path: "/etc/ecu/taildrop.json"
+        printErrors: false
+        onLoaded: {
+            try {
+                root.taildrop = JSON.parse(text()).enable === true;
+            } catch (e) {
+                root.taildrop = false;
+            }
+        }
+    }
+
     onVisibleChanged: TailscaleData.watching = visible
     Component.onCompleted: TailscaleData.watching = visible
     Component.onDestruction: TailscaleData.watching = false
-
-    component Value: Item {
-        id: kv
-
-        required property string label
-        required property string value
-
-        Layout.fillWidth: true
-        implicitHeight: 26
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.leftMargin: -6
-            anchors.rightMargin: -6
-            radius: Theme.radius
-            color: kvMa.containsMouse ? Theme.hoverRaised : "transparent"
-        }
-
-        BarText {
-            id: kvLabel
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            text: kv.label
-            font.pixelSize: root.fs - 3
-            weight: root.wt
-            color: Theme.dim
-        }
-
-        BarText {
-            anchors.left: kvLabel.right
-            anchors.leftMargin: 12
-            anchors.right: kvCopy.left
-            anchors.rightMargin: kvCopy.visible ? 6 : 0
-            anchors.verticalCenter: parent.verticalCenter
-            horizontalAlignment: Text.AlignRight
-            text: kv.value || "—"
-            elide: Text.ElideLeft
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: root.fs - 3
-            color: kvMa.containsMouse ? Theme.bright : Theme.text
-        }
-
-        BarText {
-            id: kvCopy
-            visible: kvMa.containsMouse
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            text: Glyph.copy
-            font.pixelSize: root.fs - 2
-            color: Theme.dim
-        }
-
-        MouseArea {
-            id: kvMa
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: kv.value !== ""
-            cursorShape: Qt.PointingHandCursor
-            onClicked: TailscaleData.copy(kv.value)
-        }
-    }
 
     component Header: RowLayout {
         id: header
@@ -165,28 +118,11 @@ Popup {
                 }
             }
 
-            Rectangle {
-                Layout.fillWidth: true
+            ActionButton {
                 visible: root.ts.needsLogin
-                implicitHeight: 34
-                radius: Theme.radius + 2
-                color: loginMa.containsMouse ? Theme.bright : Theme.text
-
-                BarText {
-                    anchors.centerIn: parent
-                    text: "Giriş yap  ·  tarayıcıda açılır"
-                    font.pixelSize: root.fs - 2
-                    weight: 650
-                    color: Theme.ground
-                }
-
-                MouseArea {
-                    id: loginMa
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: TailscaleData.login()
-                }
+                text: "Giriş yap  ·  tarayıcıda açılır"
+                primary: true
+                onClicked: TailscaleData.login()
             }
 
             ColumnLayout {
@@ -201,16 +137,19 @@ Popup {
                 Value {
                     label: "Bu cihaz"
                     value: root.ts.self.name ?? ""
+                    copier: TailscaleData.copy
                 }
 
                 Value {
                     label: "IPv4"
                     value: root.ts.self.ip4 ?? ""
+                    copier: TailscaleData.copy
                 }
 
                 Value {
                     label: "MagicDNS"
                     value: root.ts.self.dns ?? ""
+                    copier: TailscaleData.copy
                 }
             }
         }
@@ -263,6 +202,7 @@ Popup {
                             color: peerMa.containsMouse ? Theme.hoverRaised : "transparent"
 
                             RowLayout {
+                                z: 1
                                 anchors {
                                     fill: parent
                                     leftMargin: 8
@@ -314,6 +254,22 @@ Popup {
                                         font.pixelSize: root.fs - 4
                                         weight: root.wt
                                         color: Theme.dim
+                                    }
+                                }
+
+                                Tile {
+                                    visible: root.taildrop && peer.modelData.mine
+                                    implicitWidth: 28
+                                    implicitHeight: 28
+                                    glyphSize: 14
+                                    glyph: String.fromCodePoint(0xF048A)
+                                    lit: false
+                                    tone: peer.modelData.online ? Theme.text : Theme.dim
+                                    border.color: "transparent"
+                                    clickable: true
+                                    onClicked: {
+                                        Panels.popup = "";
+                                        Quickshell.execDetached(["ecu-taildrop", "send", peer.modelData.name]);
                                     }
                                 }
                             }

@@ -3,7 +3,6 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Networking
 
 Singleton {
     id: root
@@ -27,6 +26,14 @@ Singleton {
     property string status: ""
     property bool statusError: false
     property bool busy: false
+
+    onWatchingChanged: {
+        if (watching)
+            return;
+        root.lastSample = 0;
+        root.rxRate = 0;
+        root.txRate = 0;
+    }
 
     readonly property var dnsPresets: [
         { name: "Otomatik", servers: "" },
@@ -59,6 +66,31 @@ Singleton {
     function refresh(): void {
         if (!details.running)
             details.running = true;
+    }
+
+    function loadConnections(): void {
+        if (!lister.running)
+            lister.running = true;
+    }
+
+    function sample(): void {
+        rxFile.reload();
+        txFile.reload();
+        const rxText = rxFile.text().trim();
+        const txText = txFile.text().trim();
+        if (!root.watching || !rxText || !txText)
+            return;
+        const rx = Number(rxText);
+        const tx = Number(txText);
+        const now = Date.now();
+        if (root.lastSample > 0 && rx >= root.rxTotal) {
+            const dt = (now - root.lastSample) / 1000;
+            root.rxRate = (rx - root.rxTotal) / dt;
+            root.txRate = (tx - root.txTotal) / dt;
+        }
+        root.rxTotal = rx;
+        root.txTotal = tx;
+        root.lastSample = now;
     }
 
     function copy(text: string): void {
@@ -132,33 +164,25 @@ Singleton {
               IFS= read -r ip; IFS= read -r gw; IFS= read -r dns; } <<EOF
 $(nmcli -t -g GENERAL.TYPE,GENERAL.STATE,GENERAL.CONNECTION,GENERAL.CON-UUID,IP4.ADDRESS,IP4.GATEWAY,IP4.DNS dev show "$dev" 2>/dev/null)
 EOF
-            { IFS= read -r method; IFS= read -r saddr; IFS= read -r sgw; IFS= read -r sdns; IFS= read -r ignore; } <<EOF
-$([ -n "$uuid" ] && nmcli -t -g ipv4.method,ipv4.addresses,ipv4.gateway,ipv4.dns,ipv4.ignore-auto-dns con show "$uuid" 2>/dev/null)
+            { IFS= read -r method; IFS= read -r sdns; IFS= read -r ignore; } <<EOF
+$([ -n "$uuid" ] && nmcli -t -g ipv4.method,ipv4.dns,ipv4.ignore-auto-dns con show "$uuid" 2>/dev/null)
 EOF
             s=/sys/class/net/$dev
             jq -cn --arg device "$dev" --arg type "$type" --arg state "$state" --arg name "$name" \\
               --arg uuid "$uuid" --arg ip "$ip" --arg gateway "$gw" --arg dns "$dns" \\
-              --arg method "$method" --arg savedAddress "$saddr" --arg savedGateway "$sgw" \\
-              --arg savedDns "$sdns" --arg ignoreAutoDns "$ignore" \\
+              --arg method "$method" --arg savedDns "$sdns" --arg ignoreAutoDns "$ignore" \\
               --arg mac "$(cat $s/address 2>/dev/null)" --arg mtu "$(cat $s/mtu 2>/dev/null)" \\
               --arg speed "$(cat $s/speed 2>/dev/null)" \\
-              --argjson connections "$(nmcli -t -f UUID,TYPE,NAME con show | jq -R '
-                  split(":") | {uuid: .[0], type: .[1], name: (.[2:] | join(":") | gsub("\\\\\\\\"; ""))}
-                  | select(.type == "802-3-ethernet" or .type == "802-11-wireless")' | jq -s .)" \\
               '{device: $device, type: $type, state: $state, name: $name, uuid: $uuid,
                 ip: $ip, gateway: $gateway, dns: ($dns | gsub(" \\\\| "; ", ")), method: $method,
-                savedAddress: $savedAddress, savedGateway: $savedGateway, savedDns: $savedDns,
-                ignoreAutoDns: $ignoreAutoDns, mac: ($mac | ascii_upcase), mtu: $mtu, speed: $speed,
-                connections: $connections}'
+                savedDns: $savedDns, ignoreAutoDns: $ignoreAutoDns,
+                mac: ($mac | ascii_upcase), mtu: $mtu, speed: $speed}'
         `]
 
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    const d = JSON.parse(text);
-                    root.connections = d.connections;
-                    delete d.connections;
-                    root.link = d;
+                    root.link = JSON.parse(text);
                 } catch (e) {
                     console.warn(`net: ${e}`);
                 }
@@ -167,24 +191,36 @@ EOF
     }
 
     Process {
-        id: counters
+        id: lister
 
-        command: ["cat", `/sys/class/net/${root.link.device}/statistics/rx_bytes`, `/sys/class/net/${root.link.device}/statistics/tx_bytes`]
+        command: ["nmcli", "-t", "-f", "UUID,TYPE,NAME", "connection", "show"]
 
         stdout: StdioCollector {
-            onStreamFinished: {
-                const [rx, tx] = text.trim().split("\n").map(Number);
-                const now = Date.now();
-                if (root.lastSample > 0 && rx >= root.rxTotal) {
-                    const dt = (now - root.lastSample) / 1000;
-                    root.rxRate = (rx - root.rxTotal) / dt;
-                    root.txRate = (tx - root.txTotal) / dt;
-                }
-                root.rxTotal = rx;
-                root.txTotal = tx;
-                root.lastSample = now;
-            }
+            onStreamFinished: root.connections = text.split("\n").filter(l => l).map(l => {
+                const [uuid, type, ...name] = l.split(":");
+                return {
+                    uuid,
+                    type,
+                    name: name.join(":").replace(/\\/g, "")
+                };
+            }).filter(c => c.type === "802-3-ethernet" || c.type === "802-11-wireless")
         }
+    }
+
+    FileView {
+        id: rxFile
+
+        path: root.link.device ? `/sys/class/net/${root.link.device}/statistics/rx_bytes` : ""
+        blockAllReads: true
+        printErrors: false
+    }
+
+    FileView {
+        id: txFile
+
+        path: root.link.device ? `/sys/class/net/${root.link.device}/statistics/tx_bytes` : ""
+        blockAllReads: true
+        printErrors: false
     }
 
     Process {
@@ -242,13 +278,13 @@ EOF
         triggeredOnStart: true
         onTriggered: {
             if (root.link.device)
-                counters.running = true;
+                root.sample();
         }
     }
 
     Timer {
         running: root.watching
-        interval: 4000
+        interval: 12000
         repeat: true
         triggeredOnStart: true
         onTriggered: root.refresh()
