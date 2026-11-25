@@ -141,6 +141,7 @@ function nixclean {
   sudo nix-collect-garbage -d || return 1
   nix-collect-garbage -d
   sudo /run/current-system/bin/switch-to-configuration boot >/dev/null && ok "Eski sistemler silindi, açılış menüsü güncellendi"
+  (cd "$NIXDIR" && nix develop -c true >/dev/null 2>&1) && ok "Commit denetimleri yeniden kuruldu"
 }
 alias nixgit='git -C "$NIXDIR" status --short'
 alias nixpush='git -C "$NIXDIR" push'

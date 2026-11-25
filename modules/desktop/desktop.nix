@@ -1,4 +1,9 @@
-{ lib, pkgs, theme, ... }:
+{
+  lib,
+  pkgs,
+  theme,
+  ...
+}:
 {
   services.displayManager.ly = {
     enable = true;

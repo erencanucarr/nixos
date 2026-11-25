@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   repoLinks = {
     ".config/hypr" = "desktop/hyprland";
     ".config/quickshell" = "desktop/quickshell";

@@ -1,4 +1,10 @@
-{ config, lib, pkgs, theme, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  theme,
+  ...
+}:
 {
   home.packages = [ pkgs.vicinae ];
 

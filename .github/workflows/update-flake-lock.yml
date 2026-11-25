@@ -38,6 +38,9 @@ jobs:
       - name: Evaluate the system
         run: nix eval --raw .#nixosConfigurations.b850e-desktop.config.system.build.toplevel.drvPath
 
+      - name: Run the checks
+        run: nix flake check
+
       - name: Open pull request
         id: pr
         uses: peter-evans/create-pull-request@v8

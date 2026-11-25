@@ -11,13 +11,15 @@ in
   };
 
   config.home.activation.repoLinks = lib.hm.dag.entryAfter [ "writeBoundary" ] (
-    lib.concatStrings (lib.mapAttrsToList (target: source: ''
-      t="${home}/${target}"
-      if [ "$(readlink "$t")" != "${repo}/${source}" ]; then
-        if [ -e "$t" ] && [ ! -L "$t" ]; then run mv "$t" "$t.bak"; fi
-        run mkdir -p "$(dirname "$t")"
-        run ln -sfn "${repo}/${source}" "$t"
-      fi
-    '') config.repoLinks)
+    lib.concatStrings (
+      lib.mapAttrsToList (target: source: ''
+        t="${home}/${target}"
+        if [ "$(readlink "$t")" != "${repo}/${source}" ]; then
+          if [ -e "$t" ] && [ ! -L "$t" ]; then run mv "$t" "$t.bak"; fi
+          run mkdir -p "$(dirname "$t")"
+          run ln -sfn "${repo}/${source}" "$t"
+        fi
+      '') config.repoLinks
+    )
   );
 }

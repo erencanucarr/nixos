@@ -1,10 +1,21 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.ecu.headset;
 
   chatmix = pkgs.writeShellApplication {
     name = "ecu-chatmix";
-    runtimeInputs = with pkgs; [ coreutils gnugrep jq pipewire wireplumber ];
+    runtimeInputs = with pkgs; [
+      coreutils
+      gnugrep
+      jq
+      pipewire
+      wireplumber
+    ];
     text = ''
       state="''${XDG_RUNTIME_DIR}/ecu-chatmix"
       loops=()
@@ -101,13 +112,19 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.headsetcontrol chatmix ];
+    environment.systemPackages = [
+      pkgs.headsetcontrol
+      chatmix
+    ];
     services.udev.packages = [ pkgs.headsetcontrol ];
 
     systemd.user.services.ecu-chatmix = {
       description = "Arctis 7+ ChatMix wheel";
       wantedBy = [ "default.target" ];
-      after = [ "pipewire.service" "wireplumber.service" ];
+      after = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
       serviceConfig = {
         ExecStart = "${chatmix}/bin/ecu-chatmix";
         Restart = "always";

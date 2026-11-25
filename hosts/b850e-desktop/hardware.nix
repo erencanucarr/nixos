@@ -1,8 +1,20 @@
-{ config, lib, modulesPath, ... }:
+{
+  config,
+  lib,
+  modulesPath,
+  ...
+}:
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "ahci" "xhci_pci" "usb_storage" "usbhid" "sd_mod" ];
+  boot.initrd.availableKernelModules = [
+    "nvme"
+    "ahci"
+    "xhci_pci"
+    "usb_storage"
+    "usbhid"
+    "sd_mod"
+  ];
   boot.kernelModules = [ "kvm-amd" ];
 
   fileSystems."/" = {
@@ -16,7 +28,10 @@
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/3108-3169";
     fsType = "vfat";
-    options = [ "fmask=0077" "dmask=0077" ];
+    options = [
+      "fmask=0077"
+      "dmask=0077"
+    ];
   };
 
   swapDevices = [ ];

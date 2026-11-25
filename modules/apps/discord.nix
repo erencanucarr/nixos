@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   host = "127.0.0.1";
   port = 1080;
@@ -34,13 +39,18 @@ in
   services.byedpi = {
     enable = true;
     extraArgs = [
-      "--ip" host
-      "--port" (toString port)
-      "--split" "1"
-      "--disorder" "3+s"
+      "--ip"
+      host
+      "--port"
+      (toString port)
+      "--split"
+      "1"
+      "--disorder"
+      "3+s"
       "--mod-http=h,d"
       "--auto=torst"
-      "--tlsrec" "1+s"
+      "--tlsrec"
+      "1+s"
     ];
   };
 

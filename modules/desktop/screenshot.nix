@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.ecu.screenshot;
 
@@ -247,8 +252,15 @@ in
       };
       languages = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "tur" "eng" ];
-        example = [ "tur" "eng" "deu" ];
+        default = [
+          "tur"
+          "eng"
+        ];
+        example = [
+          "tur"
+          "eng"
+          "deu"
+        ];
         description = "Tesseract dil kodları.";
       };
     };

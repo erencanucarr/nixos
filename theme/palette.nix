@@ -23,9 +23,21 @@
   purple = "#ddc0db";
 
   ansi = [
-    "#232427" "#e06c75" "#b5c98f" "#ffd9a0"
-    "#8fb0d9" "#cba6c9" "#88c0c8" "#e6e7ea"
-    "#8a8f98" "#ff8a93" "#c9dba8" "#ffe6c4"
-    "#a9c3e0" "#ddc0db" "#a4d4da" "#f7f8f8"
+    "#232427"
+    "#e06c75"
+    "#b5c98f"
+    "#ffd9a0"
+    "#8fb0d9"
+    "#cba6c9"
+    "#88c0c8"
+    "#e6e7ea"
+    "#8a8f98"
+    "#ff8a93"
+    "#c9dba8"
+    "#ffe6c4"
+    "#a9c3e0"
+    "#ddc0db"
+    "#a4d4da"
+    "#f7f8f8"
   ];
 }

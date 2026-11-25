@@ -23,7 +23,11 @@
   users.users.can = {
     isNormalUser = true;
     description = "Can";
-    extraGroups = [ "networkmanager" "wheel" "video" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "video"
+    ];
   };
 
   networking.networkmanager.enable = true;
@@ -35,7 +39,10 @@
   nixpkgs.config.allowUnfree = true;
   nix = {
     settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       auto-optimise-store = true;
     };
     gc = {
