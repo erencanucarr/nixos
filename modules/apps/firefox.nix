@@ -12,6 +12,8 @@ let
   };
 in
 {
+  programs.firefox.enable = true;
+
   programs.firefox.policies = {
     ExtensionSettings = {
       ${black} = addon "black21" { };

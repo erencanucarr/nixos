@@ -1,6 +1,8 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
-  proxy = "socks5://127.0.0.1:1080";
+  host = "127.0.0.1";
+  port = 1080;
+  socks = "${host}:${toString port}";
 
   domains = [
     "discord.com"
@@ -21,7 +23,7 @@ let
       var domains = ${builtins.toJSON domains};
       for (var i = 0; i < domains.length; i++) {
         if (host === domains[i] || dnsDomainIs(host, "." + domains[i])) {
-          return "SOCKS5 127.0.0.1:1080";
+          return "SOCKS5 ${socks}";
         }
       }
       return "DIRECT";
@@ -32,8 +34,8 @@ in
   services.byedpi = {
     enable = true;
     extraArgs = [
-      "--ip" "127.0.0.1"
-      "--port" "1080"
+      "--ip" host
+      "--port" (toString port)
       "--split" "1"
       "--disorder" "3+s"
       "--mod-http=h,d"
@@ -48,7 +50,7 @@ in
       paths = [ pkgs.equibop ];
       nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
-        wrapProgram $out/bin/equibop --add-flags "--proxy-server=${proxy}" --set PULSE_SINK arctis_chat
+        wrapProgram $out/bin/equibop --add-flags "--proxy-server=socks5://${socks}"${lib.optionalString config.ecu.headset.enable " --set PULSE_SINK arctis_chat"}
       '';
     })
   ];

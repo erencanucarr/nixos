@@ -19,11 +19,6 @@ in
     networkmanagerapplet
     pavucontrol
     playerctl
-    grim
-    wf-recorder
-    ffmpeg
-    vips
     jq
-    xdg-user-dirs
   ];
 }

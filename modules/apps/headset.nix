@@ -1,12 +1,12 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
-  sink = "alsa_output.usb-SteelSeries_Arctis_7_-00.analog-stereo";
+  cfg = config.ecu.headset;
 
   chatmix = pkgs.writeShellApplication {
-    name = "arctis-chatmix";
+    name = "ecu-chatmix";
     runtimeInputs = with pkgs; [ coreutils gnugrep jq pipewire wireplumber ];
     text = ''
-      state="''${XDG_RUNTIME_DIR}/arctis-chatmix"
+      state="''${XDG_RUNTIME_DIR}/ecu-chatmix"
       loops=()
 
       hid() {
@@ -20,8 +20,8 @@ let
         return 1
       }
 
-      node() {
-        pw-dump 2>/dev/null | jq -r --arg n "$1" 'first(.[] | select(.info.props."node.name" == $n) | .id) // empty'
+      ids() {
+        pw-dump 2>/dev/null | jq -r '[$ARGS.positional[] as $n | first(.[] | select(.info.props."node.name" == $n) | .id) // "" | tostring] | join(",")' --args "$@" || true
       }
 
       start_loops() {
@@ -29,7 +29,7 @@ let
           n=''${kind%%:*}
           pw-loopback -n "arctis_$n" \
             --capture-props="media.class=Audio/Sink node.name=arctis_$n node.description=\"Arctis ''${kind#*:}\" audio.position=[FL,FR]" \
-            --playback-props="node.name=arctis_$n.out target.object=${sink} node.passive=true node.dont-fallback=true stream.dont-remix=true audio.position=[FL,FR]" &
+            --playback-props="node.name=arctis_$n.out target.object=${cfg.sink} node.passive=true node.dont-fallback=true stream.dont-remix=true audio.position=[FL,FR]" &
           loops+=("$!")
         done
       }
@@ -62,20 +62,19 @@ let
       trap 'stop_loops; exit 0' TERM INT
 
       while true; do
-        if ! events=$(hid 05) || ! status=$(hid 03) || [ -z "$(node ${sink})" ]; then
+        if ! events=$(hid 05) || ! status=$(hid 03) || [ -z "$(ids ${lib.escapeShellArg cfg.sink})" ]; then
           sleep 10
           continue
         fi
 
         start_loops
-        game_id="" chat_id=""
+        game_id="" chat_id="" game_sink=""
         for _ in $(seq 50); do
-          game_id=$(node arctis_game.out)
-          chat_id=$(node arctis_chat.out)
-          [ -n "$game_id" ] && [ -n "$chat_id" ] && break
+          IFS=, read -r game_id chat_id game_sink < <(ids arctis_game.out arctis_chat.out arctis_game) || true
+          [ -n "$game_id" ] && [ -n "$chat_id" ] && [ -n "$game_sink" ] && break
           sleep 0.2
         done
-        wpctl set-default "$(node arctis_game)" || true
+        wpctl set-default "$game_sink" || true
 
         read -r g c < <(initial "$status")
         apply "$g" "$c"
@@ -91,17 +90,29 @@ let
   };
 in
 {
-  environment.systemPackages = [ pkgs.headsetcontrol chatmix ];
-  services.udev.packages = [ pkgs.headsetcontrol ];
+  options.ecu.headset = {
+    enable = lib.mkEnableOption "SteelSeries Arctis 7+ pil durumu ve ChatMix tekerleği (ecu-chatmix)";
 
-  systemd.user.services.arctis-chatmix = {
-    description = "Arctis 7+ ChatMix wheel";
-    wantedBy = [ "default.target" ];
-    after = [ "pipewire.service" "wireplumber.service" ];
-    serviceConfig = {
-      ExecStart = "${chatmix}/bin/arctis-chatmix";
-      Restart = "always";
-      RestartSec = 5;
+    sink = lib.mkOption {
+      type = lib.types.str;
+      default = "alsa_output.usb-SteelSeries_Arctis_7_-00.analog-stereo";
+      description = "Kulaklığın ALSA çıkışının PipeWire düğüm adı; Oyun ve Sohbet çıkışları buna bağlanır.";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ pkgs.headsetcontrol chatmix ];
+    services.udev.packages = [ pkgs.headsetcontrol ];
+
+    systemd.user.services.ecu-chatmix = {
+      description = "Arctis 7+ ChatMix wheel";
+      wantedBy = [ "default.target" ];
+      after = [ "pipewire.service" "wireplumber.service" ];
+      serviceConfig = {
+        ExecStart = "${chatmix}/bin/ecu-chatmix";
+        Restart = "always";
+        RestartSec = 5;
+      };
     };
   };
 }
