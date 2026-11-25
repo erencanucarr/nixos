@@ -163,7 +163,7 @@ Item {
 
             BarText {
                 anchors.centerIn: parent
-                text: String.fromCodePoint(0xF0156)
+                text: Glyph.close
                 font.pixelSize: Theme.size + 2
                 color: closeMa.containsMouse ? Theme.ground : Theme.text
             }
@@ -183,18 +183,24 @@ Item {
 
         property point start
         property bool dragging: false
+        property bool moved: false
 
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
 
-        onPressed: e => start = Qt.point(e.x, e.y)
+        onPressed: e => {
+            start = Qt.point(e.x, e.y);
+            moved = false;
+        }
         onPositionChanged: e => {
             if (!(e.buttons & Qt.LeftButton))
                 return;
-            if (!dragging && Math.hypot(e.x - start.x, e.y - start.y) > 8)
+            if (!dragging && Math.hypot(e.x - start.x, e.y - start.y) > 8) {
                 dragging = true;
+                moved = true;
+            }
             if (dragging) {
                 root.dx = e.x - start.x;
                 root.dy = e.y - start.y;
@@ -210,6 +216,8 @@ Item {
             }
         }
         onClicked: e => {
+            if (moved)
+                return;
             if (e.button === Qt.MiddleButton)
                 root.closeRequested();
             else

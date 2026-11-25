@@ -8,12 +8,12 @@ import qs.common
 PanelWindow {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
 
-    WlrLayershell.namespace: "can-reminder"
+    WlrLayershell.namespace: "ecu-reminder"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
@@ -66,7 +66,7 @@ PanelWindow {
                         spacing: 10
 
                         BarText {
-                            text: String.fromCodePoint(0xF009A)
+                            text: Glyph.bell
                             font.pixelSize: root.fs + 5
                             color: Theme.warm
                         }

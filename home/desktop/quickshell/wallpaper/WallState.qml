@@ -20,7 +20,7 @@ Singleton {
     FileView {
         id: file
 
-        path: `${Quickshell.env("HOME")}/.local/state/can-wallpaper`
+        path: `${Quickshell.env("HOME")}/.local/state/ecu-wallpaper`
         printErrors: false
         onLoaded: {
             const name = text().trim();

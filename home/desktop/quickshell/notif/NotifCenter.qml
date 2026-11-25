@@ -5,8 +5,8 @@ import qs.common
 Menu {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     property var expanded: ({})
 
@@ -48,6 +48,8 @@ Menu {
         Layout.preferredHeight: Notifs.history.length === 0 ? 150 : Math.min(list.implicitHeight, 520)
 
         Row {
+            id: tools
+
             z: 5
             anchors.top: parent.top
             anchors.right: parent.right
@@ -59,7 +61,7 @@ Menu {
                 implicitWidth: 28
                 implicitHeight: 28
                 glyphSize: 14
-                glyph: String.fromCodePoint(Notifs.dnd ? 0xF009B : 0xF009A)
+                glyph: Notifs.dnd ? Glyph.bellOff : Glyph.bell
                 lit: Notifs.dnd
                 tone: Notifs.dnd ? Theme.warm : Theme.dim
                 border.color: Notifs.dnd ? Qt.alpha(Theme.warm, 0.35) : "transparent"
@@ -174,7 +176,7 @@ Menu {
 
                             Tag {
                                 anchors.right: parent.right
-                                anchors.rightMargin: group.index === 0 ? 66 : 0
+                                anchors.rightMargin: group.index === 0 ? tools.width + 8 : 0
                                 anchors.verticalCenter: parent.verticalCenter
                                 implicitHeight: 20
                                 text: "temizle"

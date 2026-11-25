@@ -16,8 +16,8 @@ Rectangle {
     signal dismissed
     signal expired
 
-    readonly property int fs: 13
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize - 1
+    readonly property int wt: Theme.menuWeight
     readonly property int iconSize: 38
 
     readonly property bool hovered: ma.containsMouse || closeMa.containsMouse || actionsHovered
@@ -347,7 +347,7 @@ Rectangle {
 
         BarText {
             anchors.centerIn: parent
-            text: String.fromCodePoint(0xF0156)
+            text: Glyph.close
             font.pixelSize: root.fs + 1
             color: closeMa.containsMouse ? Theme.bright : Theme.dim
         }

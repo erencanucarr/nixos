@@ -37,7 +37,7 @@ PanelWindow {
     screen: modelData
     visible: true
 
-    WlrLayershell.namespace: "can-power"
+    WlrLayershell.namespace: "ecu-power"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: root.main ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
@@ -47,7 +47,7 @@ PanelWindow {
         left: true
         right: true
     }
-    color: Theme.alpha(Theme.ground, 0.7)
+    color: Qt.alpha(Theme.ground, 0.7)
 
     Component.onCompleted: {
         root.main = Hyprland.focusedMonitor?.name === root.modelData.name;

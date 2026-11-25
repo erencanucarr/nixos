@@ -32,7 +32,7 @@ PanelWindow {
     }
 
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
-    WlrLayershell.namespace: "can-osd"
+    WlrLayershell.namespace: "ecu-osd"
     WlrLayershell.layer: WlrLayer.Overlay
     anchors.bottom: true
     margins.bottom: 120 - drift
@@ -59,6 +59,21 @@ PanelWindow {
         objects: [root.sink, root.source]
     }
 
+    property bool sinkReady: false
+
+    onSinkChanged: root.sinkReady = false
+
+    Timer {
+        interval: 500
+        running: root.sink !== null && !root.sinkReady
+        onTriggered: {
+            const a = root.sink?.audio;
+            root.lastVolume = a ? a.volume : -1;
+            root.lastMuted = a ? a.muted : false;
+            root.sinkReady = true;
+        }
+    }
+
     Connections {
         target: root.sink?.audio ?? null
 
@@ -73,7 +88,7 @@ PanelWindow {
 
     function flashVolume(): void {
         const a = root.sink?.audio;
-        if (!a)
+        if (!a || !root.sinkReady)
             return;
 
         const changed = root.lastVolume >= 0 && (Math.abs(a.volume - root.lastVolume) > 0.001 || a.muted !== root.lastMuted);

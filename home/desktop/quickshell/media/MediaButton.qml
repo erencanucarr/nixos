@@ -6,8 +6,6 @@ import qs.common
 BarModule {
     id: root
 
-    readonly property bool tracking: Positions.now > 0
-
     required property string screenName
 
     readonly property bool open: Panels.popup === `media@${root.screenName}`
@@ -45,7 +43,7 @@ BarModule {
         readonly property string label: root.clip([p?.trackArtist ?? "", p?.trackTitle ?? ""].filter(s => s !== "").join(" - "), 32)
 
         anchors.verticalCenter: parent.verticalCenter
-        text: `${String.fromCodePoint(p?.isPlaying ? 0xF040A : 0xF03E4)} ${label}`
+        text: `${p?.isPlaying ? Glyph.play : Glyph.pause} ${label}`
         color: p?.isPlaying ? Theme.text : Theme.dim
         font.italic: !(p?.isPlaying ?? false)
         font.wordSpacing: Theme.glyphGap

@@ -21,7 +21,7 @@ BarModule {
 
     BarText {
         anchors.verticalCenter: parent.verticalCenter
-        text: String.fromCodePoint(Notifs.dnd ? 0xF009B : root.count > 0 ? 0xF116B : 0xF009A)
+        text: Notifs.dnd ? Glyph.bellOff : root.count > 0 ? Glyph.bellBadge : Glyph.bell
         color: Notifs.dnd ? Theme.bright : root.count > 0 ? Theme.text : Theme.dim
         font.pixelSize: Theme.size + 1
     }

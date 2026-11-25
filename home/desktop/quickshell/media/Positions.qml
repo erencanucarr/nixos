@@ -10,6 +10,7 @@ Singleton {
 
     property var tracks: ({})
     property real now: Date.now()
+    property int watchers: 0
 
     function keyOf(p: var): string {
         const m = p?.metadata ?? {};
@@ -24,78 +25,102 @@ Singleton {
         return p?.positionSupported && !root.broken(p) ? (p.position ?? 0) : 0;
     }
 
-    function update(): void {
-        const t = Date.now();
-        const next = {};
-        for (const p of Mpris.players.values) {
-            const id = p.dbusName;
-            const key = root.keyOf(p);
-            const playing = p.isPlaying;
-            const real = root.reported(p);
-            let s = root.tracks[id];
-            if (!s || s.key !== key)
-                s = {
-                    key,
-                    base: real > 0.5 ? real : 0,
-                    at: t,
-                    playing
-                };
-            else if (real > 0.5)
-                s = {
-                    key,
-                    base: real,
-                    at: t,
-                    playing
-                };
-            else if (s.playing !== playing)
-                s = {
-                    key,
-                    base: s.playing ? s.base + (t - s.at) / 1000 : s.base,
-                    at: t,
-                    playing
-                };
+    function put(id: string, s: var): void {
+        const next = Object.assign({}, root.tracks);
+        if (s)
             next[id] = s;
-        }
+        else
+            delete next[id];
         root.tracks = next;
-        root.now = t;
+    }
+
+    function record(p: var): void {
+        if (!p)
+            return;
+        const t = Date.now();
+        const key = root.keyOf(p);
+        const playing = p.isPlaying;
+        const real = root.reported(p);
+        const s = root.tracks[p.dbusName];
+        if (!s || s.key !== key || real > 0.5)
+            root.put(p.dbusName, {
+                key,
+                base: real > 0.5 ? real : 0,
+                at: t,
+                playing
+            });
+        else if (s.playing !== playing)
+            root.put(p.dbusName, {
+                key,
+                base: s.playing ? s.base + (t - s.at) / 1000 : s.base,
+                at: t,
+                playing
+            });
     }
 
     function get(p: var): real {
         if (!p)
             return 0;
+        const t = Math.max(root.now, Date.now());
         const real = root.reported(p);
         if (real > 0.5)
             return real;
         const s = root.tracks[p.dbusName];
         if (!s || s.key !== root.keyOf(p))
             return 0;
-        return s.playing ? s.base + (root.now - s.at) / 1000 : s.base;
+        return s.playing ? s.base + (t - s.at) / 1000 : s.base;
     }
 
     function seek(p: var, to: real): void {
         const s = root.tracks[p?.dbusName];
         if (!s)
             return;
-        const next = Object.assign({}, root.tracks);
-        next[p.dbusName] = {
+        root.put(p.dbusName, {
             key: s.key,
             base: Math.max(0, to),
             at: Date.now(),
             playing: s.playing
-        };
-        root.tracks = next;
+        });
     }
 
     function sync(p: var, to: real): void {
-        const key = root.keyOf(p);
-        const next = Object.assign({}, root.tracks);
-        next[p.dbusName] = {
-            key,
+        root.put(p.dbusName, {
+            key: root.keyOf(p),
             base: to,
             at: Date.now(),
             playing: p.isPlaying
-        };
-        root.tracks = next;
+        });
+    }
+
+    Instantiator {
+        model: Mpris.players
+
+        delegate: Connections {
+            id: watch
+
+            required property MprisPlayer modelData
+            property string bus: ""
+
+            target: watch.modelData
+
+            function onIsPlayingChanged(): void {
+                root.record(watch.modelData);
+            }
+
+            function onTrackTitleChanged(): void {
+                root.record(watch.modelData);
+            }
+
+            function onMetadataChanged(): void {
+                root.record(watch.modelData);
+            }
+
+            Component.onCompleted: {
+                watch.bus = watch.modelData?.dbusName ?? "";
+                root.record(watch.modelData);
+            }
+            Component.onDestruction: root.put(watch.bus, null)
+        }
     }
 
     Process {
@@ -127,9 +152,9 @@ Singleton {
 
     Timer {
         interval: 1000
-        running: Mpris.players.values.length > 0
+        running: root.watchers > 0
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.update()
+        onTriggered: root.now = Date.now()
     }
 }

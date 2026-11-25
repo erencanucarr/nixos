@@ -11,19 +11,9 @@ PanelWindow {
 
     readonly property var focusedScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
 
-    screen: focusedScreen
     Component.onCompleted: root.screen = root.focusedScreen
 
-    Connections {
-        target: Notifs
-
-        function onPopupsChanged(): void {
-            if (Notifs.popups.length === 1 && root.screen !== root.focusedScreen)
-                root.screen = root.focusedScreen;
-        }
-    }
-
-    WlrLayershell.namespace: "can-notifications"
+    WlrLayershell.namespace: "ecu-notifications"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     anchors {

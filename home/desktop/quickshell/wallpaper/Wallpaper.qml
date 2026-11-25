@@ -13,7 +13,7 @@ Scope {
             required property var modelData
 
             screen: modelData
-            WlrLayershell.namespace: "can-wallpaper"
+            WlrLayershell.namespace: "ecu-wallpaper"
             WlrLayershell.layer: WlrLayer.Background
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             exclusionMode: ExclusionMode.Ignore

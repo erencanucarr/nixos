@@ -17,6 +17,7 @@ Singleton {
     property string sunrise: ""
     property string sunset: ""
     property date updated
+    property var request: null
 
     readonly property string glyph: ready ? glyphFor(current.code, current.night) : ""
     readonly property string condition: ready ? nameFor(current.code) : ""
@@ -76,10 +77,16 @@ Singleton {
 
     function refresh(): void {
         const url = "https://api.open-meteo.com/v1/forecast" + `?latitude=${root.latitude}&longitude=${root.longitude}` + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day,precipitation_probability" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" + "&timezone=Europe%2FIstanbul&forecast_days=6";
+        if (root.request)
+            return;
         const xhr = new XMLHttpRequest();
+        root.request = xhr;
+        watchdog.restart();
         xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE)
+            if (xhr.readyState !== XMLHttpRequest.DONE || root.request !== xhr)
                 return;
+            root.request = null;
+            watchdog.stop();
             try {
                 if (xhr.status !== 200)
                     throw new Error(`HTTP ${xhr.status}`);
@@ -95,6 +102,18 @@ Singleton {
         };
         xhr.open("GET", url);
         xhr.send();
+    }
+
+    function abandon(): void {
+        const xhr = root.request;
+        if (!xhr)
+            return;
+        root.request = null;
+        xhr.abort();
+        console.warn("weather: timeout");
+        root.failed = true;
+        timer.interval = 60000;
+        timer.restart();
     }
 
     function apply(r: var): void {
@@ -129,6 +148,12 @@ Singleton {
         running: true
         repeat: false
         onTriggered: root.refresh()
+    }
+
+    Timer {
+        id: watchdog
+        interval: 20000
+        onTriggered: root.abandon()
     }
 
     Component.onCompleted: refresh()

@@ -8,8 +8,8 @@ import qs.common
 PanelWindow {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     readonly property var order: ["Masaüstü", "Uygulamalar", "Pencereler", "Çalışma alanları", "Ekran görüntüsü", "Oturum", "Ses ve medya"]
 
@@ -137,7 +137,7 @@ PanelWindow {
 
     screen: Quickshell.screens.find(s => s.name === Panels.keysScreen) ?? Quickshell.screens[0]
 
-    WlrLayershell.namespace: "can-keys"
+    WlrLayershell.namespace: "ecu-keys"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore
@@ -147,7 +147,7 @@ PanelWindow {
         left: true
         right: true
     }
-    color: Theme.alpha(Theme.ground, 0.65)
+    color: Qt.alpha(Theme.ground, 0.65)
 
     Component.onCompleted: {
         reader.running = true;

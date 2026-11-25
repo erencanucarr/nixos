@@ -28,7 +28,7 @@ PanelWindow {
 
     screen: Quickshell.screens.find(s => s.name === Panels.wallsScreen) ?? Quickshell.screens[0]
 
-    WlrLayershell.namespace: "can-walls"
+    WlrLayershell.namespace: "ecu-walls"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore

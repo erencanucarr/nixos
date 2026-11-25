@@ -10,15 +10,17 @@ import qs.common
 Menu {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     required property var player
 
     signal picked(string id)
 
     readonly property var players: Mpris.players.values
-    readonly property real length: (root.player?.lengthSupported && root.player.length > 0) ? root.player.length : Math.max(0, Lengths.get(root.player?.metadata?.["xesam:url"] ?? ""))
+    readonly property bool ownLength: (root.player?.lengthSupported ?? false) && root.player.length > 0
+    readonly property string url: root.ownLength ? "" : root.player?.metadata?.["xesam:url"] ?? ""
+    readonly property real length: root.ownLength ? root.player.length : Math.max(0, Lengths.lengthOf(root.url))
     readonly property bool hasLength: root.length > 0
     readonly property real position: Math.min(Positions.get(root.player), root.length > 0 ? root.length : Infinity)
     readonly property bool canSeek: root.player?.canSeek ?? false
@@ -61,9 +63,9 @@ Menu {
         if (!p)
             return;
         const keys = [p.desktopEntry, (p.identity ?? "").split(" ").pop()].filter(k => !!k).map(k => k.toLowerCase());
-        const win = Hyprland.toplevels.values.find(t => keys.includes((t.lastIpcObject?.class ?? "").toLowerCase()));
+        const win = Windows.forKeys(keys);
         if (win)
-            Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${win.address}" })`);
+            Windows.focus(win);
         else if (p.canRaise)
             p.raise();
         Panels.popup = "";
@@ -72,7 +74,14 @@ Menu {
     contentWidth: 340
     rowSpacing: 10
 
-    Component.onCompleted: Hyprland.refreshToplevels()
+    onUrlChanged: Lengths.request(root.url)
+
+    Component.onCompleted: {
+        Hyprland.refreshToplevels();
+        Lengths.request(root.url);
+        Positions.watchers++;
+    }
+    Component.onDestruction: Positions.watchers--
 
     PwObjectTracker {
         objects: root.stream ? [root.stream] : []
@@ -180,7 +189,7 @@ Menu {
                 }
                 GradientStop {
                     position: 1
-                    color: Theme.alpha(Theme.ground, 0.8)
+                    color: Qt.alpha(Theme.ground, 0.8)
                 }
             }
         }
@@ -194,14 +203,14 @@ Menu {
             implicitWidth: who.implicitWidth + 14
             implicitHeight: 22
             radius: 11
-            color: Theme.alpha(Theme.ground, 0.7)
+            color: Qt.alpha(Theme.ground, 0.7)
             border.width: 1
             border.color: Theme.edge
 
             BarText {
                 id: who
                 anchors.centerIn: parent
-                text: `${String.fromCodePoint(root.player?.isPlaying ? 0xF040A : 0xF03E4)}  ${root.player?.identity ?? ""}`
+                text: `${root.player?.isPlaying ? Glyph.play : Glyph.pause}  ${root.player?.identity ?? ""}`
                 font.pixelSize: root.fs - 4
                 weight: 600
                 color: Theme.text
@@ -304,7 +313,7 @@ Menu {
 
         Button {
             big: true
-            glyph: String.fromCodePoint(root.player?.isPlaying ? 0xF03E4 : 0xF040A)
+            glyph: root.player?.isPlaying ? Glyph.pause : Glyph.play
             enabled: root.player?.canTogglePlaying ?? false
             onActivated: root.player.togglePlaying()
         }
@@ -382,20 +391,11 @@ Menu {
             color: Theme.dim
         }
 
-        BarText {
+        Link {
             text: `Pencereye git ${Glyph.chevronRight}`
             font.pixelSize: root.fs - 2
             weight: root.wt
-            color: goMa.containsMouse ? Theme.bright : Theme.dim
-
-            MouseArea {
-                id: goMa
-                anchors.fill: parent
-                anchors.margins: -4
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.goToWindow()
-            }
+            onClicked: root.goToWindow()
         }
     }
 

@@ -70,7 +70,13 @@ Singleton {
         persistenceSupported: true
 
         onNotification: n => {
-            root.stamps.set(n.id, Date.now());
+            const id = n.id;
+            const at = Date.now();
+            root.stamps.set(id, at);
+            n.closed.connect(() => {
+                if (root.stamps.get(id) === at)
+                    root.stamps.delete(id);
+            });
             n.tracked = true;
             if (!root.dnd || n.urgency === NotificationUrgency.Critical)
                 root.popups = [n, ...root.popups];
@@ -80,7 +86,7 @@ Singleton {
     FileView {
         id: dndFile
 
-        path: `${Quickshell.env("HOME")}/.local/state/can-dnd`
+        path: `${Quickshell.env("HOME")}/.local/state/ecu-dnd`
         printErrors: false
         onLoaded: root.dnd = text().trim() === "1"
     }

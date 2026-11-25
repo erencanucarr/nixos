@@ -87,11 +87,15 @@ PanelWindow {
     }
 
     function activate(t: var): void {
+        if (!t)
+            return;
         Panels.overviewOpen = false;
-        Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${t.address}" })`);
+        Windows.focus(t);
     }
 
     function closeWindow(t: var): void {
+        if (!t)
+            return;
         root.dispatch(`hl.dsp.window.close({ window = "address:0x${t.address}" })`);
     }
 
@@ -106,15 +110,14 @@ PanelWindow {
     }
 
     function moveWindow(t: var, id: int): void {
-        if (id < 0 || id === t.workspace?.id)
+        if (!t || id < 0 || id === t.workspace?.id)
             return;
         root.dispatch(`hl.dsp.window.move({ workspace = ${id}, window = "address:0x${t.address}", follow = false })`);
     }
 
     screen: modelData
-    visible: Panels.overviewOpen
 
-    WlrLayershell.namespace: "can-overview"
+    WlrLayershell.namespace: "ecu-overview"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: root.keyboard ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
@@ -124,12 +127,16 @@ PanelWindow {
         left: true
         right: true
     }
-    color: Theme.alpha(Theme.ground, 0.65)
+    color: Qt.alpha(Theme.ground, 0.65)
 
     property bool shown: false
 
+    onWindowsChanged: {
+        if (root.selected >= root.windows.length)
+            root.selected = root.windows.length - 1;
+    }
+
     Component.onCompleted: {
-        Hyprland.refreshToplevels();
         root.shownId = root.monitor?.activeWorkspace?.id ?? root.base;
         root.keyboard = root.monitor?.focused ?? false;
         root.selected = -1;
