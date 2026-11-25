@@ -9,8 +9,8 @@ import qs.common
 PanelWindow {
     id: root
 
-    readonly property int fs: 14
-    readonly property int wt: 550
+    readonly property int fs: Theme.menuSize
+    readonly property int wt: Theme.menuWeight
 
     property string query: ""
     property string category: "all"
@@ -35,10 +35,26 @@ PanelWindow {
         return root.kinds.find(k => k[3].some(c => cats.includes(c)))?.[0] ?? "other";
     }
 
+    readonly property var kindById: {
+        const out = {};
+        for (const a of root.all)
+            out[a.id] = root.kindOf(a);
+        return out;
+    }
+
+    readonly property var running: {
+        const out = {};
+        for (const t of Hyprland.toplevels.values)
+            out[Windows.classOf(t)] = true;
+        return out;
+    }
+
     readonly property var shelf: {
         const counts = {};
-        for (const a of root.all)
-            counts[root.kindOf(a)] = (counts[root.kindOf(a)] ?? 0) + 1;
+        for (const a of root.all) {
+            const k = root.kindById[a.id];
+            counts[k] = (counts[k] ?? 0) + 1;
+        }
         const out = [["all", "Tümü", 0xF003B, root.all.length]];
         for (const k of root.kinds)
             if (counts[k[0]])
@@ -46,6 +62,13 @@ PanelWindow {
         if (counts.other)
             out.push(["other", "Diğer", 0xF01D8, counts.other]);
         return out;
+    }
+
+    readonly property string sectionTitle: {
+        if (root.query.trim() !== "")
+            return `ARAMA  ·  ${root.apps.length} SONUÇ`;
+        const s = root.shelf.find(k => k[0] === root.category);
+        return `${(s?.[1] ?? "Tümü").toLocaleUpperCase("tr-TR")}  ·  ${root.apps.length}`;
     }
 
     function fold(s: string): string {
@@ -75,7 +98,7 @@ PanelWindow {
     readonly property var apps: {
         const q = root.fold(root.query.trim());
         if (q === "")
-            return root.category === "all" ? root.all : root.all.filter(a => root.kindOf(a) === root.category);
+            return root.category === "all" ? root.all : root.all.filter(a => root.kindById[a.id] === root.category);
         return root.all.map(a => [a, q.split(/\s+/).reduce((s, w) => Math.min(s, root.rank(a, w)), 100)]).filter(x => x[1] > 0).sort((x, y) => y[1] - x[1] || DrawerState.score(y[0].id) - DrawerState.score(x[0].id)).map(x => x[0]);
     }
 
@@ -88,21 +111,29 @@ PanelWindow {
 
     readonly property bool showFavourites: root.query === "" && root.category === "all" && root.favourites.length > 0
 
-    function windowOf(app: var): var {
-        const keys = [app.id, app.startupClass, app.name].filter(k => !!k).map(k => k.toLowerCase().replace(/\.desktop$/, ""));
-        return Hyprland.toplevels.values.find(t => keys.includes((t.lastIpcObject?.class ?? "").toLowerCase())) ?? null;
+    function keysOf(app: var): var {
+        return [app?.id, app?.startupClass, app?.name].filter(k => !!k).map(k => k.toLowerCase().replace(/\.desktop$/, ""));
+    }
+
+    function isRunning(app: var): bool {
+        return root.keysOf(app).some(k => root.running[k] === true);
     }
 
     function iconOf(app: var): string {
         return Quickshell.iconPath(app?.icon ?? "", true) || Quickshell.iconPath("application-x-executable", true) || "";
     }
 
+    function subtitleOf(app: var): string {
+        const g = app?.genericName ?? "";
+        return g && g !== app?.name ? g : (app?.comment ?? "");
+    }
+
     function launch(app: var, fresh: bool): void {
         if (!app)
             return;
-        const win = fresh ? null : root.windowOf(app);
+        const win = fresh ? null : Windows.forKeys(root.keysOf(app));
         if (win)
-            Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${win.address}" })`);
+            Windows.focus(win);
         else {
             app.execute();
             DrawerState.launched(app.id);
@@ -123,7 +154,7 @@ PanelWindow {
 
     screen: Quickshell.screens.find(s => s.name === Panels.drawerScreen) ?? Quickshell.screens[0]
 
-    WlrLayershell.namespace: "can-drawer"
+    WlrLayershell.namespace: "ecu-drawer"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     exclusionMode: ExclusionMode.Ignore
@@ -133,7 +164,7 @@ PanelWindow {
         left: true
         right: true
     }
-    color: Theme.alpha(Theme.ground, 0.6)
+    color: Qt.alpha(Theme.ground, 0.6)
 
     property bool shown: false
 
@@ -153,8 +184,8 @@ PanelWindow {
 
         anchors.centerIn: parent
         anchors.verticalCenterOffset: root.shown ? 0 : 10
-        width: Math.min(parent.width - 160, 900)
-        height: Math.min(parent.height - 140, 640)
+        width: Math.min(parent.width - 160, 920)
+        height: Math.min(parent.height - 140, 660)
         opacity: root.shown ? 1 : 0
 
         Behavior on opacity {
@@ -183,24 +214,26 @@ PanelWindow {
                 top: parent.top
                 left: parent.left
                 right: parent.right
-                margins: 16
+                margins: 14
             }
-            height: 42
-            radius: 8
+            height: 52
+            radius: Theme.radiusLg
             color: Theme.ground
             border.width: 1
-            border.color: search.activeFocus ? Theme.rule : Theme.line
+            border.color: search.activeFocus ? Theme.rule : Theme.edge
 
-            BarText {
+            Tile {
                 id: searchIcon
                 anchors {
                     left: parent.left
-                    leftMargin: 13
+                    leftMargin: 8
                     verticalCenter: parent.verticalCenter
                 }
-                text: Glyph.search
-                font.pixelSize: 17
-                color: Theme.dim
+                implicitWidth: 36
+                implicitHeight: 36
+                glyph: Glyph.search
+                glyphSize: 16
+                tone: search.text !== "" ? Theme.bright : Theme.dim
             }
 
             TextInput {
@@ -208,19 +241,19 @@ PanelWindow {
 
                 anchors {
                     left: searchIcon.right
-                    leftMargin: 10
+                    leftMargin: 12
                     right: count.left
                     rightMargin: 12
                     verticalCenter: parent.verticalCenter
                 }
-                color: Theme.text
+                color: Theme.bright
                 selectionColor: Theme.text
                 selectedTextColor: Theme.ground
                 font.family: "Inter Variable"
                 font.variableAxes: ({
                         wght: root.wt
                     })
-                font.pixelSize: root.fs + 1
+                font.pixelSize: root.fs + 2
                 clip: true
 
                 onTextChanged: {
@@ -261,24 +294,22 @@ PanelWindow {
                 BarText {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: search.text === ""
-                    text: "Uygulama ara — ya da soldan bir kategori seç"
-                    font.pixelSize: root.fs + 1
+                    text: "Uygulama ara"
+                    font.pixelSize: root.fs + 2
                     weight: root.wt
                     color: Theme.dim
                 }
             }
 
-            BarText {
+            Tag {
                 id: count
                 anchors {
                     right: parent.right
-                    rightMargin: 14
+                    rightMargin: 12
                     verticalCenter: parent.verticalCenter
                 }
                 text: `${root.apps.length} uygulama`
-                font.pixelSize: root.fs - 2
-                weight: root.wt
-                color: Theme.dim
+                tone: Theme.dim
             }
         }
 
@@ -287,93 +318,142 @@ PanelWindow {
 
             anchors {
                 top: searchBox.bottom
-                topMargin: 14
+                topMargin: 12
+                bottom: parent.bottom
+                bottomMargin: 14
                 left: parent.left
                 leftMargin: 14
             }
-            width: 178
-            spacing: 2
+            width: 196
+            spacing: 8
 
-            Repeater {
-                model: root.shelf
+            Card {
+                padding: 6
+                spacing: 2
 
-                delegate: Rectangle {
-                    id: kind
+                Repeater {
+                    model: root.shelf
 
-                    required property var modelData
-                    readonly property bool on: root.category === modelData[0] && root.query === ""
+                    delegate: Rectangle {
+                        id: kind
 
-                    Layout.fillWidth: true
-                    implicitHeight: 34
-                    radius: Theme.radius
-                    color: kind.on ? Theme.sel : kindMa.containsMouse ? Theme.hoverRaised : "transparent"
+                        required property var modelData
+                        readonly property bool on: root.category === modelData[0] && root.query === ""
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.anim
-                        }
-                    }
+                        Layout.fillWidth: true
+                        implicitHeight: 38
+                        radius: Theme.radius + 1
+                        color: kind.on ? Theme.selRaised : kindMa.containsMouse ? Theme.hoverRaised : "transparent"
+                        border.width: kind.on ? 1 : 0
+                        border.color: Theme.edge
 
-                    RowLayout {
-                        anchors {
-                            fill: parent
-                            leftMargin: 10
-                            rightMargin: 10
-                        }
-                        spacing: 10
-
-                        BarText {
-                            Layout.preferredWidth: 18
-                            horizontalAlignment: Text.AlignHCenter
-                            text: String.fromCodePoint(kind.modelData[2])
-                            font.pixelSize: root.fs + 2
-                            color: kind.on ? Theme.bright : Theme.dim
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.anim
+                            }
                         }
 
-                        BarText {
-                            Layout.fillWidth: true
-                            text: kind.modelData[1]
-                            font.pixelSize: root.fs - 1
-                            weight: root.wt
-                            color: kind.on ? Theme.bright : Theme.text
+                        RowLayout {
+                            anchors {
+                                fill: parent
+                                leftMargin: 6
+                                rightMargin: 8
+                            }
+                            spacing: 10
+
+                            Rectangle {
+                                implicitWidth: 26
+                                implicitHeight: 26
+                                radius: Theme.radius
+                                color: kind.on ? Theme.hoverRaised : "transparent"
+
+                                BarText {
+                                    anchors.centerIn: parent
+                                    text: String.fromCodePoint(kind.modelData[2])
+                                    font.pixelSize: root.fs + 1
+                                    color: kind.on ? Theme.bright : Theme.dim
+                                }
+                            }
+
+                            BarText {
+                                Layout.fillWidth: true
+                                text: kind.modelData[1]
+                                elide: Text.ElideRight
+                                font.pixelSize: root.fs - 1
+                                weight: kind.on ? 650 : root.wt
+                                color: kind.on ? Theme.bright : Theme.text
+                            }
+
+                            BarText {
+                                text: kind.modelData[3]
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: root.fs - 4
+                                color: kind.on ? Theme.text : Theme.dim
+                            }
                         }
 
-                        BarText {
-                            text: kind.modelData[3]
-                            font.pixelSize: root.fs - 3
-                            weight: root.wt
-                            color: Theme.dim
-                        }
-                    }
-
-                    MouseArea {
-                        id: kindMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            search.text = "";
-                            root.category = kind.modelData[0];
-                            grid.currentIndex = 0;
-                            search.forceActiveFocus();
+                        MouseArea {
+                            id: kindMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                search.text = "";
+                                root.category = kind.modelData[0];
+                                grid.currentIndex = 0;
+                                search.forceActiveFocus();
+                            }
                         }
                     }
                 }
             }
-        }
 
-        Rectangle {
-            id: divider
-            anchors {
-                top: searchBox.bottom
-                topMargin: 14
-                bottom: parent.bottom
-                bottomMargin: 16
-                left: side.right
-                leftMargin: 12
+            Item {
+                Layout.fillHeight: true
             }
-            width: 1
-            color: Theme.edge
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 6
+                spacing: 5
+
+                Repeater {
+                    model: [["↹", "kategori değiştir"], ["↵", "aç"], ["Ctrl ↵", "yeni pencere"], ["Alt 1–6", "sık kullanılan"], ["Sağ tık", "seçenekler"]]
+
+                    delegate: RowLayout {
+                        id: hint
+
+                        required property var modelData
+
+                        spacing: 8
+
+                        Rectangle {
+                            implicitWidth: Math.max(22, keyText.implicitWidth + 10)
+                            implicitHeight: 18
+                            radius: 4
+                            color: Theme.hoverRaised
+                            border.width: 1
+                            border.color: Theme.edge
+
+                            BarText {
+                                id: keyText
+                                anchors.centerIn: parent
+                                text: hint.modelData[0]
+                                font.pixelSize: 9
+                                weight: 650
+                                color: Theme.text
+                            }
+                        }
+
+                        BarText {
+                            text: hint.modelData[1]
+                            font.pixelSize: root.fs - 4
+                            weight: root.wt
+                            color: Theme.dim
+                        }
+                    }
+                }
+            }
         }
 
         Item {
@@ -381,16 +461,16 @@ PanelWindow {
 
             anchors {
                 top: searchBox.bottom
-                topMargin: 10
-                left: divider.right
-                leftMargin: 10
+                topMargin: 12
+                left: side.right
+                leftMargin: 12
                 right: parent.right
-                rightMargin: 12
+                rightMargin: 14
                 bottom: parent.bottom
-                bottomMargin: 12
+                bottomMargin: 14
             }
 
-            ColumnLayout {
+            Card {
                 id: favs
 
                 visible: root.showFavourites
@@ -399,58 +479,170 @@ PanelWindow {
                     left: parent.left
                     right: parent.right
                 }
-                spacing: 6
+                padding: 10
+                spacing: 8
 
-                BarText {
-                    Layout.leftMargin: 6
-                    Layout.topMargin: 4
-                    text: "Sık kullanılanlar"
-                    font.pixelSize: root.fs - 3
-                    weight: 600
-                    color: Theme.dim
+                Caption {
+                    Layout.leftMargin: 2
+                    text: "SIK KULLANILANLAR"
                 }
 
-                Row {
-                    spacing: 0
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
 
                     Repeater {
                         model: root.favourites
 
-                        delegate: AppCell {
+                        delegate: Rectangle {
+                            id: fav
+
                             required property var modelData
                             required property int index
+                            readonly property string icon: root.iconOf(fav.modelData)
+                            readonly property bool running: root.isRunning(fav.modelData)
 
-                            app: modelData
-                            width: grid.cellWidth
-                            height: 96
-                            hint: `Alt+${index + 1}`
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            implicitHeight: 92
+                            radius: Theme.radius + 2
+                            color: favMa.containsMouse ? Theme.selRaised : Theme.hoverRaised
+                            border.width: 1
+                            border.color: Theme.edge
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.anim
+                                }
+                            }
+
+                            IconImage {
+                                id: favIcon
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.top
+                                anchors.topMargin: 12
+                                implicitSize: 38
+                                source: fav.icon
+                                scale: favMa.pressed ? 0.92 : favMa.containsMouse ? 1.06 : 1
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: 140
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+                            }
+
+                            BarText {
+                                anchors.top: favIcon.bottom
+                                anchors.topMargin: 7
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.leftMargin: 6
+                                anchors.rightMargin: 6
+                                horizontalAlignment: Text.AlignHCenter
+                                text: fav.modelData?.name ?? ""
+                                elide: Text.ElideRight
+                                font.pixelSize: root.fs - 3
+                                weight: 600
+                                color: Theme.text
+                            }
+
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.margins: 6
+                                width: altText.implicitWidth + 8
+                                height: 15
+                                radius: 4
+                                color: "transparent"
+                                border.width: 1
+                                border.color: Theme.edge
+
+                                BarText {
+                                    id: altText
+                                    anchors.centerIn: parent
+                                    text: `Alt ${fav.index + 1}`
+                                    font.pixelSize: 8
+                                    weight: 650
+                                    color: Theme.dim
+                                }
+                            }
+
+                            Rectangle {
+                                visible: fav.running
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: 9
+                                width: 6
+                                height: 6
+                                radius: 3
+                                color: Theme.green
+                            }
+
+                            BarText {
+                                visible: DrawerState.isPinned(fav.modelData?.id ?? "") && !fav.running
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.topMargin: 5
+                                anchors.rightMargin: 7
+                                text: Glyph.pin
+                                font.pixelSize: root.fs - 4
+                                color: Theme.dim
+                            }
+
+                            MouseArea {
+                                id: favMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: e => {
+                                    if (e.button === Qt.RightButton)
+                                        root.openMenu(fav.modelData, mapToItem(null, e.x, e.y));
+                                    else
+                                        root.launch(fav.modelData, e.button === Qt.MiddleButton);
+                                }
+                            }
+                        }
+                    }
+
+                    Repeater {
+                        model: Math.max(0, 6 - root.favourites.length)
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
                         }
                     }
                 }
+            }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 2
-                    Layout.bottomMargin: 2
-                    implicitHeight: 1
-                    color: Theme.edge
+            Caption {
+                id: section
+                anchors {
+                    top: root.showFavourites ? favs.bottom : parent.top
+                    topMargin: root.showFavourites ? 14 : 4
+                    left: parent.left
+                    leftMargin: 4
                 }
+                text: root.sectionTitle
             }
 
             GridView {
                 id: grid
 
                 anchors {
-                    top: root.showFavourites ? favs.bottom : parent.top
-                    topMargin: root.showFavourites ? 6 : 4
+                    top: section.bottom
+                    topMargin: 8
                     left: parent.left
                     right: parent.right
                     bottom: parent.bottom
                 }
                 clip: true
                 model: root.apps
-                cellWidth: Math.floor(width / 6)
-                cellHeight: 104
+                cellWidth: Math.floor(width / 5)
+                cellHeight: 120
                 boundsBehavior: Flickable.StopAtBounds
                 highlightFollowsCurrentItem: false
 
@@ -465,17 +657,36 @@ PanelWindow {
                 }
             }
 
-            BarText {
+            Column {
                 anchors.centerIn: grid
                 visible: root.apps.length === 0
-                text: "Sonuç yok"
-                font.pixelSize: root.fs
-                weight: root.wt
-                color: Theme.dim
+                spacing: 8
+
+                Tile {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    glyph: Glyph.search
+                    tone: Theme.dim
+                }
+
+                BarText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Sonuç yok"
+                    font.pixelSize: root.fs
+                    weight: 600
+                    color: Theme.text
+                }
+
+                BarText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: `"${root.query.trim()}" ile eşleşen uygulama bulunamadı`
+                    font.pixelSize: root.fs - 3
+                    weight: root.wt
+                    color: Theme.dim
+                }
             }
         }
 
-        Surface {
+        Rectangle {
             id: menu
 
             readonly property var app: root.menuApp
@@ -485,9 +696,12 @@ PanelWindow {
             visible: !!app
             x: Math.min(at.x, panel.width - width - 8)
             y: Math.min(at.y, panel.height - height - 8)
-            width: 236
-            height: menuBody.implicitHeight + 16
-            radius: Theme.radius + 2
+            width: 250
+            height: menuBody.implicitHeight + 20
+            radius: Theme.radiusLg
+            color: Theme.raised
+            border.width: 1
+            border.color: Theme.edge
             z: 10
 
             MouseArea {
@@ -501,22 +715,51 @@ PanelWindow {
                     left: parent.left
                     right: parent.right
                     top: parent.top
-                    margins: 8
+                    margins: 10
                 }
                 spacing: 2
 
-                BarText {
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.leftMargin: 6
+                    Layout.bottomMargin: 6
+                    spacing: 10
+
+                    IconImage {
+                        implicitSize: 28
+                        source: root.iconOf(menu.app)
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        BarText {
+                            Layout.fillWidth: true
+                            text: menu.app?.name ?? ""
+                            elide: Text.ElideRight
+                            font.pixelSize: root.fs - 1
+                            weight: 650
+                            color: Theme.bright
+                        }
+
+                        BarText {
+                            Layout.fillWidth: true
+                            visible: text !== ""
+                            text: root.subtitleOf(menu.app)
+                            elide: Text.ElideRight
+                            font.pixelSize: root.fs - 4
+                            weight: root.wt
+                            color: Theme.dim
+                        }
+                    }
+                }
+
+                Rule {
                     Layout.bottomMargin: 4
-                    text: menu.app?.name ?? ""
-                    elide: Text.ElideRight
-                    font.pixelSize: root.fs - 2
-                    weight: 650
-                    color: Theme.bright
                 }
 
                 MenuRow {
+                    glyph: DrawerState.isPinned(menu.app?.id ?? "") ? Glyph.pinOff : Glyph.pin
                     label: DrawerState.isPinned(menu.app?.id ?? "") ? "Sabitlemeyi kaldır" : "Sık kullanılanlara sabitle"
                     onClicked: {
                         DrawerState.togglePin(menu.app.id);
@@ -525,7 +768,8 @@ PanelWindow {
                 }
 
                 MenuRow {
-                    label: root.windowOf(menu.app ?? {}) ? "Yeni pencere aç" : "Aç"
+                    glyph: String.fromCodePoint(0xF0415)
+                    label: root.isRunning(menu.app) ? "Yeni pencere aç" : "Aç"
                     onClicked: root.launch(menu.app, true)
                 }
 
@@ -535,6 +779,7 @@ PanelWindow {
                     delegate: MenuRow {
                         required property var modelData
 
+                        glyph: Glyph.chevronRight
                         label: modelData.name
                         onClicked: {
                             modelData.execute();
@@ -547,10 +792,50 @@ PanelWindow {
         }
     }
 
-    component MenuRow: Pick {
-        implicitHeight: 30
-        textSize: root.fs - 2
-        weight: root.wt
+    component MenuRow: Rectangle {
+        id: mrow
+
+        property string glyph
+        required property string label
+        signal clicked
+
+        Layout.fillWidth: true
+        implicitHeight: 32
+        radius: Theme.radius
+        color: mrowMa.containsMouse ? Theme.hoverRaised : "transparent"
+
+        BarText {
+            id: mrowGlyph
+            anchors.left: parent.left
+            anchors.leftMargin: 8
+            anchors.verticalCenter: parent.verticalCenter
+            width: 18
+            horizontalAlignment: Text.AlignHCenter
+            text: mrow.glyph
+            font.pixelSize: root.fs
+            color: mrowMa.containsMouse ? Theme.bright : Theme.dim
+        }
+
+        BarText {
+            anchors.left: mrowGlyph.right
+            anchors.leftMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 8
+            anchors.verticalCenter: parent.verticalCenter
+            text: mrow.label
+            elide: Text.ElideRight
+            font.pixelSize: root.fs - 2
+            weight: root.wt
+            color: mrowMa.containsMouse ? Theme.bright : Theme.text
+        }
+
+        MouseArea {
+            id: mrowMa
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: mrow.clicked()
+        }
     }
 
     component AppCell: Item {
@@ -558,15 +843,18 @@ PanelWindow {
 
         property var app
         property bool current: false
-        property string hint: ""
         readonly property string icon: root.iconOf(cell.app)
-        readonly property bool running: !!root.windowOf(cell.app ?? {})
+        readonly property bool running: root.isRunning(cell.app)
+        readonly property string subtitle: root.subtitleOf(cell.app)
 
         Rectangle {
+            id: card
             anchors.fill: parent
             anchors.margins: 4
-            radius: 10
-            color: cell.current ? Theme.selRaised : area.containsMouse ? Theme.hoverRaised : "transparent"
+            radius: Theme.radiusLg
+            color: cell.current ? Theme.selRaised : area.containsMouse ? Theme.hoverRaised : Theme.card
+            border.width: 1
+            border.color: cell.current ? Qt.alpha(Theme.text, 0.35) : area.containsMouse ? Theme.edge : "transparent"
 
             Behavior on color {
                 ColorAnimation {
@@ -581,10 +869,10 @@ PanelWindow {
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
-                topMargin: 14
+                topMargin: 16
             }
-            width: 46
-            height: 46
+            width: 44
+            height: 44
             scale: area.pressed ? 0.92 : area.containsMouse ? 1.06 : 1
 
             Behavior on scale {
@@ -618,60 +906,66 @@ PanelWindow {
             }
         }
 
-        Rectangle {
-            visible: cell.running
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                top: iconBox.bottom
-                topMargin: 4
-            }
-            width: 4
-            height: 4
-            radius: 2
-            color: Theme.bright
-        }
-
         BarText {
+            id: cellName
             anchors {
                 top: iconBox.bottom
-                topMargin: 12
+                topMargin: 10
                 left: parent.left
                 right: parent.right
-                leftMargin: 8
-                rightMargin: 8
+                leftMargin: 12
+                rightMargin: 12
             }
             text: cell.app?.name ?? ""
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             font.pixelSize: root.fs - 2
-            weight: root.wt
+            weight: 600
             color: cell.current ? Theme.bright : Theme.text
+        }
+
+        BarText {
+            anchors {
+                top: cellName.bottom
+                topMargin: 2
+                left: parent.left
+                right: parent.right
+                leftMargin: 12
+                rightMargin: 12
+            }
+            visible: cell.subtitle !== ""
+            text: cell.subtitle
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
+            font.pixelSize: root.fs - 5
+            weight: root.wt
+            color: Theme.dim
+        }
+
+        Rectangle {
+            visible: cell.running
+            anchors {
+                top: parent.top
+                right: parent.right
+                topMargin: 13
+                rightMargin: 13
+            }
+            width: 6
+            height: 6
+            radius: 3
+            color: Theme.green
         }
 
         BarText {
             visible: DrawerState.isPinned(cell.app?.id ?? "")
             anchors {
                 top: parent.top
-                right: parent.right
-                topMargin: 8
-                rightMargin: 10
-            }
-            text: String.fromCodePoint(0xF0403)
-            font.pixelSize: root.fs - 3
-            color: Theme.dim
-        }
-
-        BarText {
-            visible: cell.hint !== "" && area.containsMouse
-            anchors {
-                top: parent.top
                 left: parent.left
-                topMargin: 8
-                leftMargin: 10
+                topMargin: 9
+                leftMargin: 12
             }
-            text: cell.hint
-            font.pixelSize: root.fs - 5
-            weight: root.wt
+            text: Glyph.pin
+            font.pixelSize: root.fs - 3
             color: Theme.dim
         }
 

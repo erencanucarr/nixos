@@ -46,7 +46,7 @@ Singleton {
     FileView {
         id: file
 
-        path: `${Quickshell.env("HOME")}/.local/state/can-drawer.json`
+        path: `${Quickshell.env("HOME")}/.local/state/ecu-drawer.json`
         blockLoading: true
         printErrors: false
         onLoaded: {
