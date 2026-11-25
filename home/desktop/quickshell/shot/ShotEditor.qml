@@ -54,10 +54,10 @@ Scope {
         root.commitWord();
         canvas.grabToImage(r => {
             if (!r.saveToFile(root.shot)) {
-                Quickshell.execDetached(["notify-send", "-a", "Ekran görüntüsü", "Düzenleme kaydedilemedi", root.shot]);
+                Quickshell.execDetached(["ecu-shot", "notify", "Ekran görüntüsü", "Düzenleme kaydedilemedi", root.shot]);
                 return;
             }
-            Quickshell.execDetached(["sh", "-c", 'wl-copy -t image/png < "$1"', "sh", root.shot]);
+            Quickshell.execDetached(["ecu-shot", "copy", root.shot]);
             root.close();
         }, Qt.size(img.implicitWidth, img.implicitHeight));
     }
@@ -73,7 +73,7 @@ Scope {
             top: true
             bottom: true
         }
-        color: Theme.alpha(Theme.ground, 0.95)
+        color: Qt.alpha(Theme.ground, 0.95)
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -230,7 +230,7 @@ Scope {
                     BarText {
                         text: `${root.marks.length} işaret   ${img.implicitWidth} × ${img.implicitHeight}`
                         color: Theme.dim
-                                            }
+                    }
                 }
             }
 
@@ -269,7 +269,9 @@ Scope {
                             }
                         }
 
-                        Sep {}
+                        Rule {
+                            vertical: true
+                        }
 
                         Repeater {
                             model: root.inks
@@ -303,7 +305,9 @@ Scope {
                             }
                         }
 
-                        Sep {}
+                        Rule {
+                            vertical: true
+                        }
 
                         Repeater {
                             model: root.sizes

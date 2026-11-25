@@ -7,39 +7,6 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string run: Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"
-    readonly property string dir: `d="$(xdg-user-dir VIDEOS 2>/dev/null || echo "$HOME/Videos")/Ekran Kayıtları"; mkdir -p "$d"`
-
-    readonly property string recScript: `kind=$1 stamp=$2 run=$3 audio=$4; shift 4
-        if [ "$kind" = gif ]; then
-            f="$run/qs-rec-$stamp.mp4"; set -- "$@" -r 30
-        else
-            ${dir}; f="$d/$stamp.mp4"; set -- "$@" -r 60
-            if [ "$audio" = 1 ]; then
-                s=$(wpctl inspect @DEFAULT_AUDIO_SINK@ | sed -n 's/.*node.name = "\\(.*\\)"/\\1/p')
-                [ -n "$s" ] && set -- "$@" --audio-backend=pipewire "--audio=$s.monitor"
-            fi
-        fi
-        exec wf-recorder -y "$@" -c libx264 -p preset=veryfast -p crf=20 -x yuv420p -f "$f"`
-
-    readonly property string saveScript: `kind=$1 stamp=$2 run=$3
-        ${dir}
-        if [ "$kind" = gif ]; then
-            src="$run/qs-rec-$stamp.mp4"; f="$d/$stamp.gif"
-            [ -s "$src" ] || exit 1
-            ffmpeg -y -loglevel error -i "$src" -vf "fps=15,scale='min(960,iw)':-2:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4" "$f" || exit 1
-            rm -f "$src"
-            wl-copy -t image/gif < "$f"
-        else
-            f="$d/$stamp.mp4"
-            [ -s "$f" ] || exit 1
-            printf 'file://%s\\n' "$f" | sed 's/ /%20/g' | wl-copy -t text/uri-list
-        fi
-        rm -f "$run"/qs-rec-thumb-*.png
-        t="$run/qs-rec-thumb-$stamp.png"
-        ffmpeg -y -loglevel error -i "$f" -frames:v 1 -vf "scale=592:-2" "$t"
-        printf '%s\\n%s' "$f" "$t"`
-
     property string kind: ""
     property string stamp: ""
     property bool audio: true
@@ -85,16 +52,8 @@ Singleton {
 
     function begin(): void {
         root.stamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss");
-        rec.exec(["sh", "-c", root.recScript, "sh", root.kind, root.stamp, root.run, root.audio ? "1" : "0", ...root.target]);
+        rec.exec(["ecu-shot", "record", root.kind, root.stamp, root.audio ? "1" : "0", ...root.target]);
         root.recording = true;
-    }
-
-    IpcHandler {
-        target: "rec"
-
-        function stop(): void {
-            root.stop();
-        }
     }
 
     Timer {
@@ -131,7 +90,7 @@ Singleton {
         onExited: {
             root.recording = false;
             root.saving = true;
-            save.exec(["sh", "-c", root.saveScript, "sh", root.kind, root.stamp, root.run]);
+            save.exec(["ecu-shot", "finish", root.kind, root.stamp]);
         }
     }
 
@@ -145,7 +104,7 @@ Singleton {
                 if (file)
                     root.saved(file, thumb ?? "", root.kind, root.elapsed, root.area);
                 else
-                    Quickshell.execDetached(["notify-send", "-a", "Ekran kaydı", "Kayıt kaydedilemedi"]);
+                    Quickshell.execDetached(["ecu-shot", "notify", "Ekran kaydı", "Kayıt kaydedilemedi"]);
             }
         }
     }

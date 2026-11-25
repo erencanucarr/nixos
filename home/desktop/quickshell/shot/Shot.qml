@@ -13,16 +13,15 @@ Scope {
 
     readonly property var modes: ["alan", "pencere", "ekran"]
     readonly property var delays: [0, 3, 10]
-    readonly property var kinds: ["foto", "video", "gif"]
+    property var features: ({
+            ocr: false,
+            qr: false
+        })
+    readonly property var kinds: ["foto", "video", "gif", "yazı", "qr"].filter(k => k === "yazı" ? root.features.ocr : k === "qr" ? root.features.qr : true)
+    readonly property string kindName: root.kinds[root.kind] ?? "foto"
+    readonly property bool recKind: root.kindName === "video" || root.kindName === "gif"
+    readonly property bool scanning: root.kindName === "yazı" || root.kindName === "qr"
     readonly property string run: Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"
-
-    readonly property string script: `d="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Ekran Görüntüleri"
-        mkdir -p "$d"; f="$d/$(date +%Y-%m-%d_%H-%M-%S).png"
-        if [ -n "$5" ]; then grim -o "$5" "$f"
-        elif [ "$1" = 0 ] && command -v vips >/dev/null; then vips crop -- "$4" "$f[compression=1]" $2
-        else s=$1; [ "$s" = 0 ] && s=0.2; sleep "$s"; grim -g "$3" "$f"; fi \\
-            && wl-copy -t image/png < "$f" && printf %s "$f" || notify-send -a "Ekran görüntüsü" "Ekran görüntüsü alınamadı" "$f"
-        if [ -n "$4" ]; then rm -f "$4"; fi`
 
     property int mode: 0
     property int delay: 0
@@ -44,6 +43,8 @@ Scope {
     property rect shotRect
     property string shotFile: ""
     property string shotKind: "foto"
+    property string shotText: ""
+    property bool shotEmpty: false
 
     function focusedScreen(): var {
         return Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0];
@@ -58,16 +59,19 @@ Scope {
             .map(o => Qt.rect(o.at[0] - screen.x, o.at[1] - screen.y, o.size[0], o.size[1]));
     }
 
-    function open(kind: int): void {
+    function open(name: string): void {
         if (Recorder.busy)
             return Recorder.stop();
-        if (aim.visible)
+        if (aim.visible || freeze.running)
             return;
-        root.kind = kind;
+        const i = root.kinds.indexOf(name);
+        if (i < 0)
+            return Quickshell.execDetached(["ecu-shot", "notify", "Ekran görüntüsü", name === "qr" ? "QR okuma kapalı" : "Yazı okuma kapalı"]);
+        root.kind = i;
         root.scr = root.focusedScreen();
         Hyprland.refreshToplevels();
-        freeze.next = `${root.run}/qs-shot-${Date.now()}.ppm`;
-        freeze.exec(["sh", "-c", 'rm -f "$3"/qs-shot-*.ppm; grim -t ppm -o "$1" "$2" && echo ok', "sh", root.scr.name, freeze.next, root.run]);
+        freeze.next = `${root.run}/ecu-shot-${Date.now()}.ppm`;
+        freeze.exec(["ecu-shot", "freeze", root.scr.name, freeze.next]);
     }
 
     function screenNow(): void {
@@ -79,7 +83,10 @@ Scope {
         root.shotWhat = `ekran · ${Qt.formatTime(new Date(), "HH:mm")}`;
         root.shotDims = `${Math.round(root.scr.width * d)} × ${Math.round(root.scr.height * d)}`;
         root.shotKind = "foto";
-        take.exec(["sh", "-c", root.script, "sh", "0", "", "", "", root.scr.name]);
+        root.shotEmpty = false;
+        capture.createObject(root, {
+            command: ["ecu-shot", "screen", root.scr.name]
+        });
     }
 
     function close(): void {
@@ -103,15 +110,26 @@ Scope {
         const c = Calc.crop(r, aim.width, aim.height, frozenImg.sourceSize.width, frozenImg.sourceSize.height);
         if (!c)
             return;
-        if (root.kind > 0)
+        if (root.recKind)
             return root.record(r, c);
         root.shotRect = r;
-        root.shotKind = "foto";
         root.shotWhat = `${root.modes[root.mode]} · ${Qt.formatTime(new Date(), "HH:mm")}`;
-        root.shotDims = `${c.w} × ${c.h}`;
+        root.shotEmpty = false;
+        root.shotText = "";
         const frame = root.frozen;
+        const box = [String(c.x), String(c.y), String(c.w), String(c.h)];
+        if (root.scanning) {
+            root.shotKind = root.kindName;
+            scan.exec(["ecu-shot", root.kindName === "yazı" ? "ocr" : "qr", frame, ...box]);
+            root.close();
+            return;
+        }
+        root.shotKind = "foto";
+        root.shotDims = `${c.w} × ${c.h}`;
         const g = `${Math.round(root.scr.x + c.x / root.k)},${Math.round(root.scr.y + c.y / root.k)} ${Math.round(c.w / root.k)}x${Math.round(c.h / root.k)}`;
-        take.exec(["sh", "-c", root.script, "sh", String(root.delays[root.delay]), `${c.x} ${c.y} ${c.w} ${c.h}`, g, frame, ""]);
+        capture.createObject(root, {
+            command: ["ecu-shot", "photo", String(root.delays[root.delay]), frame, ...box, g]
+        });
         root.close();
     }
 
@@ -121,7 +139,22 @@ Scope {
         const target = root.mode === 2 ? ["-o", root.scr.name] : ["-g", `${x},${y} ${w}x${h}`];
         Quickshell.execDetached(["rm", "-f", root.frozen]);
         root.close();
-        Recorder.start(root.kinds[root.kind], target, root.delays[root.delay], root.audio, r);
+        Recorder.start(root.kindName, target, root.delays[root.delay], root.audio, r);
+    }
+
+    FileView {
+        path: "/etc/ecu/shot.json"
+        printErrors: false
+        onLoaded: {
+            try {
+                root.features = JSON.parse(text());
+            } catch (e) {
+                root.features = {
+                    ocr: false,
+                    qr: false
+                };
+            }
+        }
     }
 
     Connections {
@@ -142,15 +175,23 @@ Scope {
         target: "shot"
 
         function open(): void {
-            root.open(0);
+            root.open("foto");
         }
 
         function record(): void {
-            root.open(1);
+            root.open("video");
         }
 
         function gif(): void {
-            root.open(2);
+            root.open("gif");
+        }
+
+        function text(): void {
+            root.open("yazı");
+        }
+
+        function qr(): void {
+            root.open("qr");
         }
 
         function stop(): void {
@@ -201,14 +242,44 @@ Scope {
         }
     }
 
+    Component {
+        id: capture
+
+        Process {
+            id: proc
+
+            running: true
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    if (text) {
+                        root.shot = text;
+                        fx.restart();
+                    }
+                    proc.destroy();
+                }
+            }
+        }
+    }
+
     Process {
-        id: take
+        id: scan
 
         stdout: StdioCollector {
             onStreamFinished: {
-                if (!text)
+                const lines = text.split("\n");
+                const status = lines[0] ?? "";
+                if (status !== "ok" && status !== "empty") {
+                    Quickshell.execDetached(["ecu-shot", "notify", "Ekran görüntüsü", root.shotKind === "qr" ? "QR kod okunamadı" : "Yazı okunamadı"]);
                     return;
-                root.shot = text;
+                }
+                const body = lines.slice(2).join("\n");
+                root.shot = lines[1] ?? "";
+                root.shotEmpty = status === "empty";
+                root.shotText = body;
+                if (root.shotEmpty)
+                    root.shotDims = root.shotKind === "qr" ? "QR kod yok" : "Yazı yok";
+                else
+                    root.shotDims = root.shotKind === "qr" ? "QR kod" : `${body.split("\n").length} satır · ${body.length} karakter`;
                 fx.restart();
             }
         }
@@ -264,11 +335,11 @@ Scope {
                     root.mode = (root.mode + 1) % 3;
                 else if (e.key === Qt.Key_Backtab)
                     root.mode = (root.mode + 2) % 3;
-                else if (e.key === Qt.Key_T)
+                else if (e.key === Qt.Key_T && !root.scanning)
                     root.delay = (root.delay + 1) % 3;
                 else if (e.key === Qt.Key_R)
-                    root.kind = (root.kind + 1) % 3;
-                else if (e.key === Qt.Key_A && root.kind === 1)
+                    root.kind = (root.kind + 1) % root.kinds.length;
+                else if (e.key === Qt.Key_A && root.kindName === "video")
                     root.audio = !root.audio;
                 else
                     return;
@@ -367,7 +438,7 @@ Scope {
                         id: dims
 
                         anchors.centerIn: parent
-                        text: `${root.kind ? root.kinds[root.kind] + " · " : ""}${root.modes[root.mode]}  ${Math.round(root.sel.width * root.k)} × ${Math.round(root.sel.height * root.k)}`
+                        text: `${root.kind ? root.kindName + " · " : ""}${root.modes[root.mode]}  ${Math.round(root.sel.width * root.k)} × ${Math.round(root.sel.height * root.k)}`
                         color: Theme.bright
                     }
                 }
@@ -550,7 +621,9 @@ Scope {
                             }
                         }
 
-                        Sep {}
+                        Rule {
+                            vertical: true
+                        }
 
                         Repeater {
                             model: root.modes
@@ -565,16 +638,19 @@ Scope {
                             }
                         }
 
-                        Sep {}
+                        Rule {
+                            vertical: true
+                        }
 
                         Chip {
+                            visible: !root.scanning
                             text: root.delay ? `${root.delays[root.delay]} sn` : "gecikme"
                             on: root.delay > 0
                             onClicked: root.delay = (root.delay + 1) % 3
                         }
 
                         Chip {
-                            visible: root.kind === 1
+                            visible: root.kindName === "video"
                             text: root.audio ? "ses açık" : "ses kapalı"
                             on: root.audio
                             onClicked: root.audio = !root.audio
@@ -592,7 +668,7 @@ Scope {
                         id: keys
 
                         anchors.centerIn: parent
-                        text: root.kind ? `sürükle  alan     boşluk  pencere     r  tür     t  gecikme${root.kind === 1 ? "     a  ses" : ""}     ↵  kaydı başlat     esc  iptal` : "sürükle  alan     boşluk  pencere     tab  kip     r  kayıt     t  gecikme     ↵  çek     esc  iptal"
+                        text: root.scanning ? `sürükle  alan     boşluk  pencere     tab  kip     r  tür     ↵  ${root.kindName === "qr" ? "QR oku" : "yazıyı oku"}     esc  iptal` : root.recKind ? `sürükle  alan     boşluk  pencere     r  tür     t  gecikme${root.kindName === "video" ? "     a  ses" : ""}     ↵  kaydı başlat     esc  iptal` : "sürükle  alan     boşluk  pencere     tab  kip     r  tür     t  gecikme     ↵  çek     esc  iptal"
                         color: Theme.dim
                         font.pixelSize: Theme.size - 1
                     }
@@ -687,8 +763,32 @@ Scope {
                 }
 
                 BarText {
-                    text: root.shotKind === "foto" ? "Kaydedildi ve kopyalandı · düzenlemek için tıkla" : root.shotKind === "gif" ? "GIF kaydedildi ve kopyalandı · açmak için tıkla" : "Video kaydedildi, dosya kopyalandı · açmak için tıkla"
-                    color: Theme.dim
+                    Layout.fillWidth: true
+                    visible: root.shotKind === "yazı" && !root.shotEmpty && root.shotText !== ""
+                    text: root.shotText
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 4
+                    elide: Text.ElideRight
+                    font.family: "JetBrainsMono Nerd Font"
+                    font.pixelSize: Theme.size - 1
+                    color: Theme.text
+                }
+
+                BarText {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    text: {
+                        if (root.shotKind === "yazı")
+                            return root.shotEmpty ? "Bu alanda okunabilir bir yazı bulunamadı" : "Yazı panoya kopyalandı";
+                        if (root.shotKind === "qr")
+                            return root.shotEmpty ? "Bu alanda okunabilir bir QR kod bulunamadı" : "QR kod panoya kopyalandı · içerik güvenlik için gösterilmiyor";
+                        if (root.shotKind === "gif")
+                            return "GIF kaydedildi ve kopyalandı · açmak için tıkla";
+                        if (root.shotKind === "video")
+                            return "Video kaydedildi, dosya kopyalandı · açmak için tıkla";
+                        return "Kaydedildi ve kopyalandı · düzenlemek için tıkla";
+                    }
+                    color: root.shotEmpty ? Theme.hot : Theme.dim
                 }
             }
 
@@ -700,7 +800,7 @@ Scope {
                     fired.visible = false;
                     if (root.shotKind === "foto")
                         editor.open(root.shot, root.scr);
-                    else
+                    else if (root.shotKind === "video" || root.shotKind === "gif")
                         Qt.openUrlExternally("file://" + root.shotFile);
                 }
             }
