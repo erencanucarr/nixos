@@ -60,7 +60,7 @@ in
       paths = [ pkgs.equibop ];
       nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
-        wrapProgram $out/bin/equibop --add-flags "--proxy-server=socks5://${socks}"${lib.optionalString config.ecu.headset.enable " --set PULSE_SINK arctis_chat"}
+        wrapProgram $out/bin/equibop --add-flags "--proxy-server=socks5://${socks}"${lib.optionalString config.services.arctis-chatmix.enable " --set PULSE_SINK arctis_chat"}
       '';
     })
   ];

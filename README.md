@@ -34,7 +34,6 @@ Flake-based NixOS configuration with Home Manager.
 │   └── apps/
 │       ├── discord.nix       # ByeDPI proxy for Discord: Equibop and Firefox (PAC) use it
 │       ├── firefox.nix       # Firefox: theme, uBlock, Bitwarden, privacy settings
-│       ├── headset.nix       # Arctis 7+ battery and the ecu-chatmix wheel service (ecu.headset)
 │       └── taildrop.nix      # ecu-taildrop: send and receive files over Tailscale (ecu.taildrop)
 └── home/                     # the user (Home Manager)
     ├── can.nix               # user apps and the GTK look
@@ -73,7 +72,8 @@ Flake-based NixOS configuration with Home Manager.
 ## Options
 
 Own modules keep their switches under `ecu.*`, set per host in `hosts/<host>/default.nix`:
-`ecu.screenshot`, `ecu.taildrop`, and `ecu.headset` (`enable`, `sink`: the headset's ALSA output).
+`ecu.screenshot` and `ecu.taildrop`. The Arctis 7+ ChatMix wheel and battery come from my
+[arctis-chatmix.nix](https://github.com/erencanucarr/arctis-chatmix.nix) flake (`services.arctis-chatmix`).
 
 ## Thanks
 

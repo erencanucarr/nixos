@@ -11,14 +11,19 @@
     ../../modules/desktop/screenshot.nix
     ../../modules/apps/discord.nix
     ../../modules/apps/firefox.nix
-    ../../modules/apps/headset.nix
     ../../modules/apps/taildrop.nix
     ../../modules/desktop/hyprland.nix
   ];
 
   ecu.screenshot.enable = true;
   ecu.taildrop.enable = true;
-  ecu.headset.enable = true;
+  services.arctis-chatmix = {
+    enable = true;
+    labels = {
+      game = "Arctis Oyun";
+      chat = "Arctis Sohbet";
+    };
+  };
 
   networking.hostName = "b850e-desktop";
 

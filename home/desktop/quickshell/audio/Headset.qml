@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.notif
 
 Singleton {
     id: root
@@ -21,6 +22,7 @@ Singleton {
     property int viewers: 0
     property real lastQuery: 0
     property string warned: ""
+    property string suspect: ""
 
     readonly property int idleInterval: 300000
     readonly property int openInterval: 30000
@@ -56,22 +58,39 @@ Singleton {
 
     function checkLow(): void {
         if (!root.online || root.charging || root.level < 0 || root.level > 25) {
-            if (root.charging || root.level > 25)
+            root.suspect = "";
+            if (root.charging || root.level > 25) {
+                if (root.warned !== "")
+                    Notifs.dismissApp("Kulaklık");
                 root.warned = "";
+            }
             return;
         }
         const step = root.level === 0 ? "empty" : "low";
         if (root.warned === step)
             return;
+        if (root.suspect !== step) {
+            root.suspect = step;
+            confirm.restart();
+            return;
+        }
+        root.suspect = "";
         root.warned = step;
         const empty = step === "empty";
-        Quickshell.execDetached(["notify-send", "-a", "Kulaklık", "-i", "audio-headset", "-u", empty ? "critical" : "normal", empty ? `${root.name} pili bitmek üzere` : `${root.name} pili azaldı`, empty ? "Şarja takmazsan birazdan kapanacak." : `Pil %${root.level}, şarja takmayı unutma.`]);
+        Quickshell.execDetached(["notify-send", "-a", "Kulaklık", "-u", empty ? "critical" : "normal", empty ? `${root.name} pili bitmek üzere` : `${root.name} pili azaldı`, empty ? "Şarja takmazsan birazdan kapanacak." : `Pil %${root.level}, şarja takmayı unutma.`]);
+    }
+
+    Timer {
+        id: confirm
+
+        interval: 20000
+        onTriggered: root.refresh()
     }
 
     FileView {
         id: mixFile
 
-        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/ecu-chatmix`
+        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/arctis-chatmix`
         watchChanges: true
         printErrors: false
         onFileChanged: reload()

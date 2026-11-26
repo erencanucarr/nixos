@@ -12,6 +12,10 @@
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    arctis-chatmix = {
+      url = "github:erencanucarr/arctis-chatmix.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -20,6 +24,7 @@
       nixpkgs-unstable,
       home-manager,
       git-hooks,
+      arctis-chatmix,
       ...
     }:
     let
@@ -43,6 +48,7 @@
           specialArgs = { inherit unstable theme; };
           modules = [
             ./hosts/${host}
+            arctis-chatmix.nixosModules.default
             home-manager.nixosModules.home-manager
             {
               home-manager = {

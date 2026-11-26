@@ -52,6 +52,13 @@ Singleton {
         root.popups = root.popups.filter(p => p !== n);
     }
 
+    function dismissApp(app: string): void {
+        for (const n of root.history)
+            if (n.appName === app)
+                n.dismiss();
+        root.popups = root.popups.filter(p => p.appName !== app);
+    }
+
     function clearAll(): void {
         for (const n of root.history)
             n.dismiss();

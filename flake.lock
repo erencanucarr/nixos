@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "arctis-chatmix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795638296,
+        "narHash": "sha256-5bNgMQXMgTBztS1KUUYAD/Jlj7jI0uHIocT/m30rPxo=",
+        "owner": "erencanucarr",
+        "repo": "arctis-chatmix.nix",
+        "rev": "c9749df204fdde82cbab9a36afc23dcde7b82105",
+        "type": "github"
+      },
+      "original": {
+        "owner": "erencanucarr",
+        "repo": "arctis-chatmix.nix",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -92,6 +112,7 @@
     },
     "root": {
       "inputs": {
+        "arctis-chatmix": "arctis-chatmix",
         "git-hooks": "git-hooks",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",

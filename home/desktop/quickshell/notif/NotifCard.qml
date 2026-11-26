@@ -36,6 +36,7 @@ Rectangle {
     readonly property var glyphs: ({
             "ekran görüntüsü": 0xF0100,
             "ekran kaydı": 0xF044A,
+            "kulaklık": 0xF02CE,
             "notify-send": 0xF009A
         })
     readonly property bool tailscale: root.app.toLowerCase() === "tailscale"
