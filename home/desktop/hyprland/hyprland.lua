@@ -120,7 +120,6 @@ local function key(keys, action, description, opts)
   hl.bind(keys, action, opts)
 end
 
-key(mod .. " + Super_L", hl.dsp.exec_cmd(qs .. "drawer toggle"), "Masaüstü: Uygulama çekmecesi", { release = true })
 key(mod .. " + K", hl.dsp.exec_cmd(qs .. "keys toggle"), "Masaüstü: Kısayollar (bu ekran)")
 local overview = hl.dsp.exec_cmd(qs .. "overview toggle")
 key(mod .. " + TAB", overview, "Masaüstü: Pencere görünümü")
