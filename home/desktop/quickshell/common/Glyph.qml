@@ -37,6 +37,8 @@ Singleton {
     readonly property string chevronRight: String.fromCodePoint(0xF0142)
     readonly property string pencil: String.fromCodePoint(0xF03EB)
     readonly property string copy: String.fromCodePoint(0xF018F)
+    readonly property string clipboard: String.fromCodePoint(0xF014C)
+    readonly property string cog: String.fromCodePoint(0xF08BB)
     readonly property string down: String.fromCodePoint(0xF0045)
     readonly property string up: String.fromCodePoint(0xF005D)
     readonly property string wired: String.fromCodePoint(0xF0317)

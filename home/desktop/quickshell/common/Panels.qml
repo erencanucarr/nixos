@@ -191,6 +191,10 @@ Singleton {
         target: "weather"
     }
 
+    PopupIpc {
+        target: "clipboard"
+    }
+
     IpcHandler {
         target: "audio"
 

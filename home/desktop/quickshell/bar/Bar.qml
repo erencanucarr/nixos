@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Services.UPower
 import qs.weather
 import qs.audio
+import qs.clip
 import qs.common
 import qs.media
 import qs.notif
@@ -91,6 +92,10 @@ PanelWindow {
         RecButton {}
 
         Tray {}
+
+        ClipButton {
+            screenName: root.modelData.name
+        }
 
         TailscaleButton {
             screenName: root.modelData.name

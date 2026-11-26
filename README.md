@@ -30,6 +30,7 @@ Flake-based NixOS configuration with Home Manager.
 │   ├── desktop/
 │   │   ├── desktop.nix       # ly login screen, Thunar and viewers, theme, fonts
 │   │   ├── hyprland.nix      # Hyprland and its tools
+│   │   ├── clipboard.nix     # ecu-clip: clipboard history with cliphist (ecu.clipboard)
 │   │   └── screenshot.nix    # ecu-shot: screenshots, video, GIF, OCR and QR (ecu.screenshot)
 │   └── apps/
 │       ├── discord.nix       # ByeDPI proxy for Discord: Equibop and Firefox (PAC) use it
@@ -55,6 +56,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── notif/        # notifications, their history and Do Not Disturb
     │       ├── net/          # network menu: traffic, addresses, DNS, Wi-Fi, IP settings
     │       ├── tailscale/    # Tailscale: connection, devices, exit node, services
+    │       ├── clip/         # clipboard history panel (Super+V); ecu-clip does the work
     │       ├── drawer/       # app drawer
     │       ├── keys/         # every shortcut, read from Hyprland (Super+K)
     │       ├── overview/     # window overview (mouse thumb button, Super+Tab)
@@ -72,7 +74,7 @@ Flake-based NixOS configuration with Home Manager.
 ## Options
 
 Own modules keep their switches under `ecu.*`, set per host in `hosts/<host>/default.nix`:
-`ecu.screenshot` and `ecu.taildrop`. The Arctis 7+ ChatMix wheel and battery come from my
+`ecu.screenshot`, `ecu.taildrop` and `ecu.clipboard` (`days`, `maxItems`, `images`; the panel can override them). The Arctis 7+ ChatMix wheel and battery come from my
 [arctis-chatmix.nix](https://github.com/erencanucarr/arctis-chatmix.nix) flake (`services.arctis-chatmix`).
 
 ## Thanks

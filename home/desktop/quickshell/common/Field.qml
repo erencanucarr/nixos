@@ -11,6 +11,7 @@ Rectangle {
     property int textSize: Theme.small
 
     signal accepted
+    signal keyPressed(var event)
 
     Layout.fillWidth: true
     implicitHeight: 26
@@ -36,6 +37,7 @@ Rectangle {
         echoMode: root.secret ? TextInput.Password : TextInput.Normal
         clip: true
         onAccepted: root.accepted()
+        Keys.onPressed: e => root.keyPressed(e)
     }
 
     BarText {
