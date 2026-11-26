@@ -12,6 +12,11 @@
 
   xdg.configFile."vicinae/nix.json".text = builtins.toJSON {
     theme.dark.name = "graphite";
+    favorites = [ ];
+    providers.clipboard = {
+      enabled = false;
+      preferences.monitoring = false;
+    };
   };
   home.activation.vicinaeImport = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     f="${config.xdg.configHome}/vicinae/settings.json"
