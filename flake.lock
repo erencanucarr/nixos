@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795638296,
-        "narHash": "sha256-5bNgMQXMgTBztS1KUUYAD/Jlj7jI0uHIocT/m30rPxo=",
+        "lastModified": 1795724451,
+        "narHash": "sha256-ReCG/N4dKvPL9N9HDcYIhS9O3NpRCNxQnt3uZ8kpjVs=",
         "owner": "erencanucarr",
         "repo": "arctis-chatmix.nix",
-        "rev": "c9749df204fdde82cbab9a36afc23dcde7b82105",
+        "rev": "bacaec19bfa849664fbb7601839944329781bdc9",
         "type": "github"
       },
       "original": {

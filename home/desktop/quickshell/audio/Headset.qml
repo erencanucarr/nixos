@@ -23,14 +23,34 @@ Singleton {
     property real lastQuery: 0
     property string warned: ""
     property string suspect: ""
+    property bool evented: false
 
     readonly property int idleInterval: 300000
     readonly property int openInterval: 30000
+    readonly property int eventedInterval: 1800000
 
     function watch(on: bool): void {
         root.viewers = Math.max(0, root.viewers + (on ? 1 : -1));
-        if (on && Date.now() - root.lastQuery > 5000)
+        if (on && !root.evented && Date.now() - root.lastQuery > 5000)
             root.refresh();
+    }
+
+    function applyEvent(text: string): void {
+        let s = null;
+        try {
+            s = JSON.parse(text);
+        } catch (e) {
+            s = null;
+        }
+        root.evented = s !== null;
+        if (!root.evented)
+            return;
+        root.present = true;
+        root.name = root.name || "Arctis 7+";
+        root.online = s.connected === true;
+        root.charging = root.online && s.charging === true;
+        root.level = root.online && typeof s.level === "number" ? s.level : -1;
+        root.checkLow();
     }
 
     function refresh(): void {
@@ -105,11 +125,27 @@ Singleton {
         onLoadFailed: root.mixing = false
     }
 
+    FileView {
+        id: batteryFile
+
+        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/arctis-chatmix.battery`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.applyEvent(text())
+        onLoadFailed: root.evented = false
+    }
+
     Timer {
         interval: 30000
-        running: !root.mixing
+        running: !root.mixing || !root.evented
         repeat: true
-        onTriggered: mixFile.reload()
+        onTriggered: {
+            if (!root.mixing)
+                mixFile.reload();
+            if (!root.evented)
+                batteryFile.reload();
+        }
     }
 
     Process {
@@ -122,7 +158,7 @@ Singleton {
     }
 
     Timer {
-        interval: root.viewers > 0 ? root.openInterval : root.idleInterval
+        interval: root.evented ? root.eventedInterval : root.viewers > 0 ? root.openInterval : root.idleInterval
         running: true
         repeat: true
         triggeredOnStart: true
