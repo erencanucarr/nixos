@@ -145,12 +145,11 @@ let
             [ -s "$src" ] || exit 1
             ffmpeg -y -loglevel error -i "$src" -vf "fps=${toString cfg.gif.fps},scale='min(${toString cfg.gif.maxWidth},iw)':-2:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4" "$f" || { rm -f "$src"; exit 1; }
             rm -f "$src"
-            wl-copy -t image/gif < "$f"
           else
             f="$d/$id.mp4"
             [ -s "$f" ] || exit 1
-            jq -rn --arg p "$f" '"file://" + ($p | split("/") | map(@uri) | join("/"))' | wl-copy -t text/uri-list
           fi
+          jq -rn --arg p "$f" '"file://" + ($p | split("/") | map(@uri) | join("/"))' | wl-copy -t text/uri-list
           rm -f "$run"/ecu-rec-thumb-*.png
           t="$run/ecu-rec-thumb-$id.png"
           ffmpeg -y -loglevel error -i "$f" -frames:v 1 -vf "scale=592:-2" "$t" || t=""
