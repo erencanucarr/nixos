@@ -1,6 +1,6 @@
 local mod = "SUPER"
 local terminal = "ghostty"
-local files = "thunar"
+local files = "flea"
 local browser = "firefox"
 local hypr = os.getenv("HOME") .. "/.config/hypr"
 local ok, palette = pcall(dofile, os.getenv("HOME") .. "/.config/ecu-theme/palette.lua")
@@ -93,7 +93,7 @@ hl.animation({ leaf = "global", enabled = true, speed = 2, bezier = "ease" })
 ---------------------------------------------------------------------- rules
 hl.window_rule({
   name = "tools-float",
-  match = { class = "^(org.pulseaudio.pavucontrol|pavucontrol|nm-connection-editor|blueman-manager|xdg-desktop-portal-gtk)$" },
+  match = { class = "^(org.pulseaudio.pavucontrol|pavucontrol|nm-connection-editor|blueman-manager|xdg-desktop-portal-gtk|com.thisisgm.flea.picker)$" },
   float = true,
   center = true,
 })

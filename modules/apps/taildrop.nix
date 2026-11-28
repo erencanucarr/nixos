@@ -122,23 +122,6 @@ let
     '';
   };
 
-  thunarAction = ''
-    <action>
-    	<icon>document-send</icon>
-    	<name>Tailscale ile gönder</name>
-    	<submenu></submenu>
-    	<unique-id>ecu-taildrop</unique-id>
-    	<command>ecu-taildrop pick %F</command>
-    	<description>Seçili dosyaları Taildrop ile bir cihaza gönder</description>
-    	<range></range>
-    	<patterns>*</patterns>
-    	<audio-files/>
-    	<image-files/>
-    	<other-files/>
-    	<text-files/>
-    	<video-files/>
-    </action>
-  '';
 in
 {
   options.ecu.taildrop = {
@@ -150,11 +133,6 @@ in
       description = "İndirilenler klasörünün altında gelen dosyaların kaydedildiği klasör.";
     };
 
-    thunar = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Thunar'ın sağ tık menüsüne \"Tailscale ile gönder\" eylemini ekler.";
-    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -180,17 +158,5 @@ in
       };
     };
 
-    system.userActivationScripts.ecuTaildropThunar = lib.mkIf cfg.thunar ''
-      f="$HOME/.config/Thunar/uca.xml"
-      action=${lib.escapeShellArg thunarAction}
-      if [ ! -f "$f" ]; then
-        ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$f")"
-        printf '<?xml version="1.0" encoding="UTF-8"?>\n<actions>\n%s</actions>\n' "$action" > "$f"
-      elif ! ${pkgs.gnugrep}/bin/grep -q "<unique-id>ecu-taildrop</unique-id>" "$f"; then
-        tmp=$(${pkgs.coreutils}/bin/mktemp)
-        ECU_ACTION="$action" ${pkgs.gawk}/bin/awk '/<\/actions>/ && !done { printf "%s", ENVIRON["ECU_ACTION"]; done = 1 } { print }' "$f" > "$tmp" && ${pkgs.coreutils}/bin/cat "$tmp" > "$f"
-        ${pkgs.coreutils}/bin/rm -f "$tmp"
-      fi
-    '';
   };
 }

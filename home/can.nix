@@ -16,6 +16,7 @@ in
     ./theme.nix
     ./shell
     ./desktop/hyprland.nix
+    ./apps/flea.nix
     ./apps/vicinae
     ./apps/ghostty.nix
     ./apps/viewers.nix

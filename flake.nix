@@ -16,6 +16,7 @@
       url = "github:erencanucarr/arctis-chatmix.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    flea.url = "github:erencanucarr/flea.nix";
   };
 
   outputs =
@@ -25,6 +26,7 @@
       home-manager,
       git-hooks,
       arctis-chatmix,
+      flea,
       ...
     }:
     let
@@ -49,11 +51,13 @@
           modules = [
             ./hosts/${host}
             arctis-chatmix.nixosModules.default
+            flea.nixosModules.default
             home-manager.nixosModules.home-manager
             {
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
+                sharedModules = [ flea.homeModules.default ];
                 extraSpecialArgs = { inherit unstable theme; };
                 users.can = import ./home/can.nix;
               };

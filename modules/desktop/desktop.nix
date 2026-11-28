@@ -22,18 +22,14 @@
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.ly.enableGnomeKeyring = true;
   programs.dconf.enable = true;
-  programs.thunar = {
+  programs.flea = {
     enable = true;
-    plugins = with pkgs; [
-      thunar-archive-plugin
-      thunar-volman
-    ];
+    defaultFileManager = true;
+    filePicker.enable = true;
   };
-  services.tumbler.enable = true;
   services.gvfs.enable = true;
   services.udisks2.enable = true;
   xdg.mime.defaultApplications = {
-    "inode/directory" = "thunar.desktop";
     "application/pdf" = "org.pwmt.zathura.desktop";
     "text/plain" = "org.xfce.mousepad.desktop";
   }

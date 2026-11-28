@@ -28,7 +28,7 @@ Flake-based NixOS configuration with Home Manager.
 │   │   ├── dns.nix           # encrypted DNS (DNS-over-TLS) through resolved
 │   │   └── tailscale.nix     # Tailscale; "can" can control it without sudo
 │   ├── desktop/
-│   │   ├── desktop.nix       # ly login screen, Thunar and viewers, theme, fonts
+│   │   ├── desktop.nix       # ly login screen, Flea (file manager and file picker), viewers, theme, fonts
 │   │   ├── hyprland.nix      # Hyprland and its tools
 │   │   ├── clipboard.nix     # ecu-clip: clipboard history with cliphist (ecu.clipboard)
 │   │   └── screenshot.nix    # ecu-shot: screenshots, video, GIF, OCR and QR (ecu.screenshot)
@@ -45,7 +45,7 @@ Flake-based NixOS configuration with Home Manager.
     │   ├── hyprland.nix      # links hyprland/, quickshell/ and the gtk/ folders
     │   ├── hyprland/         # hyprland.lua, lock screen, idle
     │   │   └── bin/          # helpers: sunset (night light), dpms
-    │   ├── gtk/              # graphite colours for GTK 3 and 4 apps (Thunar…)
+    │   ├── gtk/              # graphite colours for GTK 3 and 4 apps
     │   ├── wallpapers/       # wallpaper images, picked with Super+Shift+W
     │   └── quickshell/       # the shell: shell.qml starts it
     │       ├── common/       # theme, glyphs, shared cards and menus
@@ -65,6 +65,7 @@ Flake-based NixOS configuration with Home Manager.
     │       ├── osd/          # volume and mic pop-ups, note reminders
     │       └── shot/         # screenshot UI (F8): photo, video, GIF, text (OCR), QR; ecu-shot does the work
     └── apps/
+        ├── flea.nix          # Flea in graphite colours, Taildrop in its menu
         ├── vicinae/          # launcher on Super+Space and its theme
         ├── equibop/          # Equibop (Discord) theme
         ├── ghostty.nix       # terminal
@@ -75,7 +76,8 @@ Flake-based NixOS configuration with Home Manager.
 
 Own modules keep their switches under `ecu.*`, set per host in `hosts/<host>/default.nix`:
 `ecu.screenshot`, `ecu.taildrop` and `ecu.clipboard` (`days`, `maxItems`, `images`; the panel can override them). The Arctis 7+ ChatMix wheel and battery come from my
-[arctis-chatmix.nix](https://github.com/erencanucarr/arctis-chatmix.nix) flake (`services.arctis-chatmix`).
+[arctis-chatmix.nix](https://github.com/erencanucarr/arctis-chatmix.nix) flake (`services.arctis-chatmix`), and the
+Flea file manager from [flea.nix](https://github.com/erencanucarr/flea.nix) (`programs.flea`).
 
 ## Thanks
 
